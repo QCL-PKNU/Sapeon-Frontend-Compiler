@@ -18,21 +18,16 @@ from AxfcError import *
 from AxfcIRGraph import *
 from AxfcIRBuilder import *
 
-##
-# AxfcTFIRBuilder
-#
+#######################################################################
+# AxfcTFIRBuilder class
+#######################################################################
 class AxfcTFIRBuilder(AxfcIRBuilder):
-
-    # name of input layer
-    ID_INPUT_LAYER = 'input'
 
     ## The constructor
     def __init__(self, md):
         super().__init__(md)
 
-    ##
-    # This method is used to read a tensorflow graph from an input file in the given path.
-    #
+    ## This method is used to read a tensorflow graph from an input file in the given path.
     # @param self this object
     # @param path file path of input network model
     # @return error info
@@ -48,9 +43,7 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
 
         return AxfcError.SUCCESS
 
-    ##
-    # This method is used to construct a naive AIXIR using a tensorflow graph.
-    #
+    ## This method is used to construct a naive AIXIR using a tensorflow graph.
     # @param self this object
     # @param path file path of input network model
     # @return error info
@@ -78,8 +71,9 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
 
     ## This method is used to create a new IR node from tf.NodeDef and append it to the IR graph.
     #  The successors and predecessors of the IR node is found using the symbol table.
-    #
-    #
+    # @param self this object
+    # @param tf_node_def input node_def object of Tensorflow
+    # @return error info.
     def __append_node_def(self, tf_node_def: tf.compat.v1.NodeDef) -> AxfcError:
         #logging.info("AxfcTFIRBuilder:append_node_def - tf_node_def: %s", tf_node_def.name)
 
@@ -89,13 +83,8 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
         # register the IR node to the symbol table with the name of node_def
         self._ir_symtab[tf_node_def.name] = ir_node
 
-        # configure the attributes of the IR node
-        ir_node.op = tf_node_def.name.split('/')[-1]
-
-        if ir_node.op == AxfcTFIRBuilder.ID_INPUT_LAYER:
-            ir_node.is_root = True
-        else:
-            ir_node.is_root = False
+        # set the operation of this node
+        ir_node.op = tf_node_def.op
 
         # check the node that is supported by AIXH hardware
         if self._md.get_axih_support(ir_node.op):
@@ -121,7 +110,6 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
         return AxfcError.SUCCESS
 
     ## This method is used to visualize the IR graph using networkx.
-    #
     # @param self this object
     def _visualize_graph(self):
 
@@ -129,37 +117,32 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
         nx_color_map = []
 
         # Nested function to ignore edges from a constant node
-        def is_ignored(node_def: tf.compat.v1.NodeDef) -> bool:
-            op = node_def.op
-            name = node_def.name.split('/')[-1]
-
-            if op == 'Const':
-                return True
-            elif op == 'Identity' and name != 'Identity':
+        def is_ignored(op:str) -> bool:
+            if op == 'Const' or op == 'Identity':
                 return True
             else:
                 return False
 
         # build a networkx graph
-        for node in self._ir_graph.nodes:
+        for ir_node in self._ir_graph.nodes:
 
             # ignore some edges
-            if is_ignored(node.node_def):
+            if is_ignored(ir_node.op):
                 continue
 
             # check if the node is supported by AIXH
-            if node.is_aixh_support:
+            if ir_node.is_aixh_support:
                 nx_color_map.append('red')
             else:
                 nx_color_map.append('blue')
 
-            for succ in node.succs:
+            for succ in ir_node.succs:
                 # ignore some edges
-                if is_ignored(succ.node_def):
+                if is_ignored(succ.op):
                     continue
 
-                nx_graph.add_edge(node.id, succ.id)
-                # nx_graph.add_edge(node._node_def.name, succ._node_def.name)
+                nx_graph.add_edge(ir_node.id, succ.id)
+                # nx_graph.add_edge(ir_node._node_def.name, succ._node_def.name)
 
         nx.draw(nx_graph, cmap=plt.get_cmap('jet'), node_color=nx_color_map, with_labels=True)
         plt.show()

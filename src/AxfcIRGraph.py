@@ -16,9 +16,9 @@ from AxfcError import *
 from AxfcIRNode import *
 from AxfcIRBlock import *
 
-##
-# AxfcIRGraph
-#
+#######################################################################
+# AxfcIRGraph class
+#######################################################################
 class AxfcIRGraph:
 
     ## @var nodes

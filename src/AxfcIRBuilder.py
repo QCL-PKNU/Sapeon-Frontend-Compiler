@@ -18,9 +18,9 @@ from AxfcIRBlock import *
 from AxfcIRGraph import *
 from AxfcMachineDesc import *
 
-##
-# AxfcIRBuilder
-#
+#######################################################################
+# AxfcIRBuilder class
+#######################################################################
 class AxfcIRBuilder:
 
     ## @var _md
@@ -38,10 +38,8 @@ class AxfcIRBuilder:
     ## The constructor
     def __init__(self, md):
         self._md = md
-
         self._tf_graph = None
         self._ir_graph = None
-
         self._ir_symtab = dict()
 
     def _read_model_graph(self, path: str):
@@ -160,6 +158,11 @@ class AxfcIRBuilder:
 
         # skip if this node is not supported by hardware
         if ir_node.is_aixh_support:
+            if len(ir_block.nodes) > 0:
+                ir_node.is_root = False
+            else:
+                ir_node.is_root = True
+
             ir_block.nodes.append(ir_node)
             ir_node.block_ref = ir_block
         else:

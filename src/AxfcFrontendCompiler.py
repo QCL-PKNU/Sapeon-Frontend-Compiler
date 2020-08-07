@@ -20,9 +20,9 @@ from AxfcMachineDesc import *
 from AxfcIRTranslator import *
 #import AIXGraph
 
-##
+#######################################################################
 # AxfcFrontendCompiler
-#
+#######################################################################
 class AxfcFrontendCompiler:
 
     ## @var __md

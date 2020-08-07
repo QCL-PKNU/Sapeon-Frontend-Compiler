@@ -10,6 +10,7 @@
 #   High Performance Computing Laboratory (hpcl.pknu.ac.kr)
 #######################################################################
 
+import enum
 import logging
 
 from aixh_pb2 import *
@@ -18,10 +19,26 @@ from AxfcIRBlock import *
 from AxfcIRGraph import *
 from AxfcMachineDesc import *
 
-##
-# AxfcIRTranslator
-#
+#######################################################################
+# AxfcIRTranslator class
+#######################################################################
 class AxfcIRTranslator:
+
+    ## AIX data type
+    class AIXDataType(enum.Enum):
+        AIX_DATA_FLOAT = 0
+        AIX_DATA_DOUBLE = 1
+        AIX_DATA_HALF = 2
+        AIX_DATA_UINT8 = 3
+        AIX_DATA_SINT8 = 4
+        AIX_DATA_SINT16 = 5
+
+    ## AIX tensor format
+    class AIXTensorFormat(enum.Enum):
+        AIX_FORMAT_NCHW = 0
+        AIX_FORMAT_NHWC = 1
+        AIX_FORMAT_NWHC = 2
+        AIX_FORMAT_VECTOR = 3
 
     ## @var _md
     # AIX machine description
