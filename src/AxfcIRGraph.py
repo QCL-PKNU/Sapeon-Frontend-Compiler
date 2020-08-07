@@ -7,8 +7,6 @@
 #      Youngsun Han (youngsun@pknu.ac.kr)
 #      Heng Sengthai (sengthai37@gmail.com)
 #
-#   Copyright (c) 2020
-#
 #   High Performance Computing Laboratory (hpcl.pknu.ac.kr)
 #######################################################################
 
