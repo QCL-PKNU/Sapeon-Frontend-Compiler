@@ -48,7 +48,7 @@ class AxfcIRBuilder:
     def _build_naive_ir(self, path: str):
         return NotImplementedError()
 
-    def _visualize_ir_graph(self):
+    def _visualize_graph(self):
         return NotImplementedError()
 
     ## This method is used to build AXI IR.
@@ -70,7 +70,7 @@ class AxfcIRBuilder:
             return err, None
 
         # just for debugging - YOUNGSUN
-        #self._visualize_graph()
+        self._visualize_graph()
 
         # find AIXH blocks to be translated into AIXGraphs
         err = self.__find_aixh_blocks()

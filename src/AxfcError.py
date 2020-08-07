@@ -26,3 +26,4 @@ class AxfcError(enum.Enum):
     PRED_NODE_NOT_FOUND = 7
     INVALID_MD_FORMAT = 8
     NOT_AIXH_SUPPORT = 9
+    NOT_IMPLEMENTED_YET = 10

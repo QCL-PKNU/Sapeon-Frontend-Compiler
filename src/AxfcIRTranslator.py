@@ -47,19 +47,23 @@ class AxfcIRTranslator:
     def __init__(self, md):
         self._md = md
 
+    def _emit_aixh_node(self, ir_node: AxfcIRNode) -> {AxfcError, AIXLayer}:
+        return NotImplementedError()
+
     ## This method translates IR blocks of the given IR graph into AIXGraphs and
     #  return them.
-    #
     # @param self this object
     # @param ir_graph input IR graph
     # @return error info and a list of AIXGraphs
-    def emit_aixh_graph(self, ir_graph: AxfcIRGraph) -> {AxfcError, list}:
+    def emit_aixh_graphs(self, ir_graph: AxfcIRGraph) -> {AxfcError, list}:
         logging.info("AxfcIRTranslator:emit_aixh_graph")
 
+        # create a new list of AIX graphs to output
         aix_graphs = list()
 
+        # translate all the blocks into AIX graphs
         for ir_block in ir_graph.blocks:
-            err, aix_graph = self.__translate_aixh_block(ir_block)
+            err, aix_graph = self.__emit_aixh_block(ir_block)
             if err is AxfcError.SUCCESS:
                 aix_graphs.append(aix_graph)
             else:
@@ -68,16 +72,25 @@ class AxfcIRTranslator:
         return AxfcError.SUCCESS, aix_graphs
 
     ## This method is used to translate an IR block into an AIXGraph.
-    #
     # @param self this object
     # @param ir_block input IR block
     # @return error info and an output AIXGraph
-    def __translate_aixh_block(self, ir_block: AxfcIRBlock) -> AIXGraph:
-        logging.info("AxfcIRTranslator:__translate_aixh_block - block %d", ir_block.id)
-        aix_graph = AIXGraph()
-        aix_layer = AIXLayer()
+    def __emit_aixh_block(self, ir_block: AxfcIRBlock) -> {AxfcError, AIXGraph}:
+        logging.info("AxfcIRTranslator:__emit_aixh_block - block %d", ir_block.id)
 
-        aix_graph.layer.append(aix_layer)
+        # create a new AIX graph to output
+        aix_graph = AIXGraph()
+
+        # translate all the nodes into AIX layers
+        for ir_node in ir_block.nodes:
+            err, aix_layer = self._emit_aixh_node(ir_node)
+            if err is AxfcError.SUCCESS:
+                aix_graph.layer.append(aix_layer)
+            else:
+                return err, None
+
+        # CHKME - YOUNGSUN (2020.08.07)
+        # need to configure input_layers and output_layers
 
         return AxfcError.SUCCESS, aix_graph
 
