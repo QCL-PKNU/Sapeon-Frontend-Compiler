@@ -12,22 +12,36 @@
 
 import os
 import logging
+import argparse
 
 from AxfcError import *
 from AxfcFrontendCompiler import *
 
-def main():
-    lg_path = "../tst/output.log"
-    in_path = "../tst/mobilenet_v1_1.0_224_frozen.pb"
-    md_path = "../src/aix_tf.md"
+def __main(args):
+    md_path = args.md_path
+    in_path = args.in_path
+    lg_path = args.log_path
 
-    os.remove(lg_path)
+    # for logging
+    if lg_path is not None and os.path.isfile(lg_path):
+        os.remove(lg_path)
+
     logging.basicConfig(filename=lg_path, level=logging.INFO)
+
+    # for validating input files
+    if not os.path.isfile(md_path):
+        print("Invalid path to an MD file: " + md_path)
+        return
+
+    if not os.path.isfile(in_path):
+        print("Invalid path to an input frozen model: " + in_path)
+        return
 
     logging.info("##########################")
     logging.info("# Start to compile")
     logging.info("##########################")
 
+    # for compilation
     fc = AxfcFrontendCompiler()
 
     err = fc.read_md_file(md_path)
@@ -47,5 +61,18 @@ def main():
     return AxfcError.SUCCESS
 
 if __name__ == "__main__":
-    main()
+
+    parser = argparse.ArgumentParser(
+            description='SKT AIX Frontend Compiler',
+            usage='use "%(prog)s -h/--help" for more information')
+
+    parser.add_argument('-m', '--md-path',  metavar='', type=str, required=True,
+                        help='path to a machine description file')
+    parser.add_argument('-i', '--in-path',  metavar='', type=str, required=True,
+                        help='path to the protocol buffer of a frozen model')
+    parser.add_argument('-l', '--log-path', metavar='', type=str, required=False,
+                        help='path to log out')
+
+    args = parser.parse_args()
+    __main(args)
     pass
