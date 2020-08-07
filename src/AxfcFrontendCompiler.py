@@ -18,11 +18,11 @@ from AxfcIRBuilder import *
 from AxfcTFIRBuilder import *
 from AxfcMachineDesc import *
 from AxfcIRTranslator import *
-#import AIXGraph
+from AxfcTFIRTranslator import *
 
-##
+#######################################################################
 # AxfcFrontendCompiler
-#
+#######################################################################
 class AxfcFrontendCompiler:
 
     ## @var __md
@@ -64,6 +64,7 @@ class AxfcFrontendCompiler:
 
         if in_type is AxfcMachineDesc.TYPE_TENSORFLOW:
             self.__ir_builder = AxfcTFIRBuilder(self.__md)
+            self.__ir_translator = AxfcTFIRTranslator(self.__md)
         else:
             # currently, we support only Tensorflow as an input type for the compilation
             logging.warning("Not supported input type: %d", in_type)
@@ -76,9 +77,7 @@ class AxfcFrontendCompiler:
             return err, None
 
         # perform the translation from AIXIR to AIXGraph
-        self.__ir_translator = AxfcIRTranslator(self.__md)
-
-        err, aix_graph = self.__ir_translator.emit_aixh_graph(aix_ir)
+        err, aix_graph = self.__ir_translator.emit_aixh_graphs(aix_ir)
         if err is not AxfcError.SUCCESS:
             logging.warning("IR-to-AIXGraph translation error: %s", err)
             return err, None

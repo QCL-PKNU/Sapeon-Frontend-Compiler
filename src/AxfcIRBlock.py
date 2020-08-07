@@ -12,9 +12,9 @@
 
 from AxfcError import *
 
-##
-# AxfcIRBlock
-#
+#######################################################################
+# AxfcIRBlock class
+#######################################################################
 class AxfcIRBlock:
 
     ## @var id
@@ -112,6 +112,8 @@ class AxfcIRBlock:
 
         str_buf += ">> Nodes: ["
         for node in self.nodes:
+            if node.is_root:
+                str_buf += "*"
             str_buf += str(node.op) + "(" + str(node.id) + "), "
         str_buf += "]\n"
 

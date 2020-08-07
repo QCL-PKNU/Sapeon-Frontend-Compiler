@@ -1,27 +1,97 @@
 {
-  "AIX_INPUT_TYPE": "TENSORFLOW",  
-  "AIX_PROFIT_THRESHOLD": 1000,
-  "AIX_OPERATION": { 
-    "input": ["AIX_LAYER_INPUT", 100],
-    "output": ["AIX_LAYER_OUTPUT", 100],
-    "Conv2D": ["AIX_LAYER_CONVOLUTION", 100],
-    "X_Connect": ["AIX_LAYER_CONNECTED", 100],
-    "MaxPool": ["AIX_LAYER_MAXPOOL", 100],
-    "AvgPool": ["AIX_LAYER_AVGPOOL", 100],
-    "Softmax": ["AIX_LAYER_SOFTMAX", 100],
-    "X_Route": ["AIX_LAYER_ROUTE", 100],
-    "X_Reorg": ["AIX_LAYER_REORG", 100],
-    "Add": ["AIX_LAYER_EWADD", 100],
-    "X_Upsample": ["AIX_LAYER_UPSAMPLE", 100],
-    "X_PixelShuffle": ["AIX_LAYER_PIXELSHUFFLE", 100],
-    "X_SkipConv": ["AIX_LAYER_SKIP_CONV", 100],
-    "FusedBatchNorm": ["AIX_LAYER_BATCHNORM", 100],
-    "BiasAdd": ["AIX_LAYER_BIASADD", 100],
-    "Sigmoid": ["AIX_ACTIVATION_SIGMOID", 100],
-    "Relu": ["AIX_ACTIVATION_RELU", 100],
-    "LeakyRelu": ["AIX_ACTIVATION_LEAKY_RELU", 100],
-    "Prelu": ["AIX_ACTIVATION_PRELU", 100],
-    "Tanh": ["AIX_ACTIVATION_TANH", 100],
-    "Identity": ["AIX_ACTIVATION_IDENTITY", 100]
-  }
+	"AIX_MODEL_TYPE": "TENSORFLOW",  
+	"AIX_PROFIT_THRESHOLD": 1000,
+	"AIX_OPERATION": { 
+		"Conv2D": {
+			"layer": "AIX_LAYER_CONVOLUTION",
+			"activation": null,
+			"is_group": false,
+			"is_conv": true,
+			"profit": 100
+		},
+		"DepthwiseConv2dNative": {
+			"layer": "AIX_LAYER_CONVOLUTION",
+			"activation": null,
+			"is_group": true,
+			"is_conv": true,
+			"profit": 100
+		},
+		"FusedBatchNorm": {
+			"layer": "AIX_LAYER_BATCHNORM",
+			"activation": null,
+			"is_group": false,
+			"is_conv": false,
+			"profit": 100
+		},
+		"BatchNorm": {
+			"layer": "AIX_LAYER_BATCHNORM",
+			"activation": null,
+			"is_group": false,
+			"is_conv": false,
+			"profit": 100
+		},
+		"AvgPool": {
+			"layer": "AIX_LAYER_AVGPOOL",
+			"activation": null,
+			"is_group": false,
+			"is_conv": false,
+			"profit": 100
+		},
+		"MaxPool": {
+			"layer": "AIX_LAYER_MAXPOOL",
+			"activation": null,
+			"is_group": false,
+			"is_conv": false,
+			"profit": 100
+		},      
+		"Softmax": {
+			"layer": "AIX_LAYER_SOFTMAX",
+			"activation": null,
+			"is_group": false,
+			"is_conv": false,
+			"profit": 100
+		},      
+		"Add": {
+			"layer": "AIX_LAYER_EWADD",
+			"activation": null,
+			"is_group": false,
+			"is_conv": false,
+			"profit": 100
+		},           
+		"Relu6": {
+			"layer": "AIX_ACTIVATION",
+			"activation": "AIX_ACTIVATION_LEAKY_RELU",
+			"is_group": false,
+			"is_conv": false,
+			"profit": 100
+		},
+		"BiasAdd": {
+			"layer": "AIX_ACTIVATION",
+			"activation": "AIX_LAYER_BIASADD",
+			"is_group": false,
+			"is_conv": false,
+			"profit": 100
+		},      
+		"Sigmoid": {
+			"layer": "AIX_ACTIVATION",
+			"activation": "AIX_ACTIVATION_SIGMOID",
+			"is_group": false,
+			"is_conv": false,
+			"profit": 100
+		},        
+		"Prelu": {
+			"layer": "AIX_ACTIVATION",
+			"activation": "AIX_ACTIVATION_PRELU",
+			"is_group": false,
+			"is_conv": false,
+			"profit": 100
+		},   
+		"Tanh": {
+			"layer": "AIX_ACTIVATION",
+			"activation": "AIX_ACTIVATION_TANH",
+			"is_group": false,
+			"is_conv": false,
+			"profit": 100
+		}     
+	}
 }

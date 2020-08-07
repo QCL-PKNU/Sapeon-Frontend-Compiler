@@ -10,12 +10,12 @@
 #   High Performance Computing Laboratory (hpcl.pknu.ac.kr)
 #######################################################################
 
-from enum import Enum
+import enum
 
-##
-# AxfcError
-#
-class AxfcError(Enum):
+#######################################################################
+# AxfcError enum class
+#######################################################################
+class AxfcError(enum.Enum):
     SUCCESS = 0
     INVALID_PARAMETER = 1
     INVALID_FILE_PATH = 2
@@ -26,3 +26,4 @@ class AxfcError(Enum):
     PRED_NODE_NOT_FOUND = 7
     INVALID_MD_FORMAT = 8
     NOT_AIXH_SUPPORT = 9
+    NOT_IMPLEMENTED_YET = 10
