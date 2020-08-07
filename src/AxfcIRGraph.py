@@ -77,6 +77,33 @@ class AxfcIRGraph:
 
         return AxfcError.SUCCESS
 
+    ## This method is used to visualize the IR graph using Sigma
+    # @param self this object
+    # @param node_list this object
+    def __decodeSigmaJson(self, node_list):
+        x = 0
+        node_data = set()
+        edge_data = []
+        for index_node, node in enumerate(node_list):
+           
+            # ignore edges from a constant or identity node
+            node_op = node._node_def.op
+            if node_op == "Const" or node_op == "Identity":
+                continue
+
+            for index_succ,succ in enumerate(node._succs):
+
+                # ignore edges from a constant or identity node
+                succ_op = succ._node_def.op
+                if succ_op == "Const" or succ_op == "Identity":
+                    continue 
+                
+                node_data = {
+                    "id": index,
+                    "label": node._node_def.op,
+                    "x": index_node,
+                    "y": index_succ}
+
     ## For debugging
     def __str__(self):
         str_buf = ">> IRGraph: \n\n"
