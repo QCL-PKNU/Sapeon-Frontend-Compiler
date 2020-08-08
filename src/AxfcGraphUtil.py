@@ -80,7 +80,7 @@ class AxfcGraphUtil:
     #
     # @param self this object      
     def build(self):
-        with open('src/axfc_core_display/afxc_data.json','w') as file:
+        with open('src/axfc_core_display/axfc_data.json','w') as file:
             json.dump(self._edges_nodes, file)
 
     ## This method is used to display the graph by using pywebview
