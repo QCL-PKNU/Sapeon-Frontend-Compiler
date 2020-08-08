@@ -26,7 +26,7 @@ var config = new sigma({
 
 // parse the json data and initalize the graph
 //
-sigma.parsers.json('afxc_data.json', config ,function(s){ 
+sigma.parsers.json('axfc_data.json', config ,function(s){ 
     
     // initalize side bar
     viewNodeSidebar(s.graph.nodes()[0])
