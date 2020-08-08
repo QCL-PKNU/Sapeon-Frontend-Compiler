@@ -78,6 +78,23 @@ class AxfcIRNode:
 
         return 500
 
+    ## This methods is used to compare id with equal (==) for using Set
+    # 
+    # @param self this object
+    # @param other another AxfcIRNode object
+    def __eq__(self, other):
+        
+        # check other and self type 
+        if not isinstance(other, type(self)): return NotImplemented
+
+        return self.id == other.id
+
+    ## This methods make this object become hasable by id
+    # 
+    # @param self this object
+    def __hash__(self):
+        return hash(self.id)
+
     ## For debugging
     def __str__(self):
         str_buf = ">> IR Node: " + str(self.id) + ", " + self.op + "\n"

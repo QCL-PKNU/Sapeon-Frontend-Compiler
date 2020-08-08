@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 from AxfcError import *
 from AxfcIRGraph import *
 from AxfcIRBuilder import *
+from AxfcGraphUtil import *
 
 #######################################################################
 # AxfcTFIRBuilder class
@@ -109,43 +110,34 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
 
         return AxfcError.SUCCESS
 
-    ## This method is used to visualize the IR graph using networkx.
+    ## This method is used to visualize the IR graph using Sigma js.
     # @param self this object
     def _visualize_graph(self):
 
-        nx_graph = nx.DiGraph()
-        nx_color_map = []
-
+        graph = AxfcGraphUtil()
+        
         # Nested function to ignore edges from a constant node
         def is_ignored(op:str) -> bool:
-            if op == 'Const' or op == 'Identity':
-                return True
-            else:
-                return False
-
-        # build a networkx graph
-        for ir_node in self._ir_graph.nodes:
+            return (op == 'Const' or op == 'Identity')
+        
+        # build a AxfcGraph
+        for index_node ,ir_node in enumerate(self._ir_graph.nodes):
 
             # ignore some edges
             if is_ignored(ir_node.op):
                 continue
 
-            # check if the node is supported by AIXH
-            if ir_node.is_aixh_support:
-                nx_color_map.append('red')
-            else:
-                nx_color_map.append('blue')
+            graph.add_node(ir_node, 0, index_node)
 
-            for succ in ir_node.succs:
+            for index_succ, succ in enumerate(ir_node.succs):
                 # ignore some edges
                 if is_ignored(succ.op):
                     continue
 
-                nx_graph.add_edge(ir_node.id, succ.id)
-                # nx_graph.add_edge(ir_node._node_def.name, succ._node_def.name)
-
-        nx.draw(nx_graph, cmap=plt.get_cmap('jet'), node_color=nx_color_map, with_labels=True)
-        plt.show()
+                graph.add_edge(ir_node.id, succ.id)
+                
+        graph.build()
+        graph.show()
 
     ## For debugging
     def __str__(self):

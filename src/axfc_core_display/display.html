@@ -1,0 +1,56 @@
+<html DOCTYPE>
+<head>
+<style type="text/css">
+  #container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    background-color: antiquewhite;
+  }
+  h1 {
+    color: #111d5e;
+    font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding-top: 10px;
+  }
+</style>
+</head>
+<body>
+    <center><h1>Axfc Graph</h1></center>
+
+<div id="container"></div>
+<script src="././sigma.min.js"></script>
+<script src="./plugins/sigma.parsers.json.js"></script>
+<script>
+
+  // Config the sigma object
+  var config = new sigma({
+    container: 'container',
+    type: 'svg',
+    settings: {
+      zoomingRatio:3,
+      defaultNodeColor: '#999',
+      defaultEdgeColor: '#333',
+      edgeColor: 'default'
+  }})
+
+  // Load afxc_data json and display graph
+  sigma.parsers.json('afxc_data.json', config ,function(s){  
+
+      // check if the node is aixh_support, set the node color is red, otherwise blue
+      for (const [i, node] of  s.graph.nodes().entries()) {
+        s.graph.nodes()[i].color = (node.attributes.is_aixh_support ? "#c70039" : "#111d5e")
+      }
+
+      // Set initial zoom
+      s.cameras[0].goTo({ x: 0, y:0, angle: 0, ratio: 0.3 });
+      // s.refresh()
+      // s.cameras[0].goTo({ x: 0, y:h.graph.nodes()[0]['read_cam0:y'] + 12, angle: 0, ratio: 0.1 });
+      s.refresh()
+  });
+
+
+  
+
+</script>
+</body>
+</html>
