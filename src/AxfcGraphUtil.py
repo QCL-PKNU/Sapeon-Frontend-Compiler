@@ -19,7 +19,7 @@ import json
 class AxfcGraphUtil:
 
     ## @var __edge_id
-    # node ID
+    # Edge's ID (auto increase)
 
     ## @var _edges_nodes
     # dictionary of edges and nodes
@@ -27,11 +27,19 @@ class AxfcGraphUtil:
     ## @var _nodes
     # set of nodes
 
+    ## @var __x_axis
+    # x axis of edges
+
+    ## @var __y_axis
+    # y axis of edges
+
     ## The constructor
     def __init__(self):
         self.__edge_id = 0
         self._edges_nodes = {'edges':[],'nodes':[] }
         self._nodes = set()
+        self.__x_axis = 0
+        self.__y_axis = 0
 
     ## This method is used insert the edges of node
     #
@@ -54,18 +62,17 @@ class AxfcGraphUtil:
     # @param self this object
     # @param ir_node AxfcIRNode node
     # @param x horizontal x-axis when display on graph
-    # @param y vertical y-axis when display on graph
-    def add_node(self, ir_node, x, y):
-
+    def add_node(self, ir_node):
+            
         # check if new node is not dubplicate
         # then add this node into _edges_nodes 
         if (ir_node not in self._nodes):
             self._edges_nodes['nodes'].append({
                 'id': ir_node.id,
                 'label': ir_node.op,
-                'x': x,
-                'y': y,
-                'size':3,
+                'x': self.__x_axis,
+                'y': self.__y_axis,
+                'size':1,
                 'attributes': {
                     'is_root': ir_node.is_root,
                     'is_aixh_support': ir_node.is_aixh_support,

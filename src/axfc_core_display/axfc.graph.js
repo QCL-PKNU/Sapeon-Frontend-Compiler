@@ -16,11 +16,14 @@ var config = new sigma({
     container: 'container',
     type: 'svg',
     settings: {
-      zoomingRatio:3,
       defaultEdgeColor: '#333',
       edgeColor: 'default',
       defaultNodeBorderColor:'#ffffff',
-      borderSize:1    
+      borderSize:1,
+      minEdgeSize:2,
+      defaultEdgeType:'arrow',
+      minNodeSize:0.5,
+      maxNodeSize:5
     }
 })
 
@@ -36,12 +39,24 @@ sigma.parsers.json('axfc_data.json', config ,function(s){
       s.graph.nodes()[i].color = (node.attributes.is_aixh_support ? "#c70039" : "#111d5e")
     }
 
+    // Config the graph with Hierarchy
+    var config = {
+      rankdir: 'TB',
+      ranker:'longest-path',
+      ranksep:20,
+      minlen:0,
+    };
+   
+    // Start the algorithm:
+    sigma.layouts.dagre.configure(s, config);
+    sigma.layouts.dagre.start(s);
+
     // refresh the node
     s.refresh()
 
     // zoom in - animation :
     sigma.misc.animation.camera(s.camera, {
-      y: s.graph.nodes()[0]["read_cam0:y"] + 20,
+      y: s.graph.nodes()[0]["read_cam0:y"] + 10,
       ratio: s.camera.ratio * s.camera.settings('zoomingRatio') * 0.03
     }, {
       duration: 1000

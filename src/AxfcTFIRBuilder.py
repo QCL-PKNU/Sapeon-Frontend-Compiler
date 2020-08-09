@@ -121,15 +121,15 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
             return (op == 'Const' or op == 'Identity')
         
         # build a AxfcGraph
-        for index_node ,ir_node in enumerate(self._ir_graph.nodes):
-
+        for ir_node in self._ir_graph.nodes:
+            
             # ignore some edges
             if is_ignored(ir_node.op):
                 continue
 
-            graph.add_node(ir_node, 0, index_node)
+            graph.add_node(ir_node)
 
-            for index_succ, succ in enumerate(ir_node.succs):
+            for succ in ir_node.succs:
                 # ignore some edges
                 if is_ignored(succ.op):
                     continue
