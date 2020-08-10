@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 from AxfcError import *
 from AxfcIRGraph import *
 from AxfcIRBuilder import *
-from AxfcGraphUtil import *
+from AxfcGraphWriter import *
 
 #######################################################################
 # AxfcTFIRBuilder class
@@ -112,35 +112,6 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
         self._ir_graph.append_node(ir_node)
 
         return AxfcError.SUCCESS
-
-    ## This method is used to visualize the IR graph using Sigma js.
-    # @param self this object
-    def _visualize_graph(self):
-
-        graph = AxfcGraphUtil()
-        
-        # Nested function to ignore edges from a constant node
-        def is_ignored(op:str) -> bool:
-            return (op == 'Const' or op == 'Identity')
-        
-        # build a AxfcGraph
-        for ir_node in self._ir_graph.nodes:
-            
-            # ignore some edges
-            if is_ignored(ir_node.op):
-                continue
-
-            graph.add_node(ir_node)
-
-            for succ in ir_node.succs:
-                # ignore some edges
-                if is_ignored(succ.op):
-                    continue
-
-                graph.add_edge(ir_node.id, succ.id)
-                
-        graph.build()
-        graph.show()
 
     ## For debugging
     def __str__(self):

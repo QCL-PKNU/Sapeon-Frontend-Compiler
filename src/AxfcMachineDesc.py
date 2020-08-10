@@ -70,7 +70,6 @@ class AxfcMachineDesc:
 
                 aix_layer_info = AxfcMachineDesc.AIXLayerInfo(layer_type)
                 aix_layer_info.layer = layer_info["layer"]
-                aix_layer_info.inputs = layer_info["inputs"]
                 aix_layer_info.activation = layer_info["activation"]
                 aix_layer_info.is_group = bool(layer_info["is_group"])
                 aix_layer_info.is_conv = bool(layer_info["is_conv"])
@@ -151,7 +150,6 @@ class AxfcMachineDesc:
     class AIXLayerInfo:
         def __init__(self, op):
             self.op = op
-            self.inputs = None
             self.layer = None
             self.activation = None
             self.is_group = False
@@ -161,9 +159,8 @@ class AxfcMachineDesc:
         def __str__(self):
             str_buf = ">> AIX Operation Info.: " + str(self.op) + "\n"
             str_buf += "- layer: " + str(self.layer) + "\n"
-            str_buf += "- input: " + str(self.inputs) + "\n"
             str_buf += "- activation: " + str(self.activation) + "\n"
-            str_buf += "- group: " + str(self.is_group) + "\n"
+            str_buf += "- is_group: " + str(self.is_group) + "\n"
             str_buf += "- is_conv: " + str(self.is_conv) + "\n"
             str_buf += "- profit: " + str(self.profit) + "\n"
             return str_buf

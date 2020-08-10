@@ -41,6 +41,13 @@ class AxfcFrontendCompiler:
         self.__ir_builder = None
         self.__ir_translator = None
 
+    ## This method returns the IR graph.
+    #
+    # @para self this object
+    # @return the IR graph
+    def get_ir_graph(self):
+        return self.__ir_builder._ir_graph
+
     ## This method is used to read a machine description in the given path.
     #
     # @param self this object
@@ -87,6 +94,7 @@ class AxfcFrontendCompiler:
             logging.warning("IR-to-AIXGraph translation error: %s", err)
             return err, None
 
+        print(">> check output.log")
 
         return AxfcError.SUCCESS, aix_graph
 

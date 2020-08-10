@@ -4,32 +4,20 @@
 	"AIX_LAYER": { 
 		"Conv2D": {
 			"layer": "AIX_LAYER_CONVOLUTION",
-			"inputs": {
-			    "filter": "weights"
-			},
 			"activation": "AIX_ACTIVATION_IDENTITY",
 			"is_group": false,
 			"is_conv": true,
 			"profit": 100
 		},
 		"DepthwiseConv2dNative": {
-			"layer": "AIX_LAYER_CONVOLUTION",
-			"inputs": {
-			    "filter": "depthwise_weights"
-			},			
-			"activation": null,
+			"layer": "AIX_LAYER_GROUP_CONV",
+			"activation": "AIX_ACTIVATION_IDENTITY",
 			"is_group": true,
 			"is_conv": true,
 			"profit": 100
 		},
 		"FusedBatchNorm": {
 			"layer": "AIX_LAYER_BATCHNORM",
-			"inputs": {
-			    "scale": "gamma",
-			    "offset": "beta",
-			    "mean": "moving_mean",
-			    "variance": "moving_variance"
-			},				
 			"activation": null,
 			"is_group": false,
 			"is_conv": false,
@@ -37,12 +25,6 @@
 		},
 		"BatchNorm": {
 			"layer": "AIX_LAYER_BATCHNORM",
-			"inputs": {
-			    "scale": "gamma",
-			    "offset": "beta",
-			    "mean": "moving_mean",
-			    "variance": "moving_variance"
-			},		
 			"activation": null,
 			"is_group": false,
 			"is_conv": false,
@@ -50,7 +32,6 @@
 		},
 		"AvgPool": {
 			"layer": "AIX_LAYER_AVGPOOL",
-			"inputs": null,
 			"activation": null,
 			"is_group": false,
 			"is_conv": false,
@@ -58,7 +39,6 @@
 		},
 		"MaxPool": {
 			"layer": "AIX_LAYER_MAXPOOL",
-			"inputs": null,
 			"activation": null,
 			"is_group": false,
 			"is_conv": false,
@@ -66,7 +46,6 @@
 		},      
 		"Softmax": {
 			"layer": "AIX_LAYER_SOFTMAX",
-			"inputs": null,
 			"activation": null,
 			"is_group": false,
 			"is_conv": false,
@@ -74,7 +53,6 @@
 		},      
 		"Add": {
 			"layer": "AIX_LAYER_EWADD",
-			"inputs": null,
 			"activation": null,
 			"is_group": false,
 			"is_conv": false,
@@ -82,7 +60,6 @@
 		},           
 		"Relu6": {
 			"layer": "AIX_LAYER_ACTIVATION",
-			"inputs": null,
 			"activation": "AIX_ACTIVATION_LEAKY_RELU",
 			"is_group": false,
 			"is_conv": false,
@@ -90,7 +67,6 @@
 		},
 		"BiasAdd": {
 			"layer": "AIX_LAYER_ACTIVATION",
-			"inputs": null,
 			"activation": "AIX_LAYER_BIASADD",
 			"is_group": false,
 			"is_conv": false,
@@ -98,7 +74,6 @@
 		},      
 		"Sigmoid": {
 			"layer": "AIX_LAYER_ACTIVATION",
-			"inputs": null,
 			"activation": "AIX_ACTIVATION_SIGMOID",
 			"is_group": false,
 			"is_conv": false,
@@ -106,7 +81,6 @@
 		},        
 		"Prelu": {
 			"layer": "AIX_LAYER_ACTIVATION",
-			"inputs": null,
 			"activation": "AIX_ACTIVATION_PRELU",
 			"is_group": false,
 			"is_conv": false,
@@ -114,7 +88,6 @@
 		},   
 		"Tanh": {
 			"layer": "AIX_LAYER_ACTIVATION",
-			"inputs": null,
 			"activation": "AIX_ACTIVATION_TANH",
 			"is_group": false,
 			"is_conv": false,

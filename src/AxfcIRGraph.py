@@ -10,11 +10,13 @@
 #   High Performance Computing Laboratory (hpcl.pknu.ac.kr)
 #######################################################################
 
+import os
 import logging
 
 from AxfcError import *
 from AxfcIRNode import *
 from AxfcIRBlock import *
+from AxfcGraphWriter import *
 
 #######################################################################
 # AxfcIRGraph class
@@ -83,6 +85,40 @@ class AxfcIRGraph:
                 return err
 
         return AxfcError.SUCCESS
+
+    ## This method is used to visualize the IR graph using Sigma js.
+    # @param self this object
+    # @param file_path a file path to dump out the IR graph
+    # @param ignore_ops a list of operations to be ignored
+    # @return error info
+    def dump_to_file(self, file_path: str, ignore_ops: list) -> AxfcError:
+
+        graph_writer = AxfcGraphWriter()
+
+        # Nested function to ignore edges from a constant node
+        def is_ignored(op: str) -> bool:
+            try:
+                return ignore_ops.index(op) >= 0
+            except ValueError as e:
+                return False
+
+        # build a AxfcGraph
+        for ir_node in self.nodes:
+
+            # ignore some edges
+            if is_ignored(ir_node.op):
+                continue
+
+            graph_writer.add_node(ir_node)
+
+            for succ in ir_node.succs:
+                # ignore some edges
+                if is_ignored(succ.op):
+                    continue
+
+                graph_writer.add_edge(ir_node.id, succ.id)
+
+        return graph_writer.write_file(file_path)
 
     ## For debugging
     def __str__(self):

@@ -58,6 +58,7 @@ class AxfcIRTranslator:
 
         self.__emit_aix_layer_tbl = {
             AIXLayer.AIXLayerType.AIX_LAYER_CONVOLUTION: self._emit_aix_layer_convolution,
+            AIXLayer.AIXLayerType.AIX_LAYER_GROUP_CONV: self._emit_aix_layer_group_conv,
             AIXLayer.AIXLayerType.AIX_LAYER_BATCHNORM: self._emit_aix_layer_batchnorm,
             AIXLayer.AIXLayerType.AIX_LAYER_AVGPOOL: self._emit_aix_layer_avgpool,
             AIXLayer.AIXLayerType.AIX_LAYER_ACTIVATION: self._emit_aix_layer_activation
@@ -151,7 +152,8 @@ class AxfcIRTranslator:
             logging.warning(e)
             return AxfcError.UNSUPPORTED_AIX_LAYER_EMIT, None
 
-        err = emit_aix_layer(ir_node, aix_layer)
+        ir_node.aix_layer = aix_layer
+        err = emit_aix_layer(ir_node)
 
         if err is not AxfcError.SUCCESS:
             logging.warning("AxfcTFIRTranslator:_emit_aixh_node - "
@@ -207,16 +209,19 @@ class AxfcIRTranslator:
     #######################################################################
 
     ## emission methods for AIX layers
-    def _emit_aix_layer_convolution(self, ir_node: AxfcIRNode, aix_layer: AIXLayer) -> AxfcError:
+    def _emit_aix_layer_convolution(self, ir_node: AxfcIRNode) -> AxfcError:
         return NotImplementedError()
 
-    def _emit_aix_layer_batchnorm(self, ir_node: AxfcIRNode, aix_layer: AIXLayer) -> AxfcError:
+    def _emit_aix_layer_group_conv(self, ir_node: AxfcIRNode) -> AxfcError:
         return NotImplementedError()
 
-    def _emit_aix_layer_avgpool(self, ir_node: AxfcIRNode, aix_layer: AIXLayer) -> AxfcError:
+    def _emit_aix_layer_batchnorm(self, ir_node: AxfcIRNode) -> AxfcError:
         return NotImplementedError()
 
-    def _emit_aix_layer_activation(self, ir_node: AxfcIRNode, aix_layer: AIXLayer) -> AxfcError:
+    def _emit_aix_layer_avgpool(self, ir_node: AxfcIRNode) -> AxfcError:
+        return NotImplementedError()
+
+    def _emit_aix_layer_activation(self, ir_node: AxfcIRNode) -> AxfcError:
         return NotImplementedError()
 
     ## emission methods for AIX tensors
@@ -242,4 +247,12 @@ class AxfcIRTranslator:
         return NotImplementedError()
 
     def _emit_aixh_node(self, ir_node: AxfcIRNode, index: int) -> {AxfcError, AIXLayer}:
+        return NotImplementedError()
+
+    ## emission methods for AIX convolution dec
+    def _emit_aix_convolution_desc(self, ir_node: AxfcIRNode) -> AIXLayer.AIXTensor:
+        return NotImplementedError()
+
+    ## emission methods for AIX sampling dec
+    def _emit_aix_sampling_desc(self, ir_node: AxfcIRNode) -> AIXLayer.AIXTensor:
         return NotImplementedError()

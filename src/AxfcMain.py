@@ -21,6 +21,7 @@ def __main(args):
     md_path = args.md_path
     in_path = args.in_path
     lg_path = args.log_path
+    gv_path = args.graph_path
 
     # for logging
     if lg_path is not None and os.path.isfile(lg_path):
@@ -54,6 +55,13 @@ def __main(args):
         print("Error] Compile TF graph to AXIGraph: ", err)
         return err
 
+    if gv_path is not None:
+        aix_ir_graph = fc.get_ir_graph()
+        err = aix_ir_graph.dump_to_file(gv_path, ["Const"])
+        if err is not AxfcError.SUCCESS:
+            print("Error] Dump IR graph: ", err)
+            return err
+
     logging.info("##########################")
     logging.info("# Finish to compile")
     logging.info("##########################")
@@ -72,6 +80,8 @@ if __name__ == "__main__":
                         help='path to the protocol buffer of a frozen model')
     parser.add_argument('-l', '--log-path', metavar='', type=str, required=False,
                         help='path to log out')
+    parser.add_argument('-g', '--graph-path', metavar='', type=str, required=False,
+                        help='path to dump an IR graph')
 
     args = parser.parse_args()
     __main(args)

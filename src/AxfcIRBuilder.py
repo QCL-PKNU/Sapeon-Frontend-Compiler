@@ -65,9 +65,6 @@ class AxfcIRBuilder:
             logging.warning("build naive IR error: %s", err)
             return err, None
 
-        # just for debugging - YOUNGSUN
-        #self._visualize_graph()
-
         # find AIXH blocks to be translated into AIXGraphs
         err = self.__find_aixh_blocks()
         if err is not AxfcError.SUCCESS:
@@ -197,13 +194,4 @@ class AxfcIRBuilder:
     # @param path file path of input network model
     # @return error info
     def _build_naive_ir(self, path: str):
-        return NotImplementedError()
-
-    ## This method is used to create a new IR node from tf.NodeDef and append it to the IR graph.
-    #  The successors and predecessors of the IR node is found using the symbol table.
-    #
-    # @param self this object
-    # @param tf_node_def input node_def object of Tensorflow
-    # @return error info.
-    def _visualize_graph(self):
         return NotImplementedError()
