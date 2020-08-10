@@ -21,6 +21,7 @@ from AxfcIRBuilder import *
 #######################################################################
 # AxfcTFIRBuilder class
 #######################################################################
+
 class AxfcTFIRBuilder(AxfcIRBuilder):
 
     ## The constructor
@@ -28,6 +29,7 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
         super().__init__(md)
 
     ## This method is used to read a tensorflow graph from an input file in the given path.
+    #
     # @param self this object
     # @param path file path of input network model
     # @return error info
@@ -44,6 +46,7 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
         return AxfcError.SUCCESS
 
     ## This method is used to construct a naive AIXIR using a tensorflow graph.
+    #
     # @param self this object
     # @param path file path of input network model
     # @return error info
@@ -62,8 +65,6 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
             return AxfcError.INVALID_TF_GRAPH
 
         # build AIX IR graph using the nodes of the Tensorflow graph
-        self._ir_graph = AxfcIRGraph()
-
         for tf_node_def in tf_graph_def.node:
             self.__append_node_def(tf_node_def)
 
@@ -71,6 +72,7 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
 
     ## This method is used to create a new IR node from tf.NodeDef and append it to the IR graph.
     #  The successors and predecessors of the IR node is found using the symbol table.
+    #
     # @param self this object
     # @param tf_node_def input node_def object of Tensorflow
     # @return error info.
@@ -85,6 +87,7 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
 
         # set the operation of this node
         ir_node.op = tf_node_def.op
+        ir_node.name = tf_node_def.name
 
         # check the node that is supported by AIXH hardware
         if self._md.get_axih_support(ir_node.op):
@@ -110,6 +113,7 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
         return AxfcError.SUCCESS
 
     ## This method is used to visualize the IR graph using networkx.
+    #
     # @param self this object
     def _visualize_graph(self):
 
@@ -151,3 +155,4 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
     def __str__(self):
         #tf.io.write_graph(self._tf_graph, './', '../tst/graph_def.pbtxt', as_text=True)
         return
+

@@ -15,6 +15,7 @@ import enum
 #######################################################################
 # AxfcError enum class
 #######################################################################
+
 class AxfcError(enum.Enum):
     SUCCESS = 0
     INVALID_PARAMETER = 1
@@ -26,4 +27,12 @@ class AxfcError(enum.Enum):
     PRED_NODE_NOT_FOUND = 7
     INVALID_MD_FORMAT = 8
     NOT_AIXH_SUPPORT = 9
-    NOT_IMPLEMENTED_YET = 10
+    NOT_IMPLEMENTED = 10
+    UNKNOWN_TENSOR_TYPE = 11
+    UNSUPPORTED_AIX_LAYER_EMIT = 12
+    INVALID_AIX_LAYER_TYPE = 13
+    INVALID_AIX_TENSOR_FORMAT = 14
+    INVALID_CONVOLUTION_LAYER = 15
+    INVALID_BATCHNORM_LAYER = 16
+    INVALID_ACTIVATION_LAYER = 17
+    INVALID_AIX_TENSOR_INPUT = 18

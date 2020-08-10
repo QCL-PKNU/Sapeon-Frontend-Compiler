@@ -23,6 +23,7 @@ from AxfcTFIRTranslator import *
 #######################################################################
 # AxfcFrontendCompiler
 #######################################################################
+
 class AxfcFrontendCompiler:
 
     ## @var __md
@@ -78,9 +79,14 @@ class AxfcFrontendCompiler:
 
         # perform the translation from AIXIR to AIXGraph
         err, aix_graph = self.__ir_translator.emit_aixh_graphs(aix_ir)
+
+        # just for debugging - YOUNGSUN
+        self.__ir_translator.dump_aix_graphs()
+
         if err is not AxfcError.SUCCESS:
             logging.warning("IR-to-AIXGraph translation error: %s", err)
             return err, None
+
 
         return AxfcError.SUCCESS, aix_graph
 

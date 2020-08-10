@@ -15,6 +15,7 @@ from AxfcError import *
 #######################################################################
 # AxfcIRBlock class
 #######################################################################
+
 class AxfcIRBlock:
 
     ## @var id
@@ -57,6 +58,10 @@ class AxfcIRBlock:
         if self.nodes is None:
             return AxfcError.EMPTY_IR_BLOCK
 
+        # find the input and output nodes of this block because
+        # we may use the information for the liveness analysis in the future
+        self.__analyse_inout()
+
         uses = set()
         defs = set()
 
@@ -76,6 +81,49 @@ class AxfcIRBlock:
 
         # compute the live-in into this block
         self.live_in = uses - defs
+
+        return AxfcError.SUCCESS
+
+    ## This method is used to find the input and output nodes of this block.
+    #
+    # @param self this object
+    # @return error info.
+    def __analyse_inout(self) -> AxfcError:
+        #logging.info("AxfcIRBlock:analyse_inout")
+
+        # check if the block is ready to be analyzed
+        if self.nodes is None:
+            return AxfcError.EMPTY_IR_BLOCK
+
+        # find input nodes
+        for ir_node in self.nodes:
+            num_aixh_support = 0
+
+            # count the number of predecessors in this block
+            for pred in ir_node.preds:
+                if pred.is_aixh_support:
+                    num_aixh_support += 1
+
+            # specify the node is an input node if there is no predecessors
+            if num_aixh_support == 0:
+                ir_node.is_input = True
+            else:
+                ir_node.is_input = False
+
+        # find output nodes
+        for ir_node in self.nodes:
+            num_aixh_support = 0
+
+            # count the number of successors in this block
+            for succ in ir_node.succs:
+                if succ.is_aixh_support:
+                    num_aixh_support += 1
+
+            # specify the node is an output node if there is no successors
+            if num_aixh_support == 0:
+                ir_node.is_output = True
+            else:
+                ir_node.is_output = False
 
         return AxfcError.SUCCESS
 
@@ -112,8 +160,10 @@ class AxfcIRBlock:
 
         str_buf += ">> Nodes: ["
         for node in self.nodes:
-            if node.is_root:
+            if node.is_input:
                 str_buf += "*"
+            if node.is_output:
+                str_buf += "+"
             str_buf += str(node.op) + "(" + str(node.id) + "), "
         str_buf += "]\n"
 

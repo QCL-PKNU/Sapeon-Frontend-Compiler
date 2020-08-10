@@ -15,10 +15,14 @@ from AxfcError import *
 #######################################################################
 # AxfcIRNode class
 #######################################################################
+
 class AxfcIRNode:
 
     ## @var id
     # node ID
+
+    ## @var layer_id
+    # node layer ID
 
     ## @var op
     # operation of this node
@@ -35,8 +39,11 @@ class AxfcIRNode:
     ## @var is_aixh_support
     # indicate whether this node can be executed in hardware-manner
 
-    ## @var is_root
-    # indicate whether this node is root or not
+    ## @var is_input
+    # indicate whether this node is an input node or not
+
+    ## @var is_output
+    # indicate whether this node is an output node or not
 
     ## @var aixh_profit
     # specify the profit to be obtained by using AIXH
@@ -47,12 +54,17 @@ class AxfcIRNode:
     ## @var eval_flag
     # indicate whether this node has been already evaluated or not for maximal munching
 
+    ## @var aix_layer
+    # reference to the AIX layer derived from this node
+
     ## The constructor
     def __init__(self):
         self.__init__(None)
 
     def __init__(self, node_def):
         self.id = 0
+        self.name = ""
+        self.layer_id = 0
         self.succs = list()
         self.preds = list()
         self.node_def = node_def
@@ -60,8 +72,12 @@ class AxfcIRNode:
 
         self.aixh_profit = 0
         self.is_aixh_support = False
-        self.is_root = False
         self.eval_flag = False
+
+        self.is_input = False
+        self.is_output = False
+
+        self.aix_layer = None
 
     ## This method is used to calculate and return the profit that we can get
     #  by accelerating the operation of this node in hardware-manner.
@@ -81,7 +97,7 @@ class AxfcIRNode:
     ## For debugging
     def __str__(self):
         str_buf = ">> IR Node: " + str(self.id) + ", " + self.op + "\n"
-        str_buf += ">> Name: " + node_def.name + "\n"
+        str_buf += ">> Name: " + self.name + "\n"
         str_buf += ">> Pred: ["
         for pred in self.preds:
             str_buf += str(pred.id) + ", "
@@ -92,7 +108,9 @@ class AxfcIRNode:
             str_buf += str(succ.id) + ", "
         str_buf += "]\n"
 
-        str_buf += ">> Attributes [root: " + str(self.is_root)
+        str_buf += ">> Attributes ["
+        str_buf += "is_input: " + str(self.is_input)
+        str_buf += ", is_output: " + str(self.is_output)
         str_buf += ", aixh_profit: " + str(self.aixh_profit)
         str_buf += ", aixh_support: " + str(self.is_aixh_support) + "]\n"
 
