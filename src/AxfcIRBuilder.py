@@ -21,6 +21,7 @@ from AxfcMachineDesc import *
 #######################################################################
 # AxfcIRBuilder class
 #######################################################################
+
 class AxfcIRBuilder:
 
     ## @var _md
@@ -40,16 +41,7 @@ class AxfcIRBuilder:
         self._md = md
         self._tf_graph = None
         self._ir_graph = None
-        self._ir_symtab = dict()
-
-    def _read_model_graph(self, path: str):
-        return NotImplementedError()
-
-    def _build_naive_ir(self, path: str):
-        return NotImplementedError()
-
-    def _visualize_graph(self):
-        return NotImplementedError()
+        self._ir_symtab = None
 
     ## This method is used to build AXI IR.
     #  1) it builds a naive IR using the given input model.
@@ -63,6 +55,10 @@ class AxfcIRBuilder:
     def build_ir(self, path: str) -> {AxfcError, AxfcIRGraph}:
         logging.info("AxfcIRBuilder:build_ir - path: %s", path)
 
+        # create a new symbol table and IR graph
+        self._ir_symtab = dict()
+        self._ir_graph = AxfcIRGraph(self._ir_symtab)
+
         # build a naive IR using the IR builder of a specific type
         err = self._build_naive_ir(path)
         if err is not AxfcError.SUCCESS:
@@ -70,7 +66,7 @@ class AxfcIRBuilder:
             return err, None
 
         # just for debugging - YOUNGSUN
-        self._visualize_graph()
+        #self._visualize_graph()
 
         # find AIXH blocks to be translated into AIXGraphs
         err = self.__find_aixh_blocks()
@@ -78,17 +74,22 @@ class AxfcIRBuilder:
             logging.warning("find AIXH blocks: %s", err)
             return err, None
 
-        # perform the local liveness analysis for all the AIXH blocks
-        # to resolve the input and output of them
+        # for all the blocks of the IR graph
         for ir_block in self._ir_graph.blocks:
+            # ignore blocks not supported by hardware
+            if not ir_block.is_aixh_support:
+                continue
+
+            # perform the local liveness analysis for all the AIXH blocks
+            # to resolve the input and output of them
             err = ir_block.analyse_liveness()
             if err is not AxfcError.SUCCESS:
                 logging.warning("analyse liveness: block %d", ir_block.id)
                 return err, None
 
             # just for debugging - YOUNGSUN
-            if ir_block.is_aixh_support:
-                print(ir_block)
+            #if ir_block.is_aixh_support:
+            #    print(ir_block)
 
         return AxfcError.SUCCESS, self._ir_graph
 
@@ -158,13 +159,9 @@ class AxfcIRBuilder:
 
         # skip if this node is not supported by hardware
         if ir_node.is_aixh_support:
-            if len(ir_block.nodes) > 0:
-                ir_node.is_root = False
-            else:
-                ir_node.is_root = True
-
-            ir_block.nodes.append(ir_node)
+            ir_node.layer_id = len(ir_block.nodes)
             ir_node.block_ref = ir_block
+            ir_block.nodes.append(ir_node)
         else:
             return AxfcError.SUCCESS
 
@@ -181,3 +178,32 @@ class AxfcIRBuilder:
     ## For debugging
     def __str__(self):
         pass
+
+    #######################################################################
+    ## Abstract methods
+    #######################################################################
+
+    ## This method is used to read a tensorflow graph from an input file in the given path.
+    #
+    # @param self this object
+    # @param path file path of input network model
+    # @return error info
+    def _read_model_graph(self, path: str):
+        return NotImplementedError()
+
+    ## This method is used to construct a naive AIXIR using a tensorflow graph.
+    #
+    # @param self this object
+    # @param path file path of input network model
+    # @return error info
+    def _build_naive_ir(self, path: str):
+        return NotImplementedError()
+
+    ## This method is used to create a new IR node from tf.NodeDef and append it to the IR graph.
+    #  The successors and predecessors of the IR node is found using the symbol table.
+    #
+    # @param self this object
+    # @param tf_node_def input node_def object of Tensorflow
+    # @return error info.
+    def _visualize_graph(self):
+        return NotImplementedError()

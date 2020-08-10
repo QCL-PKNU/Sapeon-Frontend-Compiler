@@ -19,6 +19,7 @@ from AxfcIRBlock import *
 #######################################################################
 # AxfcIRGraph class
 #######################################################################
+
 class AxfcIRGraph:
 
     ## @var nodes
@@ -30,15 +31,22 @@ class AxfcIRGraph:
     ## @var root_node
     # output root node of this graph
 
+    ## @var symtab
+    # a reference to an IR symbol table
+
     ## The constructor
-    def __init__(self):
+    # @param self this object
+    # @param symtab a symbol table for referring to an IR node using its name
+    def __init__(self, symtab: dict):
         self.root_node = None
 
         # initialize as an empty list
         self.nodes = list()
         self.blocks = list()
+        self.symtab = symtab
 
     ## This method is used to append the given IR node into the graph
+    #
     # @param self this object
     # @param node an IR node to be appended
     def append_node(self, ir_node: AxfcIRNode):
@@ -47,24 +55,23 @@ class AxfcIRGraph:
         ir_node.id = len(self.nodes)
 
         # register the root node of this IR graph
-        if ir_node.is_root:
+        if len(self.nodes) == 0:
             self.root_node = ir_node
-        else:
-            self.root_node = None
 
         self.nodes.append(ir_node)
 
     ## This method is used to append the given IR block into the graph
+    #
     # @param self this object
     # @param node an IR block to be appended
     def append_block(self, ir_block: AxfcIRBlock):
 
         # update the id of the given IR block
         ir_block.id = len(self.blocks)
-
         self.blocks.append(ir_block)
 
     ## This method is used to perform the liveness analysis of this graph
+    #
     # @param self this object
     # @return error info
     def analyse_liveness(self) -> AxfcError:
