@@ -431,21 +431,19 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         tf_node_def = ir_node.node_def
         attr_value = tf_node_def.attr["value"]
 
-        # tensor_shape
+        # tensor shape and size
         tensor_shape = attr_value.tensor.tensor_shape
-        tensor_dims = tensor_shape.dim
+        tensor_size = 1
 
-        for dim in tensor_dims:
+        for dim in tensor_shape.dim:
             aix_tensor.dims.append(dim.size)
+            tensor_size *= dim.size
 
-        # filter size (i * j * k)
-        aix_tensor.size = tensor_dims[1].size * \
-                          tensor_dims[2].size * \
-                          tensor_dims[3].size
+        aix_tensor.size = tensor_size
 
         # tensor_content
         filter_values = tf.make_ndarray(attr_value.tensor).flatten()
-        for filter_value in filter_values[0:aix_tensor.size]:
+        for filter_value in filter_values:
             aix_tensor.fval.append(filter_value)
 
         return aix_tensor
