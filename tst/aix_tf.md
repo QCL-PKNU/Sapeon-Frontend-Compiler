@@ -66,8 +66,8 @@
 			"profit": 100
 		},
 		"BiasAdd": {
-			"layer": "AIX_LAYER_ACTIVATION",
-			"activation": "AIX_LAYER_BIASADD",
+			"layer": "AIX_LAYER_BIASADD",
+			"activation": null,
 			"is_group": false,
 			"is_conv": false,
 			"profit": 100

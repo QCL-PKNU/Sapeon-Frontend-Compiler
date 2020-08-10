@@ -272,7 +272,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         # output - the current IR node
         try:
             output_dims: list = [
-                1, # b
+                input_tensor.dims[0], # b
                 input_tensor.dims[1] // strides[1], # i
                 input_tensor.dims[2] // strides[2], # j
                 filter_tensor.dims[3] # k
@@ -419,6 +419,50 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         # output
         aix_layer.output.CopyFrom(input_tensor)
 
+        return AxfcError.SUCCESS
+
+    ##  This method emits some convolution-specific information of the given IR node
+    # into the given AIX biasadd layer object. The information includes layer inputs,
+    # layer outputs, and so on.
+    #
+    # @param self this object
+    # @param ir_node an IR node to be emitted
+    # @return an output AIX avgpool layer
+    def _emit_aix_layer_biasadd(self, ir_node: AxfcIRNode) -> AxfcError:
+        logging.info("AxfcTFIRTranslator:_emit_aix_layer_biasadd - node %d", ir_node.layer_id)
+
+        """
+        tf.nn.bias_add(
+            input, ksize, strides, padding, data_format, name
+        )
+        """
+        # get the aix layer of the given IR node
+        aix_layer = ir_node.aix_layer
+
+        # tensorflow node_def for the given ir_node
+        tf_node_def = ir_node.node_def
+
+        # emit tensor inputs
+        input_nodes = list()
+
+        for input_name in tf_node_def.input:
+            input_nodes.append(self._ir_symtab[input_name])
+
+        # input layer
+        input_aix_layer = input_nodes[0].aix_layer
+
+        if input_aix_layer is None:
+            return AxfcError.INVALID_BATCHNORM_LAYER
+
+        # type
+        aix_layer.type.append(AIXLayer.AIXLayerType.AIX_LAYER_SKIP_CONV)
+
+        # value
+        input_tensor = input_aix_layer.output
+        aix_layer.input.CopyFrom(input_tensor)
+
+        # output
+        aix_layer.output.CopyFrom(input_tensor)
 
         return AxfcError.SUCCESS
 

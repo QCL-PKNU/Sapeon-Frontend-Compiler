@@ -61,6 +61,7 @@ class AxfcIRTranslator:
             AIXLayer.AIXLayerType.AIX_LAYER_GROUP_CONV: self._emit_aix_layer_group_conv,
             AIXLayer.AIXLayerType.AIX_LAYER_BATCHNORM: self._emit_aix_layer_batchnorm,
             AIXLayer.AIXLayerType.AIX_LAYER_AVGPOOL: self._emit_aix_layer_avgpool,
+            AIXLayer.AIXLayerType.AIX_LAYER_BIASADD: self._emit_aix_layer_biasadd,
             AIXLayer.AIXLayerType.AIX_LAYER_ACTIVATION: self._emit_aix_layer_activation
         }
 
@@ -132,7 +133,7 @@ class AxfcIRTranslator:
         #logging.info("AxfcTFIRTranslator:_emit_aixh_node - node %d", ir_node.layer_id)
 
         # get the operation information specified in the machine description
-        op_record = self._md.get_layer_info(ir_node.op)
+        layer_info = self._md.get_layer_info(ir_node.op)
 
         # create a new AIX layer
         aix_layer = AIXLayer()
@@ -142,7 +143,7 @@ class AxfcIRTranslator:
         aix_layer.name = ir_node.name
 
         # layer types
-        layer_type = AIXLayer.AIXLayerType.Value(op_record.layer)
+        layer_type = AIXLayer.AIXLayerType.Value(layer_info.layer)
         aix_layer.type.append(layer_type)
 
         # emit the output specific to each AIX layer type
@@ -175,6 +176,11 @@ class AxfcIRTranslator:
         for succ in ir_node.succs:
             if succ.is_aixh_support:
                 aix_layer.succs.append(succ.layer_id)
+
+        # activation
+        activation = layer_info.activation
+        if activation is not None:
+            aix_layer.activation = AIXLayer.AIXActivationMode.Value(activation)
 
         # register the generated AIX layer
         ir_node.aix_layer = aix_layer
