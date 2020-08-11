@@ -285,6 +285,16 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         output_tensor.format = aix_tensor_format
         output_tensor.dtype = aix_data_type
 
+        # scale
+
+        # bias
+
+        # mean
+
+        # variance
+
+        # convdesc
+
         aix_layer.output.CopyFrom(output_tensor)
 
         return AxfcError.SUCCESS
