@@ -178,19 +178,19 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         # CHKME - YOUNGSUN (2020.08.10)
         # bias - update using the calibration data
-        bias_tensor = self._emit_aix_tensor_bias(ir_node)
+        bias_tensor = self._emit_aix_tensor_bias(ir_node, True)
         aix_layer.bias.CopyFrom(bias_tensor)
 
         # scale
-        scale_tensor = self._emit_aix_tensor_scale(ir_node)
+        scale_tensor = self._emit_aix_tensor_scale(ir_node, True)
         aix_layer.scale.CopyFrom(scale_tensor)
 
         # mean
-        mean_tensor = self._emit_aix_tensor_mean(ir_node)
+        mean_tensor = self._emit_aix_tensor_mean(ir_node, True)
         aix_layer.scale.CopyFrom(mean_tensor)
 
         # variance
-        variance_tensor = self._emit_aix_tensor_variance(ir_node)
+        variance_tensor = self._emit_aix_tensor_variance(ir_node, True)
         aix_layer.variance.CopyFrom(variance_tensor)
 
         # CHKME - YOUNGSUN (2020.08.10)
@@ -354,6 +354,11 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         aix_layer.input.CopyFrom(input_tensor)
 
         # inputs/filter
+        filter_tensor = self._emit_aix_tensor_filter(ir_node, True)
+        filter_tensor.format = aix_tensor_format
+        filter_tensor.dtype = aix_data_type
+
+        aix_layer.filter.CopyFrom(filter_tensor)
 
         # output - the current IR node
         output_tensor = self._emit_aix_tensor_output(ir_node, input_tensor.dims)
@@ -585,9 +590,10 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
     #
     # @param self this object
     # @param ir_node an IR node to be emitted as an AIX tensor
+    # @param is_default indicates if default values are used to emit
     # @return an AIX tensor of an filter type
-    def _emit_aix_tensor_filter(self, ir_node: AxfcIRNode) -> AIXLayer.AIXTensor:
-
+    def _emit_aix_tensor_filter(self, ir_node: AxfcIRNode, is_default: bool = False) \
+            -> AIXLayer.AIXTensor:
         """
         filter {
             dtype: AIX_DATA_FLOAT
@@ -604,6 +610,13 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         # create a new tensor
         aix_tensor = AIXLayer.AIXTensor()
+
+        # configure the tensor with default scale values
+        if is_default:
+
+            # dimensions
+
+            return aix_tensor
 
         # get the Tensorflow node_def of the given node
         tf_node_def = ir_node.node_def
@@ -629,8 +642,10 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
     #
     # @param self this object
     # @param ir_node an IR node to be emitted as an AIX tensor
+    # @param is_default indicates if default values are used to emit
     # @return an AIX tensor of an bias type
-    def _emit_aix_tensor_bias(self, ir_node: AxfcIRNode) -> AIXLayer.AIXTensor:
+    def _emit_aix_tensor_bias(self, ir_node: AxfcIRNode, is_default: bool = False) \
+            -> AIXLayer.AIXTensor:
 
         # create a new tensor
         aix_tensor = AIXLayer.AIXTensor()
@@ -646,8 +661,11 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         aix_tensor.dims.append(aix_tensor.size)
 
         # fval
-        #for i in range(aix_tensor.size):
-        #    aix_tensor.fval.append(1)
+        if is_default:
+            for i in range(aix_tensor.size):
+                aix_tensor.fval.append(1)
+        else:
+            logging.warning("_emit_aix_tensor_bias: need to implement")
 
         return aix_tensor
 
@@ -655,15 +673,16 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
     #
     # @param self this object
     # @param ir_node an IR node to be emitted as an AIX tensor
+    # @param is_default indicates if default values are used to emit
     # @return an AIX tensor of an scale type
-    def _emit_aix_tensor_scale(self, ir_node: AxfcIRNode) -> AIXLayer.AIXTensor:
+    def _emit_aix_tensor_scale(self, ir_node: AxfcIRNode, is_default: bool = False) \
+            -> AIXLayer.AIXTensor:
 
         # create a new tensor
         aix_tensor = AIXLayer.AIXTensor()
 
         # configure the tensor with default scale values
-        if ir_node.op != "Const":
-
+        if is_default:
             # dim (k)
             aix_tensor.size = ir_node.aix_layer.output.dims[3]
             aix_tensor.dims.append(aix_tensor.size)
@@ -699,15 +718,16 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
     #
     # @param self this object
     # @param ir_node an IR node to be emitted as an AIX tensor
+    # @param is_default indicates if default values are used to emit
     # @return an AIX tensor of an mean type
-    def _emit_aix_tensor_mean(self, ir_node: AxfcIRNode) -> AIXLayer.AIXTensor:
+    def _emit_aix_tensor_mean(self, ir_node: AxfcIRNode, is_default: bool = False) \
+            -> AIXLayer.AIXTensor:
 
         # create a new tensor
         aix_tensor = AIXLayer.AIXTensor()
 
         # configure the tensor with default scale values
-        if ir_node.op != "Const":
-
+        if is_default:
             # dim (k)
             aix_tensor.size = ir_node.aix_layer.output.dims[3]
             aix_tensor.dims.append(aix_tensor.size)
@@ -743,15 +763,16 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
     #
     # @param self this object
     # @param ir_node an IR node to be emitted as an AIX tensor
+    # @param is_default indicates if default values are used to emit
     # @return an AIX tensor of an variance type
-    def _emit_aix_tensor_variance(self, ir_node: AxfcIRNode) -> AIXLayer.AIXTensor:
+    def _emit_aix_tensor_variance(self, ir_node: AxfcIRNode, is_default: bool = False) \
+            -> AIXLayer.AIXTensor:
 
         # create a new tensor
         aix_tensor = AIXLayer.AIXTensor()
 
         # configure the tensor with default scale values
-        if ir_node.op != "Const":
-
+        if is_default:
             # dim (k)
             aix_tensor.size = ir_node.aix_layer.output.dims[3]
             aix_tensor.dims.append(aix_tensor.size)

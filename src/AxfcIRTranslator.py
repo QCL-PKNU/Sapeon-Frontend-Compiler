@@ -153,7 +153,10 @@ class AxfcIRTranslator:
             logging.warning(e)
             return AxfcError.UNSUPPORTED_AIX_LAYER_EMIT, None
 
+        # register the generated AIX layer
         ir_node.aix_layer = aix_layer
+
+        # perform the emission of AIX layers
         err = emit_aix_layer(ir_node)
 
         if err is not AxfcError.SUCCESS:
@@ -181,9 +184,6 @@ class AxfcIRTranslator:
         activation = layer_info.activation
         if activation is not None:
             aix_layer.activation = AIXLayer.AIXActivationMode.Value(activation)
-
-        # register the generated AIX layer
-        ir_node.aix_layer = aix_layer
 
         return AxfcError.SUCCESS, aix_layer
 

@@ -90,7 +90,8 @@ class AxfcIRNode:
             return 0
 
         # CHKME - YOUNGSUN (2020.08.06)
-        # We must find the way to calculate the profit of a node for determining the hardware acceleration.
+        # We must find the way to calculate the profit of a node for determining
+        # to use the hardware acceleration.
 
         return 500
 
