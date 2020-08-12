@@ -66,11 +66,15 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
     # @return error info.
     def __get_aix_data_type(self, tf_node_def: tf.compat.v1.NodeDef) -> AIXLayer.AIXDataType:
 
+        node_attr = tf_node_def.attr
+
         # get the data format string
-        if tf_node_def.op == "Const":
-            data_type = tf_node_def.attr["dtype"].type
+        if "dtype" in node_attr:
+            data_type = node_attr["dtype"].type
+        elif "T" in node_attr:
+            data_type = node_attr["T"].type
         else:
-            data_type = tf_node_def.attr["T"].type
+            return None
 
         # return AIX data type
         try:
@@ -86,11 +90,16 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
     # @return error info.
     def __get_aix_tensor_format(self, tf_node_def: tf.compat.v1.NodeDef) -> AIXLayer.AIXTensorFormat:
 
-        try:
-            # get the data format string
-            data_format = tf_node_def.attr["data_format"].s
+        node_attr = tf_node_def.attr
 
-            # return AIX tensor format
+        # get the data format string
+        if "data_format" in node_attr:
+            data_format = node_attr["data_format"].s
+        else:
+            return None
+
+        # return AIX tensor format
+        try:
             return aix_tensor_format_tbl[data_format]
         except KeyError as e:
             logging.warning(e)
@@ -156,7 +165,12 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         aix_layer.filter.CopyFrom(filter_tensor)
 
         # strides
-        strides = tf_node_def.attr["strides"].list.i
+        node_attr = tf_node_def.attr
+
+        if "strides" in node_attr:
+            strides = node_attr["strides"].list.i
+        else:
+            return AxfcError.INVALID_CONVOLUTION_LAYER
 
         # output - the current IR node
         try:
@@ -187,7 +201,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         # mean
         mean_tensor = self._emit_aix_tensor_mean(ir_node, True)
-        aix_layer.scale.CopyFrom(mean_tensor)
+        aix_layer.mean.CopyFrom(mean_tensor)
 
         # variance
         variance_tensor = self._emit_aix_tensor_variance(ir_node, True)
@@ -275,7 +289,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
                 input_tensor.dims[0], # b
                 input_tensor.dims[1] // strides[1], # i
                 input_tensor.dims[2] // strides[2], # j
-                filter_tensor.dims[3] # k
+                input_tensor.dims[3] * filter_tensor.dims[3] # k * channel_multiplier
             ]
         except IndexError as e:
             logging.warning("_emit_aix_layer_convolution: %s", e)
@@ -285,17 +299,34 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         output_tensor.format = aix_tensor_format
         output_tensor.dtype = aix_data_type
 
-        # scale
+        aix_layer.output.CopyFrom(output_tensor)
 
-        # bias
+        # CHKME - YOUNGSUN (2020.08.10)
+        # bias - update using the calibration data
+        bias_tensor = self._emit_aix_tensor_bias(ir_node, True)
+        aix_layer.bias.CopyFrom(bias_tensor)
+
+        # scale
+        scale_tensor = self._emit_aix_tensor_scale(ir_node, True)
+        aix_layer.scale.CopyFrom(scale_tensor)
 
         # mean
+        mean_tensor = self._emit_aix_tensor_mean(ir_node, True)
+        aix_layer.mean.CopyFrom(mean_tensor)
 
         # variance
+        variance_tensor = self._emit_aix_tensor_variance(ir_node, True)
+        aix_layer.variance.CopyFrom(variance_tensor)
+
+        # CHKME - YOUNGSUN (2020.08.10)
+        # input_threshold - update using the calibration data
+
+        # CHKME - YOUNGSUN (2020.08.10)
+        # output_threshold - update using the calibration data
 
         # convdesc
-
-        aix_layer.output.CopyFrom(output_tensor)
+        convolution_desc = self._emit_aix_convolution_desc(ir_node)
+        aix_layer.convdesc.CopyFrom(convolution_desc)
 
         return AxfcError.SUCCESS
 
@@ -519,6 +550,11 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         # tensorflow node_def for the given ir_node
         tf_node_def = ir_node.node_def
 
+        # data type
+        aix_data_type = self.__get_aix_data_type(tf_node_def)
+        if aix_data_type is None:
+            return AxfcError.INVALID_AIX_LAYER_TYPE
+
         # emit tensor inputs
         input_nodes = list()
 
@@ -541,7 +577,16 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         # output
         aix_layer.output.CopyFrom(input_tensor)
 
-        # filter
+        # inputs/filter
+        filter_tensor = self._emit_aix_tensor_filter(ir_node, True)
+        filter_tensor.format = input_tensor.format
+        filter_tensor.dtype = aix_data_type
+
+        aix_layer.filter.CopyFrom(filter_tensor)
+
+        # convdesc
+        convolution_desc = self._emit_aix_convolution_desc(ir_node)
+        aix_layer.convdesc.CopyFrom(convolution_desc)
 
         return AxfcError.SUCCESS
 
@@ -608,13 +653,21 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
             ...
         """
 
+        # get the aix layer of thid node
+        aix_layer = ir_node.aix_layer
+
         # create a new tensor
         aix_tensor = AIXLayer.AIXTensor()
 
         # configure the tensor with default scale values
         if is_default:
 
-            # dimensions
+            input_dim = aix_layer.input.dims[3]
+
+            aix_tensor.dims.append(1)
+            aix_tensor.dims.append(input_dim)
+            aix_tensor.dims.append(input_dim)
+            aix_tensor.dims.append(1)
 
             return aix_tensor
 
@@ -650,22 +703,35 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         # create a new tensor
         aix_tensor = AIXLayer.AIXTensor()
 
+        # CHKME - YOUNGSUN (2020.08.12)
+        # get the bias (offset) values from the batchnorm node that follows this node.
+        succ_node = ir_node.succs[0]
+
+        if succ_node.op != "BatchNorm" and succ_node.op != "FusedBatchNorm":
+            logging.warning("_emit_aix_tensor_bias: the successor is not a batchnorm node")
+            return aix_tensor
+
+        # get the TF node def
+        offset_node = succ_node.preds[2]
+        offset_node_def = offset_node.node_def
+
         # dtype
-        aix_tensor.dtype = self.__get_aix_data_type(ir_node.node_def)
+        aix_tensor.dtype = self.__get_aix_data_type(offset_node_def)
 
         # tensor format
         aix_tensor.format = AIXLayer.AIXTensorFormat.AIX_FORMAT_VECTOR
 
-        # dim (k)
-        aix_tensor.size = ir_node.aix_layer.filter.dims[3]
+        # get attribute values of the tensor node
+        attr_value = offset_node_def.attr["value"]
+
+        # tensor shape and size
+        tensor_shape = attr_value.tensor.tensor_shape
+        aix_tensor.size = tensor_shape.dim[0].size
         aix_tensor.dims.append(aix_tensor.size)
 
-        # fval
-        if is_default:
-            for i in range(aix_tensor.size):
-                aix_tensor.fval.append(1)
-        else:
-            logging.warning("_emit_aix_tensor_bias: need to implement")
+        # tensor_content
+        for value in tf.make_ndarray(attr_value.tensor).flatten():
+            aix_tensor.fval.append(value)
 
         return aix_tensor
 
@@ -681,6 +747,12 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         # create a new tensor
         aix_tensor = AIXLayer.AIXTensor()
 
+        # dtype
+        aix_tensor.dtype = self.__get_aix_data_type(ir_node.node_def)
+
+        # tensor format
+        aix_tensor.format = AIXLayer.AIXTensorFormat.AIX_FORMAT_VECTOR
+
         # configure the tensor with default scale values
         if is_default:
             # dim (k)
@@ -692,12 +764,6 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
                 aix_tensor.fval.append(1)
 
             return aix_tensor
-
-        # dtype
-        aix_tensor.dtype = self.__get_aix_data_type(ir_node.node_def)
-
-        # tensor format
-        aix_tensor.format = AIXLayer.AIXTensorFormat.AIX_FORMAT_VECTOR
 
         # get the Tensorflow node_def of the given node
         tf_node_def = ir_node.node_def
@@ -726,6 +792,12 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         # create a new tensor
         aix_tensor = AIXLayer.AIXTensor()
 
+        # dtype
+        aix_tensor.dtype = self.__get_aix_data_type(ir_node.node_def)
+
+        # tensor format
+        aix_tensor.format = AIXLayer.AIXTensorFormat.AIX_FORMAT_VECTOR
+
         # configure the tensor with default scale values
         if is_default:
             # dim (k)
@@ -737,12 +809,6 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
                 aix_tensor.fval.append(0)
 
             return aix_tensor
-
-        # dtype
-        aix_tensor.dtype = self.__get_aix_data_type(ir_node.node_def)
-
-        # tensor format
-        aix_tensor.format = AIXLayer.AIXTensorFormat.AIX_FORMAT_VECTOR
 
         # get the Tensorflow node_def of the given node
         tf_node_def = ir_node.node_def
@@ -771,6 +837,12 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         # create a new tensor
         aix_tensor = AIXLayer.AIXTensor()
 
+        # dtype
+        aix_tensor.dtype = self.__get_aix_data_type(ir_node.node_def)
+
+        # tensor format
+        aix_tensor.format = AIXLayer.AIXTensorFormat.AIX_FORMAT_VECTOR
+
         # configure the tensor with default scale values
         if is_default:
             # dim (k)
@@ -782,12 +854,6 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
                 aix_tensor.fval.append(1)
 
             return aix_tensor
-
-        # dtype
-        aix_tensor.dtype = self.__get_aix_data_type(ir_node.node_def)
-
-        # tensor format
-        aix_tensor.format = AIXLayer.AIXTensorFormat.AIX_FORMAT_VECTOR
 
         # get the Tensorflow node_def of the given node
         tf_node_def = ir_node.node_def
@@ -842,20 +908,37 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         convolution_desc = AIXLayer.AIXConvolutionDesc()
 
-        # get the aix layer of the given IR node
+        # get the aix layer and node_def of the given IR node
         aix_layer = ir_node.aix_layer
+        tf_node_def = ir_node.node_def
 
-        # get the aix layer info of the given IR node
+        # get the layer info of the given IR node
         aix_layer_info = self._md.get_layer_info(ir_node.op)
 
         # dtype
-        convolution_desc.dtype = self.__get_aix_data_type(ir_node.node_def)
+        convolution_desc.dtype = aix_layer.input.dtype
 
         # padding
+        # CHKME - YOUNGSUN (2020.08.10)
+        # We need to check how to configure the values of padding.
 
         # stride
+        if "strides" in tf_node_def.attr:
+            strides = tf_node_def.attr["strides"].list.i
+        else:
+            strides = [1, 1, 1, 1]
+
+        for val in strides:
+            convolution_desc.stride.append(val)
 
         # dilation
+        if "dilation" in tf_node_def.attr:
+            dilation = tf_node_def.attr["dilation"].list.i
+        else:
+            dilation = [1, 1, 1, 1]
+
+        for val in dilation:
+            convolution_desc.dilation.append(val)
 
         # groups
         if not aix_layer_info.is_group:
