@@ -153,7 +153,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
             input_tensor.dtype = aix_data_type
             input_tensor.ptr = 0
         else:
-            input_tensor = input_aix_layer.input
+            input_tensor = input_aix_layer.output
 
         aix_layer.input.CopyFrom(input_tensor)
 
@@ -175,10 +175,10 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         # output - the current IR node
         try:
             output_dims: list = [
-                input_tensor.dims[0], # b
-                input_tensor.dims[1] // strides[1], # i
-                input_tensor.dims[2] // strides[2], # j
-                filter_tensor.dims[3] # k
+                input_tensor.dims[0], # n
+                input_tensor.dims[1] // strides[1], # h
+                input_tensor.dims[2] // strides[2], # w
+                filter_tensor.dims[3] # c
             ]
         except IndexError as e:
             logging.warning("_emit_aix_layer_convolution: %s", e)
@@ -269,7 +269,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
             input_tensor.dtype = aix_data_type
             input_tensor.ptr = 0
         else:
-            input_tensor = input_aix_layer.input
+            input_tensor = input_aix_layer.output
 
         aix_layer.input.CopyFrom(input_tensor)
 
@@ -286,10 +286,10 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         # output - the current IR node
         try:
             output_dims: list = [
-                input_tensor.dims[0], # b
-                input_tensor.dims[1] // strides[1], # i
-                input_tensor.dims[2] // strides[2], # j
-                input_tensor.dims[3] * filter_tensor.dims[3] # k * channel_multiplier
+                input_tensor.dims[0], # n
+                input_tensor.dims[1] // strides[1], # h
+                input_tensor.dims[2] // strides[2], # w
+                input_tensor.dims[3] * filter_tensor.dims[3] # c = k * channel_multiplier
             ]
         except IndexError as e:
             logging.warning("_emit_aix_layer_convolution: %s", e)
@@ -443,6 +443,16 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         # tensorflow node_def for the given ir_node
         tf_node_def = ir_node.node_def
 
+        # data type
+        aix_data_type = self.__get_aix_data_type(tf_node_def)
+        if aix_data_type is None:
+            return AxfcError.INVALID_AIX_LAYER_TYPE
+
+        # tensor format
+        aix_tensor_format = self.__get_aix_tensor_format(tf_node_def)
+        if aix_tensor_format is None:
+            return AxfcError.INVALID_AIX_TENSOR_FORMAT
+
         # emit tensor inputs
         input_nodes = list()
 
@@ -462,9 +472,34 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         input_tensor = input_aix_layer.output
         aix_layer.input.CopyFrom(input_tensor)
 
-        # output
-        aix_layer.output.CopyFrom(input_tensor)
+        # inputs/filter
+        filter_tensor = self._emit_aix_tensor_filter(ir_node, True)
+        filter_tensor.format = aix_tensor_format
+        filter_tensor.dtype = aix_data_type
 
+        aix_layer.filter.CopyFrom(filter_tensor)
+
+        # output
+        try:
+            output_dims: list = [
+                1, # n
+                1, # h
+                1, # w
+                input_tensor.dims[3] # c
+            ]
+        except IndexError as e:
+            logging.warning("_emit_aix_layer_convolution: %s", e)
+            return AxfcError.INVALID_AIX_TENSOR_INPUT
+
+        output_tensor = self._emit_aix_tensor_output(ir_node, output_dims)
+        output_tensor.format = aix_tensor_format
+        output_tensor.dtype = aix_data_type
+
+        aix_layer.output.CopyFrom(output_tensor)
+
+        # convdesc
+        convolution_desc = self._emit_aix_convolution_desc(ir_node)
+        aix_layer.convdesc.CopyFrom(convolution_desc)
         return AxfcError.SUCCESS
 
     ##  This method emits some convolution-specific information of the given IR node
@@ -711,9 +746,13 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
             logging.warning("_emit_aix_tensor_bias: the successor is not a batchnorm node")
             return aix_tensor
 
-        # get the TF node def
-        offset_node = succ_node.preds[2]
-        offset_node_def = offset_node.node_def
+        # get the offset (beta) node of the following batchnorm node
+        input_nodes = list()
+
+        for input_name in succ_node.node_def.input:
+            input_nodes.append(self._ir_symtab[input_name])
+
+        offset_node_def = input_nodes[2].node_def
 
         # dtype
         aix_tensor.dtype = self.__get_aix_data_type(offset_node_def)
