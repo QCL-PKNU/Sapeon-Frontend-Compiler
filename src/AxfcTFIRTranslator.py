@@ -11,6 +11,7 @@
 #######################################################################
 
 import logging
+import math
 import numpy as np
 import tensorflow as tf
 
@@ -172,17 +173,32 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         else:
             return AxfcError.INVALID_CONVOLUTION_LAYER
 
+        # padding
+        if "padding" in node_attr:
+            padding = node_attr["padding"].s
+        else:
+            return AxfcError.INVALID_CONVOLUTION_LAYER
+
         # output - the current IR node
-        try:
-            output_dims: list = [
-                input_tensor.dims[0], # n
-                input_tensor.dims[1] // strides[1], # h
-                input_tensor.dims[2] // strides[2], # w
-                filter_tensor.dims[3] # c
-            ]
-        except IndexError as e:
-            logging.warning("_emit_aix_layer_convolution: %s", e)
-            return AxfcError.INVALID_AIX_TENSOR_INPUT
+        """
+        Refer to https://mmuratarat.github.io/2019-01-17/implementing-padding-schemes-of-tensorflow-in-python
+        """
+        if padding == b"SAME":
+            output_h = input_tensor.dims[1]
+            output_w = input_tensor.dims[2]
+        elif padding == b"VALID":
+            output_h = input_tensor.dims[1] - filter_tensor.dims[0] + 1
+            output_w = input_tensor.dims[2] - filter_tensor.dims[1] + 1
+        else:
+            output_h = 0
+            output_w = 0
+
+        output_dims: list = [
+            input_tensor.dims[0],  # n
+            math.ceil(output_h / strides[1]), # h
+            math.ceil(output_w / strides[2]), # w
+            filter_tensor.dims[3]  # c
+        ]
 
         output_tensor = self._emit_aix_tensor_output(ir_node, output_dims)
         output_tensor.format = aix_tensor_format
@@ -281,19 +297,39 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         aix_layer.filter.CopyFrom(filter_tensor)
 
         # strides
-        strides = tf_node_def.attr["strides"].list.i
+        node_attr = tf_node_def.attr
+
+        if "strides" in node_attr:
+            strides = node_attr["strides"].list.i
+        else:
+            return AxfcError.INVALID_CONVOLUTION_LAYER
+
+        # padding
+        if "padding" in node_attr:
+            padding = node_attr["padding"].s
+        else:
+            return AxfcError.INVALID_CONVOLUTION_LAYER
 
         # output - the current IR node
-        try:
-            output_dims: list = [
-                input_tensor.dims[0], # n
-                input_tensor.dims[1] // strides[1], # h
-                input_tensor.dims[2] // strides[2], # w
-                input_tensor.dims[3] * filter_tensor.dims[3] # c = k * channel_multiplier
-            ]
-        except IndexError as e:
-            logging.warning("_emit_aix_layer_convolution: %s", e)
-            return AxfcError.INVALID_AIX_TENSOR_INPUT
+        """
+        Refer to https://mmuratarat.github.io/2019-01-17/implementing-padding-schemes-of-tensorflow-in-python
+        """
+        if padding == b"SAME":
+            output_h = input_tensor.dims[1]
+            output_w = input_tensor.dims[2]
+        elif padding == b"VALID":
+            output_h = input_tensor.dims[1] - filter_tensor.dims[0] + 1
+            output_w = input_tensor.dims[2] - filter_tensor.dims[1] + 1
+        else:
+            output_h = 0
+            output_w = 0
+
+        output_dims: list = [
+            input_tensor.dims[0], # n
+            math.ceil(output_h / strides[1]), # h
+            math.ceil(output_w / strides[2]), # w
+            input_tensor.dims[3] * filter_tensor.dims[3] # c = k * channel_multiplier
+        ]
 
         output_tensor = self._emit_aix_tensor_output(ir_node, output_dims)
         output_tensor.format = aix_tensor_format
@@ -480,16 +516,12 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         aix_layer.filter.CopyFrom(filter_tensor)
 
         # output
-        try:
-            output_dims: list = [
-                1, # n
-                1, # h
-                1, # w
-                input_tensor.dims[3] # c
-            ]
-        except IndexError as e:
-            logging.warning("_emit_aix_layer_convolution: %s", e)
-            return AxfcError.INVALID_AIX_TENSOR_INPUT
+        output_dims: list = [
+            1, # n
+            1, # h
+            1, # w
+            input_tensor.dims[3] # c
+        ]
 
         output_tensor = self._emit_aix_tensor_output(ir_node, output_dims)
         output_tensor.format = aix_tensor_format
@@ -644,6 +676,8 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
             size: 150528
             ptr: 94234087239120
         }
+        
+        dims: [batch_size, input_height, input_width, input_depth]
         """
 
         # create a new tensor
@@ -686,6 +720,8 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
             fval: -1.87250947e-07
             fval: 6.8427272e-07
             ...
+
+        dims: [filter_height, filter_width, filter_depth, number_of_filters]
         """
 
         # get the aix layer of thid node
@@ -696,7 +732,6 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         # configure the tensor with default scale values
         if is_default:
-
             input_dim = aix_layer.input.dims[3]
 
             aix_tensor.dims.append(1)
@@ -957,13 +992,11 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         # dtype
         convolution_desc.dtype = aix_layer.input.dtype
 
-        # padding
-        # CHKME - YOUNGSUN (2020.08.10)
-        # We need to check how to configure the values of padding.
-
         # stride
-        if "strides" in tf_node_def.attr:
-            strides = tf_node_def.attr["strides"].list.i
+        node_attr = tf_node_def.attr
+
+        if "strides" in node_attr:
+            strides = node_attr["strides"].list.i
         else:
             strides = [1, 1, 1, 1]
 
@@ -971,19 +1004,83 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
             convolution_desc.stride.append(val)
 
         # dilation
-        if "dilation" in tf_node_def.attr:
-            dilation = tf_node_def.attr["dilation"].list.i
+        if "dilation" in node_attr:
+            dilations = node_attr["dilation"].list.i
         else:
-            dilation = [1, 1, 1, 1]
+            dilations = [1, 1, 1, 1]
 
-        for val in dilation:
+        for val in dilations:
             convolution_desc.dilation.append(val)
+
+        # padding
+        # CHKME - YOUNGSUN (2020.08.10)
+        # We need to check how to configure the values of padding.
+
+        if "padding" in node_attr:
+            padding = node_attr["padding"].s
+        else:
+            padding = None
+
+        if padding is None:
+            paddings = [0, 0, 0, 0]
+        elif padding == b"VALID":
+            paddings = [0, 0, 0, 0]
+        elif padding == b"SAME":
+            """
+            Refer to https://mmuratarat.github.io/2019-01-17/implementing-padding-schemes-of-tensorflow-in-python
+            
+            if H1%Sh==0:
+                padding along height=Ph=max(Fh−Sh,0)
+            else:                
+                padding along height=Ph=max(Fh−(H1%Sh),0)
+                
+            if W1%Sw==0:
+                padding along width=Pw=max(Fw−Sw,0)
+            else:
+                padding along width=Pw=max(Fw−(W1%Sw),0)
+            """
+            input_h = aix_layer.input.dims[1]
+            input_w = aix_layer.input.dims[2]
+
+            filter_h = aix_layer.filter.dims[0]
+            filter_w = aix_layer.filter.dims[1]
+
+            stride_h = strides[1]
+            stride_w = strides[2]
+
+            # for padding along for height
+            if input_h % stride_h == 0:
+                padding_h = max(0, (filter_h - stride_h))
+            else:
+                padding_h = max(0, (filter_h - (input_h % stride_h)))
+
+            # for padding along for width
+            if input_w % stride_w == 0:
+                padding_w = max(0, (filter_w - stride_w))
+            else:
+                padding_w = max(0, (filter_w - (input_w % stride_w)))
+
+            # padding top and left
+            padding_t = math.floor(padding_h / 2)
+            padding_l = math.floor(padding_w / 2)
+
+            paddings = [
+                padding_t, # top
+                padding_h - padding_t, # bottom
+                padding_l, # left
+                padding_w - padding_l  # right
+            ]
+        else:
+            return AxfcError.INVALID_CONVOLUTION_LAYER
+
+        for val in paddings:
+            convolution_desc.padding.append(val)
 
         # groups
         if not aix_layer_info.is_group:
             convolution_desc.groups = 1
         else:
-            convolution_desc.groups = aix_layer.filter.dims[3]
+            convolution_desc.groups = aix_layer.output.dims[3]
 
         return convolution_desc
 
