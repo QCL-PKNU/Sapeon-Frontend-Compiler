@@ -1071,7 +1071,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
                 padding_w - padding_l  # right
             ]
         else:
-            return AxfcError.INVALID_CONVOLUTION_LAYER
+            paddings = [0, 0, 0, 0]
 
         for val in paddings:
             convolution_desc.padding.append(val)
