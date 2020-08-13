@@ -28,12 +28,13 @@ This README describes the organization and usage of the SKT AIX Frontend Compile
 
 ### 2. Usage ###
 
-    $$ python3 AxfcMain.py [-m] [-i] [-l] [-g]
+    $$ python3 AxfcMain.py [-m] [-i] [-o] [-l] [-g]
     
     -m: Path to a machine description file
     -i: Path to the protocol buffer of a frozen model
-    -l: Path to log out
-    -g: Path to dump out an IR graph
+    -o: Path to output the generated AIXGraph
+    -l: Path to log out (optional)
+    -g: Path to dump out an IR graph (optional)
 
 ### 3. Contact ###
 

@@ -63,7 +63,7 @@ class AxfcFrontendCompiler:
     #
     # @param self this object
     # @param path file path of an input AI network model
-    # @return error info and an AXIGraph object (not supported yet)
+    # @return error info and an AXIGraph objects
     def compile(self, path: str) -> AxfcError:
         logging.info("AxfcFrontendCompiler:compile - path: %s", path)
 
@@ -85,18 +85,43 @@ class AxfcFrontendCompiler:
             return err, None
 
         # perform the translation from AIXIR to AIXGraph
-        err, aix_graph = self.__ir_translator.emit_aixh_graphs(aix_ir)
-
-        # just for debugging - YOUNGSUN
-        self.__ir_translator.dump_aix_graphs()
+        err, aix_graphs = self.__ir_translator.emit_aixh_graphs(aix_ir)
 
         if err is not AxfcError.SUCCESS:
             logging.warning("IR-to-AIXGraph translation error: %s", err)
             return err, None
 
-        print(">> check output.log")
+        return AxfcError.SUCCESS, aix_graphs
 
-        return AxfcError.SUCCESS, aix_graph
+    ## This method is used to dump out the generated AIXGraphs.
+    #
+    # @param self this object
+    # @param out_path a file path to output the AIXGraphs
+    # @param aix_graphs a list of AIXGraphs to be dumped out
+    # @return error info
+    def dump_aix_graphs(self, out_path: str, aix_graphs: list) -> AxfcError:
+        logging.info("AxfcIRTranslator:dump_aix_graphs - %s", out_path)
+        if aix_graphs is None:
+            logging.warning("No AIXGraphs found")
+            return AxfcError.INVALID_AIX_GRAPH
+
+        # set the default output path if the path was not given
+        if out_path is None:
+            out_path = "aix_graph.out"
+
+        # print out the generated AIX graphs
+        for i, aix_graph in enumerate(aix_graphs):
+
+            # rename the output path using the graph index
+            out_path += ".%02d"%i
+
+            # dump out each graph
+            fd = open(out_path, mode="wt")
+            fd.seek(0)
+            fd.write(str(aix_graph))
+            fd.close()
+
+        return AxfcError.SUCCESS
 
     def dump_launcher(self, path: str) -> AxfcError:
         pass
