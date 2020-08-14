@@ -61,6 +61,9 @@ class AxfcIRTranslator:
             AIXLayer.AIXLayerType.AIX_LAYER_GROUP_CONV: self._emit_aix_layer_group_conv,
             AIXLayer.AIXLayerType.AIX_LAYER_BATCHNORM: self._emit_aix_layer_batchnorm,
             AIXLayer.AIXLayerType.AIX_LAYER_AVGPOOL: self._emit_aix_layer_avgpool,
+            AIXLayer.AIXLayerType.AIX_LAYER_MAXPOOL: self._emit_aix_layer_maxpool,
+            AIXLayer.AIXLayerType.AIX_LAYER_EWADD: self._emit_aix_layer_ewadd,
+            AIXLayer.AIXLayerType.AIX_LAYER_SOFTMAX: self._emit_aix_layer_softmax,
             AIXLayer.AIXLayerType.AIX_LAYER_BIASADD: self._emit_aix_layer_biasadd,
             AIXLayer.AIXLayerType.AIX_LAYER_ACTIVATION: self._emit_aix_layer_activation
         }
@@ -107,11 +110,16 @@ class AxfcIRTranslator:
 
         # translate all the nodes into AIX layers
         for ir_node in ir_block.nodes:
+
+            # skip already emitted nodes
+            if ir_node.aix_layer is not None:
+                continue
+
+            # emit the current node into an AIX layer and append it to the AIXGraph
             err, aix_layer = self.__emit_aixh_node(ir_node)
             if err is not AxfcError.SUCCESS:
                 return err, None
 
-            # update AIXGraph.layer
             aix_graph.layer.append(aix_layer)
 
             # update AIXGraph.input_layers
@@ -150,7 +158,7 @@ class AxfcIRTranslator:
         try:
             emit_aix_layer = self.__emit_aix_layer_tbl[layer_type]
         except KeyError as e:
-            logging.warning(e)
+            logging.warning("__emit_aixh_node: unsupported layer type - %s, %s", ir_node.op, layer_type)
             return AxfcError.UNSUPPORTED_AIX_LAYER_EMIT, None
 
         # register the generated AIX layer
@@ -160,8 +168,7 @@ class AxfcIRTranslator:
         err = emit_aix_layer(ir_node)
 
         if err is not AxfcError.SUCCESS:
-            logging.warning("AxfcTFIRTranslator:_emit_aixh_node - "
-                            "unsupported layer type %d", layer_type)
+            logging.warning("AxfcIRTranslator:__emit_aixh_node - %s", err)
             return err, None
 
         # layer input and output
@@ -187,6 +194,40 @@ class AxfcIRTranslator:
 
         return AxfcError.SUCCESS, aix_layer
 
+    ## This method is used to return a list of already emitted input nodes.
+    #  If there are input nodes that have not translated yet,
+    #  we perform __emit_aixh_node method repeatedly to emit them all.
+    #
+    # @param self this object
+    # @param ir_node current node to emit its input nodes
+    # @return a list of emitted input nodes
+    def _get_emitted_input_nodes(self, ir_node: AxfcIRNode) -> {AxfcError, list}:
+        #logging.info("AxfcTFIRTranslator:_get_emitted_input_nodes - node %d", ir_node.layer_id)
+
+        # input nodes
+        input_nodes = list()
+
+        for input_name in ir_node.node_def.input:
+            # input node
+            input_node = self._ir_symtab[input_name]
+
+            if not input_node.is_aixh_support:
+                input_nodes.append(input_node)
+                continue
+
+            # emit the nodes that have not emitted yet
+            if input_node.aix_layer is None:
+                err, aix_layer = self.__emit_aixh_node(input_node)
+
+                if err != AxfcError.SUCCESS:
+                    logging.warning("AxfcIRTranslator: _get_input_aix_layers - %s", err)
+                    return err, None
+
+            # append the emitted node into a list
+            input_nodes.append(input_node)
+
+        return AxfcError.SUCCESS, input_nodes
+
     def emit_aixh_launcher(self):
         logging.info("AxfcIRTranslator:emit_aixh_launcher")
         pass
@@ -209,7 +250,16 @@ class AxfcIRTranslator:
     def _emit_aix_layer_batchnorm(self, ir_node: AxfcIRNode) -> AxfcError:
         return NotImplementedError()
 
+    def _emit_aix_layer_maxpool(self, ir_node: AxfcIRNode) -> AxfcError:
+        return NotImplementedError()
+
+    def _emit_aix_layer_ewadd(self, ir_node: AxfcIRNode) -> AxfcError:
+        return NotImplementedError()
+
     def _emit_aix_layer_avgpool(self, ir_node: AxfcIRNode) -> AxfcError:
+        return NotImplementedError()
+
+    def _emit_aix_layer_softmax(self, ir_node: AxfcIRNode) -> AxfcError:
         return NotImplementedError()
 
     def _emit_aix_layer_activation(self, ir_node: AxfcIRNode) -> AxfcError:

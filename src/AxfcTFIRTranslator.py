@@ -107,7 +107,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         return None
 
-    ##  This method emits some convolution-specific information of the given IR node
+    ##  This method emits some tensorflow-specific information of the given IR node
     # into the given AIX convolution layer object. The information includes layer inputs,
     # layer outputs, and so on.
     #
@@ -139,13 +139,11 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         if aix_tensor_format is None:
             return AxfcError.INVALID_AIX_TENSOR_FORMAT
 
-        # emit tensor inputs
-        input_nodes = list()
-
-        for input_name in tf_node_def.input:
-            input_nodes.append(self._ir_symtab[input_name])
-
         # inputs/input
+        err, input_nodes = self._get_emitted_input_nodes(ir_node)
+        if err != AxfcError.SUCCESS:
+            return err
+
         input_aix_layer = input_nodes[0].aix_layer
 
         if input_aix_layer is None:
@@ -235,7 +233,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         return AxfcError.SUCCESS
 
-    ##  This method emits some group convolution-specific information of the given IR node
+    ##  This method emits some tensorflow-specific information of the given IR node
     # into the given AIX group convolution layer object. The information includes layer inputs,
     # layer outputs, and so on.
     #
@@ -277,6 +275,10 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         aix_layer.type.append(AIXLayer.AIXLayerType.AIX_LAYER_SKIP_CONV)
 
         # inputs/input
+        err, input_nodes = self._get_emitted_input_nodes(ir_node)
+        if err != AxfcError.SUCCESS:
+            return err
+
         input_aix_layer = input_nodes[0].aix_layer
 
         if input_aix_layer is None:
@@ -366,7 +368,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         return AxfcError.SUCCESS
 
-    ##  This method emits some convolution-specific information of the given IR node
+    ##  This method emits some tensorflow-specific information of the given IR node
     # into the given AIX batchnorm layer object. The information includes layer inputs,
     # layer outputs, and so on.
     #
@@ -384,6 +386,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         # get the aix layer of the given IR node
         aix_layer = ir_node.aix_layer
+        aix_layer.type.append(AIXLayer.AIXLayerType.AIX_LAYER_SKIP_CONV)
 
         # tensorflow node_def for the given ir_node
         tf_node_def = ir_node.node_def
@@ -398,16 +401,11 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         if aix_tensor_format is None:
             return AxfcError.INVALID_AIX_TENSOR_FORMAT
 
-        # emit tensor inputs
-        input_nodes = list()
-
-        for input_name in tf_node_def.input:
-            input_nodes.append(self._ir_symtab[input_name])
-
-        # type
-        aix_layer.type.append(AIXLayer.AIXLayerType.AIX_LAYER_SKIP_CONV)
-
         # inputs/input
+        err, input_nodes = self._get_emitted_input_nodes(ir_node)
+        if err != AxfcError.SUCCESS:
+            return err
+
         input_aix_layer = input_nodes[0].aix_layer
 
         if input_aix_layer is None:
@@ -458,7 +456,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         return AxfcError.SUCCESS
 
-    ##  This method emits some convolution-specific information of the given IR node
+    ##  This method emits some tensorflow-specific information of the given IR node
     # into the given AIX avgpool layer object. The information includes layer inputs,
     # layer outputs, and so on.
     #
@@ -475,6 +473,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         """
         # get the aix layer of the given IR node
         aix_layer = ir_node.aix_layer
+        aix_layer.type.append(AIXLayer.AIXLayerType.AIX_LAYER_SKIP_CONV)
 
         # tensorflow node_def for the given ir_node
         tf_node_def = ir_node.node_def
@@ -489,23 +488,21 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         if aix_tensor_format is None:
             return AxfcError.INVALID_AIX_TENSOR_FORMAT
 
-        # emit tensor inputs
-        input_nodes = list()
+        # inputs/input
+        err, input_nodes = self._get_emitted_input_nodes(ir_node)
+        if err != AxfcError.SUCCESS:
+            return err
 
-        for input_name in tf_node_def.input:
-            input_nodes.append(self._ir_symtab[input_name])
-
-        # input layer
         input_aix_layer = input_nodes[0].aix_layer
 
         if input_aix_layer is None:
-            return AxfcError.INVALID_BATCHNORM_LAYER
+            input_tensor = self._emit_aix_tensor_input(input_nodes[0])
+            input_tensor.format = aix_tensor_format
+            input_tensor.dtype = aix_data_type
+            input_tensor.ptr = 0
+        else:
+            input_tensor = input_aix_layer.output
 
-        # type
-        aix_layer.type.append(AIXLayer.AIXLayerType.AIX_LAYER_SKIP_CONV)
-
-        # value
-        input_tensor = input_aix_layer.output
         aix_layer.input.CopyFrom(input_tensor)
 
         # inputs/filter
@@ -534,7 +531,235 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         aix_layer.convdesc.CopyFrom(convolution_desc)
         return AxfcError.SUCCESS
 
-    ##  This method emits some convolution-specific information of the given IR node
+    ##  This method emits some tensorflow-specific information of the given IR node
+    # into the given AIX maxpool layer object. The information includes layer inputs,
+    # layer outputs, and so on.
+    #
+    # @param self this object
+    # @param ir_node an IR node to be emitted
+    # @return an output AIX avgpool layer
+    def _emit_aix_layer_maxpool(self, ir_node: AxfcIRNode) -> AxfcError:
+        logging.info("AxfcTFIRTranslator:_emit_aix_layer_maxpool - node %d", ir_node.layer_id)
+
+        """
+        tf.nn.max_pool(
+            input, ksize, strides, padding, data_format=None, name=None
+        )
+        """
+        # get the aix layer of the given IR node
+        aix_layer = ir_node.aix_layer
+        aix_layer.type.append(AIXLayer.AIXLayerType.AIX_LAYER_SKIP_CONV)
+
+        # tensorflow node_def for the given ir_node
+        tf_node_def = ir_node.node_def
+
+        # data type
+        aix_data_type = self.__get_aix_data_type(tf_node_def)
+        if aix_data_type is None:
+            return AxfcError.INVALID_AIX_LAYER_TYPE
+
+        # tensor format
+        aix_tensor_format = self.__get_aix_tensor_format(tf_node_def)
+        if aix_tensor_format is None:
+            return AxfcError.INVALID_AIX_TENSOR_FORMAT
+
+        # inputs/input
+        err, input_nodes = self._get_emitted_input_nodes(ir_node)
+        if err != AxfcError.SUCCESS:
+            return err
+
+        input_aix_layer = input_nodes[0].aix_layer
+
+        if input_aix_layer is None:
+            input_tensor = self._emit_aix_tensor_input(input_nodes[0])
+            input_tensor.format = aix_tensor_format
+            input_tensor.dtype = aix_data_type
+            input_tensor.ptr = 0
+        else:
+            input_tensor = input_aix_layer.output
+
+        aix_layer.input.CopyFrom(input_tensor)
+
+        # inputs/filter
+        filter_tensor = self._emit_aix_tensor_filter(ir_node, True)
+        filter_tensor.format = aix_tensor_format
+        filter_tensor.dtype = aix_data_type
+
+        aix_layer.filter.CopyFrom(filter_tensor)
+
+        # output
+        node_attr = tf_node_def.attr
+
+        if "_output_shapes" in node_attr:
+            output_dims = list()
+
+            for dim in node_attr["_output_shapes"].list.shape[0].dim:
+                if dim.size < 0:
+                    dim.size = 1
+                output_dims.append(dim.size)
+        else:
+            output_dims: list = [
+                1, # n
+                1, # h
+                1, # w
+                input_tensor.dims[3] # c
+            ]
+
+        output_tensor = self._emit_aix_tensor_output(ir_node, output_dims)
+        output_tensor.format = aix_tensor_format
+        output_tensor.dtype = aix_data_type
+
+        aix_layer.output.CopyFrom(output_tensor)
+
+        # convdesc
+        convolution_desc = self._emit_aix_convolution_desc(ir_node)
+        aix_layer.convdesc.CopyFrom(convolution_desc)
+        return AxfcError.SUCCESS
+
+    ##  This method emits some tensorflow-specific information of the given IR node
+    # into the given AIX element-wise add (ewadd) layer object. The information includes
+    # layer inputs, layer outputs, and so on.
+    #
+    # @param self this object
+    # @param ir_node an IR node to be emitted
+    # @return an output AIX avgpool layer
+    def _emit_aix_layer_ewadd(self, ir_node: AxfcIRNode) -> AxfcError:
+        logging.info("AxfcTFIRTranslator:_emit_aix_layer_ewadd - node %d", ir_node.layer_id)
+
+        """
+        tf.math.add(
+            x, y, name=None
+        )
+        """
+        # get the aix layer of the given IR node
+        aix_layer = ir_node.aix_layer
+        aix_layer.type.append(AIXLayer.AIXLayerType.AIX_LAYER_SKIP_CONV)
+
+        # tensorflow node_def for the given ir_node
+        tf_node_def = ir_node.node_def
+
+        # data type
+        aix_data_type = self.__get_aix_data_type(tf_node_def)
+        if aix_data_type is None:
+            return AxfcError.INVALID_AIX_LAYER_TYPE
+
+        # inputs/input
+        err, input_nodes = self._get_emitted_input_nodes(ir_node)
+        if err != AxfcError.SUCCESS:
+            return err
+
+        input_aix_layer = input_nodes[0].aix_layer
+
+        if input_aix_layer is None:
+            input_tensor = self._emit_aix_tensor_input(input_nodes[0])
+            input_tensor.format = aix_tensor_format
+            input_tensor.dtype = aix_data_type
+            input_tensor.ptr = 0
+        else:
+            input_tensor = input_aix_layer.output
+
+        aix_layer.input.CopyFrom(input_tensor)
+
+        # inputs/filter
+        filter_tensor = self._emit_aix_tensor_filter(ir_node, True)
+        filter_tensor.format = input_tensor.format
+        filter_tensor.dtype = aix_data_type
+
+        aix_layer.filter.CopyFrom(filter_tensor)
+
+        # output
+        node_attr = tf_node_def.attr
+
+        if "_output_shapes" in node_attr:
+            output_dims = list()
+
+            for dim in node_attr["_output_shapes"].list.shape[0].dim:
+                if dim.size < 0:
+                    dim.size = 1
+                output_dims.append(dim.size)
+
+            output_tensor = self._emit_aix_tensor_output(ir_node, output_dims)
+            output_tensor.format = input_tensor.format
+            output_tensor.dtype = aix_data_type
+
+            aix_layer.output.CopyFrom(output_tensor)
+        else:
+            aix_layer.output.CopyFrom(input_tensor)
+
+        # convdesc
+        convolution_desc = self._emit_aix_convolution_desc(ir_node)
+        aix_layer.convdesc.CopyFrom(convolution_desc)
+        return AxfcError.SUCCESS
+
+    ##  This method emits some tensorflow-specific information of the given IR node
+    # into the given AIX softmax layer object. The information includes
+    # layer inputs, layer outputs, and so on.
+    #
+    # @param self this object
+    # @param ir_node an IR node to be emitted
+    # @return an output AIX softmax layer
+    def _emit_aix_layer_softmax(self, ir_node: AxfcIRNode) -> AxfcError:
+        logging.info("AxfcTFIRTranslator:_emit_aix_layer_softmax - node %d", ir_node.layer_id)
+
+        """
+        tf.nn.softmax(
+            logits, axis=None, name=None
+        )
+        """
+        # get the aix layer of the given IR node
+        aix_layer = ir_node.aix_layer
+        aix_layer.type.append(AIXLayer.AIXLayerType.AIX_LAYER_SKIP_CONV)
+
+        # tensorflow node_def for the given ir_node
+        tf_node_def = ir_node.node_def
+
+        # data type
+        aix_data_type = self.__get_aix_data_type(tf_node_def)
+        if aix_data_type is None:
+            return AxfcError.INVALID_AIX_LAYER_TYPE
+
+        # inputs/input
+        err, input_nodes = self._get_emitted_input_nodes(ir_node)
+        if err != AxfcError.SUCCESS:
+            return err
+
+        input_aix_layer = input_nodes[0].aix_layer
+
+        if input_aix_layer is None:
+            input_tensor = self._emit_aix_tensor_input(input_nodes[0])
+            input_tensor.format = aix_tensor_format
+            input_tensor.dtype = aix_data_type
+            input_tensor.ptr = 0
+        else:
+            input_tensor = input_aix_layer.output
+
+        aix_layer.input.CopyFrom(input_tensor)
+
+        # output
+        node_attr = tf_node_def.attr
+
+        if "_output_shapes" in node_attr:
+            output_dims = list()
+
+            for dim in node_attr["_output_shapes"].list.shape[0].dim:
+                if dim.size < 0:
+                    dim.size = 1
+                output_dims.append(dim.size)
+
+            output_tensor = self._emit_aix_tensor_output(ir_node, output_dims)
+            output_tensor.format = input_tensor.format
+            output_tensor.dtype = aix_data_type
+
+            aix_layer.output.CopyFrom(output_tensor)
+        else:
+            aix_layer.output.CopyFrom(input_tensor)
+
+        # convdesc
+        convolution_desc = self._emit_aix_convolution_desc(ir_node)
+        aix_layer.convdesc.CopyFrom(convolution_desc)
+        return AxfcError.SUCCESS
+
+    ##  This method emits some tensorflow-specific information of the given IR node
     # into the given AIX biasadd layer object. The information includes layer inputs,
     # layer outputs, and so on.
     #
@@ -551,35 +776,42 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         """
         # get the aix layer of the given IR node
         aix_layer = ir_node.aix_layer
+        aix_layer.type.append(AIXLayer.AIXLayerType.AIX_LAYER_SKIP_CONV)
 
         # tensorflow node_def for the given ir_node
         tf_node_def = ir_node.node_def
 
-        # emit tensor inputs
-        input_nodes = list()
+        # data type
+        aix_data_type = self.__get_aix_data_type(tf_node_def)
+        if aix_data_type is None:
+            return AxfcError.INVALID_AIX_LAYER_TYPE
 
-        for input_name in tf_node_def.input:
-            input_nodes.append(self._ir_symtab[input_name])
+        # tensor format
+        aix_tensor_format = self.__get_aix_tensor_format(tf_node_def)
+        if aix_tensor_format is None:
+            return AxfcError.INVALID_AIX_TENSOR_FORMAT
 
-        # input layer
+        # inputs/input
+        err, input_nodes = self._get_emitted_input_nodes(ir_node)
+        if err != AxfcError.SUCCESS:
+            return err
+
         input_aix_layer = input_nodes[0].aix_layer
 
         if input_aix_layer is None:
-            return AxfcError.INVALID_BATCHNORM_LAYER
-
-        # type
-        aix_layer.type.append(AIXLayer.AIXLayerType.AIX_LAYER_SKIP_CONV)
-
-        # value
-        input_tensor = input_aix_layer.output
-        aix_layer.input.CopyFrom(input_tensor)
+            input_tensor = self._emit_aix_tensor_input(input_nodes[0])
+            input_tensor.format = aix_tensor_format
+            input_tensor.dtype = aix_data_type
+            input_tensor.ptr = 0
+        else:
+            input_tensor = input_aix_layer.output
 
         # output
         aix_layer.output.CopyFrom(input_tensor)
 
         return AxfcError.SUCCESS
 
-    ##  This method emits some convolution-specific information of the given IR node
+    ##  This method emits some tensorflow-specific information of the given IR node
     # into the given AIX activation layer object. The information includes layer inputs,
     # layer outputs, and so on.
     #
@@ -587,8 +819,8 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
     # @param ir_node an IR node to be emitted
     # @return an output AIX activation layer
     def _emit_aix_layer_activation(self, ir_node: AxfcIRNode) -> AxfcError:
-        logging.info("AxfcTFIRTranslator:_emit_aix_layer_activation - node %d", ir_node.layer_id)
-
+        logging.info("AxfcTFIRTranslator:_emit_aix_layer_activation - node %d, %s",
+                     ir_node.layer_id, ir_node.op)
         """
         tf.nn.sigmoid_cross_entropy_with_logits(
             labels=None, logits=None, name=None
@@ -613,6 +845,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         # get the aix layer of the given IR node
         aix_layer = ir_node.aix_layer
+        aix_layer.type.append(AIXLayer.AIXLayerType.AIX_LAYER_SKIP_CONV)
 
         # tensorflow node_def for the given ir_node
         tf_node_def = ir_node.node_def
@@ -622,27 +855,22 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         if aix_data_type is None:
             return AxfcError.INVALID_AIX_LAYER_TYPE
 
-        # emit tensor inputs
-        input_nodes = list()
+        # inputs/input
+        err, input_nodes = self._get_emitted_input_nodes(ir_node)
+        if err != AxfcError.SUCCESS:
+            return err
 
-        for input_name in tf_node_def.input:
-            input_nodes.append(self._ir_symtab[input_name])
-
-        # input layer
         input_aix_layer = input_nodes[0].aix_layer
 
         if input_aix_layer is None:
-            return AxfcError.INVALID_ACTIVATION_LAYER
+            input_tensor = self._emit_aix_tensor_input(input_nodes[0])
+            input_tensor.format = aix_layer.format
+            input_tensor.dtype = aix_data_type
+            input_tensor.ptr = 0
+        else:
+            input_tensor = input_aix_layer.output
 
-        # type
-        aix_layer.type.append(AIXLayer.AIXLayerType.AIX_LAYER_SKIP_CONV)
-
-        # input
-        input_tensor = input_aix_layer.output
         aix_layer.input.CopyFrom(input_tensor)
-
-        # output
-        aix_layer.output.CopyFrom(input_tensor)
 
         # inputs/filter
         filter_tensor = self._emit_aix_tensor_filter(ir_node, True)
@@ -650,6 +878,9 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         filter_tensor.dtype = aix_data_type
 
         aix_layer.filter.CopyFrom(filter_tensor)
+
+        # output
+        aix_layer.output.CopyFrom(input_tensor)
 
         # convdesc
         convolution_desc = self._emit_aix_convolution_desc(ir_node)
@@ -663,7 +894,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
     # @param ir_node an IR node to be emitted as an AIX tensor
     # @return an AIX tensor of an input type
     def _emit_aix_tensor_input(self, ir_node: AxfcIRNode) -> AIXLayer.AIXTensor:
-        logging.info("AxfcTFIRTranslator:_emit_aix_tensor_input - node %s", ir_node.name)
+        #logging.info("AxfcTFIRTranslator:_emit_aix_tensor_input - node %s", ir_node.name)
 
         """
         input {
@@ -684,13 +915,20 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         aix_tensor = AIXLayer.AIXTensor()
 
         # get the Tensorflow node_def of the given node
-        tf_node_def = ir_node.node_def
+        node_attr = ir_node.node_def.attr
 
         # tensor shape and size
-        attr_value = tf_node_def.attr["shape"]
+        if "shape" in node_attr:                # Placeholder
+            shape_dims = node_attr["shape"].shape.dim
+        elif "_output_shapes" in node_attr:     # Pad
+            shape_dims = node_attr["_output_shapes"].list.shape[0].dim
+        else:
+            logging.warning("_emit_aix_tensor_input: invalid shape - %s", str(node_attr))
+            return None
+
         tensor_size = 1
 
-        for dim in attr_value.shape.dim:
+        for dim in shape_dims:
             if dim.size < 0:
                 dim.size = 1
             aix_tensor.dims.append(dim.size)

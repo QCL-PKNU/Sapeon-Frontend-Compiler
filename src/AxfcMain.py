@@ -48,17 +48,17 @@ def __main(args):
 
     err = fc.read_md_file(md_path)
     if err is not AxfcError.SUCCESS:
-        logging.error("Error] Read machine description: ", err)
+        logging.error("Error] Read machine description: %s", err)
         return err
 
     err, aix_graphs = fc.compile(in_path)
     if err is not AxfcError.SUCCESS:
-        logging.error("Error] Compile TF graph to AXIGraph: ", err)
+        logging.error("Error] Compile TF graph to AXIGraph: %s", err)
         return err
 
     err = fc.dump_aix_graphs(out_path, aix_graphs)
     if err is not AxfcError.SUCCESS:
-        logging.error("Error] Dump out AIXGraphs: ", err)
+        logging.error("Error] Dump out AIXGraphs: %s", err)
         return err
 
     # for AIXIR graph viewer
@@ -66,7 +66,7 @@ def __main(args):
         aix_ir_graph = fc.get_ir_graph()
         err = aix_ir_graph.dump_to_file(gv_path, ["Const"])
         if err is not AxfcError.SUCCESS:
-            logging.error("Error] Dump out AIXIR graph: ", err)
+            logging.error("Error] Dump out AIXIR graph: %s", err)
             return err
 
     logging.info("##########################")
@@ -94,4 +94,5 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     __main(args)
+
     pass

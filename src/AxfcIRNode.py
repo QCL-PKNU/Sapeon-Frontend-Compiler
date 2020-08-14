@@ -93,7 +93,7 @@ class AxfcIRNode:
         # We must find the way to calculate the profit of a node for determining
         # to use the hardware acceleration.
 
-        return 500
+        return self.aixh_profit
 
     ## This methods is used to compare id with equal (==) for using Set
     # 

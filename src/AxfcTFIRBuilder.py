@@ -90,11 +90,15 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
         ir_node.op = tf_node_def.op
         ir_node.name = tf_node_def.name
 
+        layer_info = self._md.get_layer_info(ir_node.op)
+
         # check the node that is supported by AIXH hardware
         if self._md.get_axih_support(ir_node.op):
             ir_node.is_aixh_support = True
+            ir_node.aixh_profit = layer_info.profit
         else:
             ir_node.is_aixh_support = False
+            ir_node.aixh_profit = 0
 
         # connect predecessors and successor
         for pred_name in tf_node_def.input:

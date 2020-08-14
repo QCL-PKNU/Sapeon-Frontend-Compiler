@@ -113,10 +113,10 @@ class AxfcFrontendCompiler:
         for i, aix_graph in enumerate(aix_graphs):
 
             # rename the output path using the graph index
-            out_path += ".%02d"%i
+            tmp_path = out_path + ".%02d"%i
 
             # dump out each graph
-            fd = open(out_path, mode="wt")
+            fd = open(tmp_path, mode="wt")
             fd.seek(0)
             fd.write(str(aix_graph))
             fd.close()
