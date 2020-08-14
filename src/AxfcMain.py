@@ -20,16 +20,17 @@ from AxfcFrontendCompiler import *
 def __main(args):
     md_path = args.md_path
     in_path = args.in_path
-    lg_path = args.log_path
     gv_path = args.graph_path
+    log_path = args.log_path
+    out_path = args.out_path
 
     # for logging
-    if lg_path is not None and os.path.isfile(lg_path):
-        os.remove(lg_path)
+    if log_path is not None and os.path.isfile(log_path):
+        os.remove(log_path)
 
-    logging.basicConfig(filename=lg_path, level=logging.INFO)
+    logging.basicConfig(filename=log_path, level=logging.INFO)
 
-    # for validating input files
+    # for validating md and input files
     if not os.path.isfile(md_path):
         print("Invalid path to an MD file: " + md_path)
         return
@@ -47,19 +48,25 @@ def __main(args):
 
     err = fc.read_md_file(md_path)
     if err is not AxfcError.SUCCESS:
-        print("Error] Read machine description: ", err)
+        logging.error("Error] Read machine description: ", err)
         return err
 
-    err, aix_graph = fc.compile(in_path)
+    err, aix_graphs = fc.compile(in_path)
     if err is not AxfcError.SUCCESS:
-        print("Error] Compile TF graph to AXIGraph: ", err)
+        logging.error("Error] Compile TF graph to AXIGraph: ", err)
         return err
 
+    err = fc.dump_aix_graphs(out_path, aix_graphs)
+    if err is not AxfcError.SUCCESS:
+        logging.error("Error] Dump out AIXGraphs: ", err)
+        return err
+
+    # for AIXIR graph viewer
     if gv_path is not None:
         aix_ir_graph = fc.get_ir_graph()
         err = aix_ir_graph.dump_to_file(gv_path, ["Const"])
         if err is not AxfcError.SUCCESS:
-            print("Error] Dump IR graph: ", err)
+            logging.error("Error] Dump out AIXIR graph: ", err)
             return err
 
     logging.info("##########################")
@@ -78,6 +85,8 @@ if __name__ == "__main__":
                         help='path to a machine description file')
     parser.add_argument('-i', '--in-path',  metavar='', type=str, required=True,
                         help='path to the protocol buffer of a frozen model')
+    parser.add_argument('-o', '--out-path', metavar='', type=str, required=False,
+                        help='path to output the generated AIXGraph')
     parser.add_argument('-l', '--log-path', metavar='', type=str, required=False,
                         help='path to log out')
     parser.add_argument('-g', '--graph-path', metavar='', type=str, required=False,

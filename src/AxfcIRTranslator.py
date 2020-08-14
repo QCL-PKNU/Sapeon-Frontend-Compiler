@@ -187,21 +187,6 @@ class AxfcIRTranslator:
 
         return AxfcError.SUCCESS, aix_layer
 
-    ## This method is used to dump AIXGraphs.
-    #
-    # @param self this object
-    def dump_aix_graphs(self):
-        logging.info("AxfcIRTranslator:dump_aix_graphs")
-        if self.aix_graphs is None:
-            logging.warning("No AIXGraphs found")
-            return
-
-        str_buf = ""
-        for i, aix_graph in enumerate(self.aix_graphs):
-            str_buf += ">> AIXGraph: " + str(i) + "\n"
-            str_buf += str(aix_graph) + "\n"
-        logging.info(str(str_buf))
-
     def emit_aixh_launcher(self):
         logging.info("AxfcIRTranslator:emit_aixh_launcher")
         pass
