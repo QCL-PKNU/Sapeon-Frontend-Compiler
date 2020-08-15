@@ -36,6 +36,9 @@ class AxfcIRBlock:
     ## @var aixh_profit
     # specify the profit to be obtained by using AIXH
 
+    ## @var aix_graph
+    # an AIX graph emitted from this IR block
+
     ## The constructor
     def __init__(self):
         self.id = 0
@@ -44,6 +47,7 @@ class AxfcIRBlock:
         self.live_out = set()
         self.is_aixh_support = False
         self.aixh_profit = 0
+        self.aix_graph = None
 
     ## This method is used to perform the local liveness analysis in the scope of an IR block.
     #  We employ a simple heuristic scheme to find live-ins and live-outs of a block without

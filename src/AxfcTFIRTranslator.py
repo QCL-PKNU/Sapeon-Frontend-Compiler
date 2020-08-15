@@ -61,6 +61,10 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
     def __init__(self, md):
         super().__init__(md)
 
+    ###################################################################
+    # private methods
+    ###################################################################
+
     ## This method returns the data type of the given node_def
     #
     # @param tf_node_def input node_def
@@ -106,6 +110,37 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
             logging.warning(e)
 
         return None
+
+    ##  This method get aixtensor dims from format as dictionary
+    #
+    # @param self this object
+    # @param AIXTensor an an AIX tensor data contains dims, data format, dtype, size and ptr
+    # @return a dictionary object has key as element of data format. e.g input['H'] = 2
+    def __get_aix_tensor_dims(self, aix_tensor: AIXLayer.AIXTensor) -> dict:
+
+        return self.__get_values_of_format(aix_tensor.dims, aix_tensor.format)
+
+    ##  This method get data from aix_tensor_format format as dictionary
+    #
+    # @param self this object
+    # @param values an list of input values
+    # @param tensor_format an AIX tensor format
+    # @return a dictionary object has key as element of data format. e.g input['H'] = 2
+    def __get_values_of_format(self, values: list,
+                               tensor_format: AIXLayer.AIXTensorFormat) -> dict:
+
+        # TODO: config when the aix_tensor_format is 'AIX_FORMAT_VECTOR'
+
+        # query string data format from aix_tensor_format_tbl
+        data_format = ([k for k, v in aix_tensor_format_tbl.items()
+                        if v == tensor_format])[0].decode()
+
+        # map the data format with its value
+        return dict(zip(data_format, values))
+
+    ###################################################################
+    # protected methods
+    ###################################################################
 
     ##  This method emits some tensorflow-specific information of the given IR node
     # into the given AIX convolution layer object. The information includes layer inputs,
@@ -178,14 +213,11 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
             return AxfcError.INVALID_CONVOLUTION_LAYER
 
         # output - the current IR node
-        """
-        Refer to https://mmuratarat.github.io/2019-01-17/implementing-padding-schemes-of-tensorflow-in-python
-        """
 
         # get data as dictionary has a key as the element of format
-        input_dims = self.__get_data_from_format_aixtensor(input_tensor)
-        filter_dims = self.__get_data_from_format_aixtensor(filter_tensor)
-        stride_dims = self.__get_data_from_format(strides, filter_tensor.format)
+        input_dims = self.__get_aix_tensor_dims(input_tensor)
+        filter_dims = self.__get_aix_tensor_dims(filter_tensor)
+        strides = self.__get_values_of_format(strides, filter_tensor.format)
 
         if padding == b"SAME":
             output_h = input_dims['H']
@@ -199,8 +231,8 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         output_dims: list = [
             input_dims['N'],  # n
-            math.ceil(output_h / stride_dims['H']), # h
-            math.ceil(output_w / stride_dims['W']), # w
+            math.ceil(output_h / strides['H']), # h
+            math.ceil(output_w / strides['W']), # w
             filter_dims['C']  # c
         ]
 
@@ -319,9 +351,6 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
             return AxfcError.INVALID_CONVOLUTION_LAYER
 
         # output - the current IR node
-        """
-        Refer to https://mmuratarat.github.io/2019-01-17/implementing-padding-schemes-of-tensorflow-in-python
-        """
         if padding == b"SAME":
             output_h = input_tensor.dims[1]
             output_w = input_tensor.dims[2]
@@ -1271,8 +1300,6 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
             paddings = [0, 0, 0, 0]
         elif padding == b"SAME":
             """
-            Refer to https://mmuratarat.github.io/2019-01-17/implementing-padding-schemes-of-tensorflow-in-python
-            
             if H1%Sh==0:
                 padding along height=Ph=max(Fh−Sh,0)
             else:                
@@ -1285,18 +1312,18 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
             """
 
             # get data as dictionary has a key as element of format
-            input_dim = self.__get_data_from_format_aixtensor(aix_layer.input)
-            filter_dim = self.__get_data_from_format_aixtensor(aix_layer.filter)
-            stride_dim = self.__get_data_from_format(strides, aix_layer.filter.format)
+            input_dims = self.__get_aix_tensor_dims(aix_layer.input)
+            filter_dims = self.__get_aix_tensor_dims(aix_layer.filter)
+            strides = self.__get_values_of_format(strides, aix_layer.filter.format)
 
-            input_h = input_dim['H'] #aix_layer.input.dims[1]
-            input_w = input_dim['W'] #aix_layer.input.dims[2]
+            input_h = input_dims['H'] #aix_layer.input.dims[1]
+            input_w = input_dims['W'] #aix_layer.input.dims[2]
 
-            filter_h = filter_dim['H'] #aix_layer.filter.dims[0]
-            filter_w = filter_dim['W'] #aix_layer.filter.dims[1]
+            filter_h = filter_dims['H'] #aix_layer.filter.dims[0]
+            filter_w = filter_dims['W'] #aix_layer.filter.dims[1]
 
-            stride_h = stride_dim['H'] #strides[1]
-            stride_w = stride_dim['W'] #strides[2]
+            stride_h = strides['H'] #strides[1]
+            stride_w = strides['W'] #strides[2]
 
             # for padding along for height
             if input_h % stride_h == 0:
@@ -1354,38 +1381,3 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         # groups
 
         return sampling_desc
-
-    ##  This method get aixtensor dims from format as dictionary
-    #
-    # @param self this object
-    # @param AIXTensor an an AIX tensor data contains dims, data format, dtype, size and ptr
-    # @return a dictionary object has key as element of data format. e.g input['H'] = 2
-    def __get_data_from_format_aixtensor(self, aix_tensor: AIXLayer.AIXTensor) -> {}:
-
-        # TODO: config when the data_format is 'VECTOR'
-
-        # query string data format from aix_tensor_format_tbl
-        data_format = ([k for k, v in aix_tensor_format_tbl.items() if v == aix_tensor.format])[0].decode()
-
-        # map the data format with its value
-        input_dict = dict(zip(data_format, aix_tensor.dims))
-
-        return input_dict
-
-    ##  This method get data from aix_tensor_format format as dictionary
-    #
-    # @param self this object
-    # @param list_data an list of dim
-    # @param tensor_format an AIX tensor format
-    # @return a dictionary object has key as element of data format. e.g input['H'] = 2
-    def __get_data_from_format(self, list_data: list, tensor_format: AIXLayer.AIXTensorFormat) -> {}:
-
-        # TODO: config when the aix_tensor_format is 'AIX_FORMAT_VECTOR'
-
-        # query string data format from aix_tensor_format_tbl
-        data_format = ([k for k, v in aix_tensor_format_tbl.items() if v == tensor_format])[0].decode()
-
-        # map the data format with its value
-        input_dict = dict(zip(data_format, list_data))
-
-        return input_dict

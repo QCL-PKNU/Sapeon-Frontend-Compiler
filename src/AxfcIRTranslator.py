@@ -95,6 +95,7 @@ class AxfcIRTranslator:
             err, aix_graph = self.__emit_aixh_block(ir_block)
             if err is AxfcError.SUCCESS:
                 self.aix_graphs.append(aix_graph)
+                ir_block.aix_graph = aix_graph
             else:
                 return err, None
 
@@ -232,10 +233,6 @@ class AxfcIRTranslator:
             input_nodes.append(input_node)
 
         return AxfcError.SUCCESS, input_nodes
-
-    def emit_aixh_launcher(self):
-        logging.info("AxfcIRTranslator:emit_aixh_launcher")
-        pass
 
     ## For debugging
     def __str__(self):

@@ -19,6 +19,7 @@ from AxfcTFIRBuilder import *
 from AxfcMachineDesc import *
 from AxfcIRTranslator import *
 from AxfcTFIRTranslator import *
+from AxfcLauncherWriter import *
 
 #######################################################################
 # AxfcFrontendCompiler
