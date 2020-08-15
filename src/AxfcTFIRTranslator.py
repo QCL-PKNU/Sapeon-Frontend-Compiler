@@ -183,9 +183,9 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         """
 
         # get data as dictionary has a key as the element of format
-        input_dims = self._get_data_from_format_aixtensor(input_tensor)
-        filter_dims = self._get_data_from_format_aixtensor(filter_tensor)
-        stride_dims = self._get_data_from_format(strides, filter_tensor.format)
+        input_dims = self.__get_data_from_format_aixtensor(input_tensor)
+        filter_dims = self.__get_data_from_format_aixtensor(filter_tensor)
+        stride_dims = self.__get_data_from_format(strides, filter_tensor.format)
 
         if padding == b"SAME":
             output_h = input_dims['H']
@@ -1285,9 +1285,9 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
             """
 
             # get data as dictionary has a key as element of format
-            input_dim = self._get_data_from_format_aixtensor(aix_layer.input)
-            filter_dim = self._get_data_from_format_aixtensor(aix_layer.filter)
-            stride_dim = self._get_data_from_format(strides, aix_layer.filter.format)
+            input_dim = self.__get_data_from_format_aixtensor(aix_layer.input)
+            filter_dim = self.__get_data_from_format_aixtensor(aix_layer.filter)
+            stride_dim = self.__get_data_from_format(strides, aix_layer.filter.format)
 
             input_h = input_dim['H'] #aix_layer.input.dims[1]
             input_w = input_dim['W'] #aix_layer.input.dims[2]
@@ -1360,7 +1360,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
     # @param self this object
     # @param AIXTensor an an AIX tensor data contains dims, data format, dtype, size and ptr
     # @return a dictionary object has key as element of data format. e.g input['H'] = 2
-    def _get_data_from_format_aixtensor(self, aix_tensor: AIXLayer.AIXTensor) -> {}:
+    def __get_data_from_format_aixtensor(self, aix_tensor: AIXLayer.AIXTensor) -> {}:
 
         # TODO: config when the data_format is 'VECTOR'
 
@@ -1376,14 +1376,14 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
     #
     # @param self this object
     # @param list_data an list of dim
-    # @param aix_tensor_format an aix_tensor_format_tbl value
+    # @param tensor_format an AIX tensor format
     # @return a dictionary object has key as element of data format. e.g input['H'] = 2
-    def _get_data_from_format(self, list_data: list, aix_tensor_format: aix_tensor_format_tbl ) -> {}:
+    def __get_data_from_format(self, list_data: list, tensor_format: AIXLayer.AIXTensorFormat) -> {}:
 
         # TODO: config when the aix_tensor_format is 'AIX_FORMAT_VECTOR'
 
         # query string data format from aix_tensor_format_tbl
-        data_format = ([k for k, v in aix_tensor_format_tbl.items() if v == aix_tensor_format])[0].decode()
+        data_format = ([k for k, v in aix_tensor_format_tbl.items() if v == tensor_format])[0].decode()
 
         # map the data format with its value
         input_dict = dict(zip(data_format, list_data))

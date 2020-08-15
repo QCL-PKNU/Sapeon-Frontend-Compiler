@@ -44,6 +44,9 @@ class AxfcIRTranslator:
     ## @var _aix_graphs
     # a list of AIXGraphs translated from an input model
 
+    ## @var _aix_graph
+    # the current AIX graph being translated
+
     ## @var _ir_symtab
     # a symbol table of pairs of an IR node's name and itself
 
@@ -106,7 +109,7 @@ class AxfcIRTranslator:
         logging.info("AxfcIRTranslator:__emit_aixh_block - block %d", ir_block.id)
 
         # create a new AIX graph to output
-        aix_graph = AIXGraph()
+        self._aix_graph = AIXGraph()
 
         # translate all the nodes into AIX layers
         for ir_node in ir_block.nodes:
@@ -120,17 +123,17 @@ class AxfcIRTranslator:
             if err is not AxfcError.SUCCESS:
                 return err, None
 
-            aix_graph.layer.append(aix_layer)
+            self._aix_graph.layer.append(aix_layer)
 
             # update AIXGraph.input_layers
             if ir_node.is_input:
-                aix_graph.input_layers.append(aix_layer.id)
+                self._aix_graph.input_layers.append(aix_layer.id)
 
             # update AIXGraph.output_layers
             if ir_node.is_output:
-                aix_graph.output_layers.append(aix_layer.id)
+                self._aix_graph.output_layers.append(aix_layer.id)
 
-        return AxfcError.SUCCESS, aix_graph
+        return AxfcError.SUCCESS, self._aix_graph
 
     ## This method is used to translate an IR node into an AIXLayer object.
     #
@@ -222,6 +225,8 @@ class AxfcIRTranslator:
                 if err != AxfcError.SUCCESS:
                     logging.warning("AxfcIRTranslator: _get_input_aix_layers - %s", err)
                     return err, None
+
+                self._aix_graph.layer.append(aix_layer)
 
             # append the emitted node into a list
             input_nodes.append(input_node)
