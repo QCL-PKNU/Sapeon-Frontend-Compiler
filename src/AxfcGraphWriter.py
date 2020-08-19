@@ -12,7 +12,6 @@
 
 import json
 import logging
-import webview
 
 from AxfcError import *
 from AxfcIRNode import *
@@ -76,8 +75,9 @@ class AxfcGraphWriter:
                 'label': ir_node.op,
                 'x': self.__x_axis,
                 'y': self.__y_axis,
-                'size':1,
+                'size': 1,
                 'attributes': {
+                    'block_id': (ir_node.block_ref.id if ir_node.block_ref is not None else None),
                     'profit': ir_node.aixh_profit,
                     'is_aixh_support': ir_node.is_aixh_support,
                     'name': ir_node.node_def.name,
