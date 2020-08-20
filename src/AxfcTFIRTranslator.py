@@ -564,6 +564,11 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         # convdesc
         convolution_desc = self._emit_aix_convolution_desc(ir_node)
         aix_layer.convdesc.CopyFrom(convolution_desc)
+
+        # samplingdesc
+        sampling_desc = self._emit_aix_sampling_desc(ir_node)
+        aix_layer.samplingdesc.CopyFrom(sampling_desc)
+
         return AxfcError.SUCCESS
 
     ##  This method emits some tensorflow-specific information of the given IR node
@@ -649,6 +654,11 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         # convdesc
         convolution_desc = self._emit_aix_convolution_desc(ir_node)
         aix_layer.convdesc.CopyFrom(convolution_desc)
+
+        # samplingdesc
+        sampling_desc = self._emit_aix_sampling_desc(ir_node)
+        aix_layer.samplingdesc.CopyFrom(sampling_desc)
+
         return AxfcError.SUCCESS
 
     ##  This method emits some tensorflow-specific information of the given IR node
@@ -1371,14 +1381,49 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         sampling_desc = AIXLayer.AIXSamplingDesc()
 
+        # get the aix layer and node_def of the given IR node
+        aix_layer = ir_node.aix_layer
+        tf_node_def = ir_node.node_def
+
+        # to use the already resolved convolution description
+        convolution_desc = aix_layer.convdesc
+
+        if convolution_desc is None:
+            return None
+
         # mode
+        layer_type = aix_layer.type[0]
+
+        if layer_type == AIXLayer.AIXLayerType.AIX_LAYER_MAXPOOL:
+            sampling_desc.mode = AIXLayer.AIXSamplingMode.AIX_POOLING_MAX
+        elif layer_type == AIXLayer.AIXLayerType.AIX_LAYER_AVGPOOL:
+            sampling_desc.mode = AIXLayer.AIXSamplingMode.AIX_POOLING_AVERAGE
+        elif layer_type == AIXLayer.AIXLayerType.AIX_LAYER_REORG:
+            sampling_desc.mode = AIXLayer.AIXSamplingMode.AIX_POOLING_REORG
+        elif layer_type == AIXLayer.AIXLayerType.AIX_LAYER_UPSAMPLE:
+            sampling_desc.mode = AIXLayer.AIXSamplingMode.AIX_POOLING_UPSAMPLE
+        elif layer_type == AIXLayer.AIXLayerType.AIX_LAYER_PIXELSHUFFLE:
+            sampling_desc.mode = AIXLayer.AIXSamplingMode.AIX_POOLING_PIXELSHUFFLE
+        else:
+            return None
 
         # padding
+        for val in convolution_desc.padding:
+            sampling_desc.padding.append(val)
 
         # stride
+        for val in convolution_desc.stride:
+            sampling_desc.stride.append(val)
 
-        # window
+        # window (ksize)
+        node_attr = tf_node_def.attr
 
-        # groups
+        if "ksize" in node_attr:
+            windows = node_attr["ksize"].list.i
+        else:
+            windows = [0, 0, 0, 0]
+
+        for val in windows:
+            sampling_desc.window.append(val)
 
         return sampling_desc
