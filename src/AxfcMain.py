@@ -56,6 +56,11 @@ def __main(args):
         logging.error("Error] Compile TF graph to AXIGraph: %s", err)
         return err
 
+    # set the default output path if the path was not given
+    if out_path is None:
+        out_path = os.path.dirname(in_path) + "/aix_graph.out"
+
+    # AIX graph out
     err = fc.dump_aix_graphs(out_path, aix_graphs)
     if err is not AxfcError.SUCCESS:
         logging.error("Error] Dump out AIXGraphs: %s", err)
@@ -64,7 +69,7 @@ def __main(args):
     # for AIXIR graph viewer
     if gv_path is not None:
         aix_ir_graph = fc.get_ir_graph()
-        err = aix_ir_graph.dump_to_file(gv_path, ["Const"])
+        err = aix_ir_graph.dump_to_file(gv_path, ["Const", "Pad"])
         if err is not AxfcError.SUCCESS:
             logging.error("Error] Dump out AIXIR graph: %s", err)
             return err

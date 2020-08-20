@@ -99,6 +99,6 @@
 			"is_group": false,
 			"is_conv": false,
 			"profit": 100
-		}     
+		}	
 	}
 }

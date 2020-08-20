@@ -112,6 +112,15 @@ class AxfcIRNode:
     def __hash__(self):
         return hash(self.id)
 
+    ## Destructor
+    def __del__(self):
+        self.id = -1
+        self.op = None
+        self.name = None
+        self.preds.clear()
+        self.succs.clear()
+        self.node_def = None
+
     ## For debugging
     def __str__(self):
         str_buf = ">> IR Node: " + str(self.id) + ", " + self.op + "\n"

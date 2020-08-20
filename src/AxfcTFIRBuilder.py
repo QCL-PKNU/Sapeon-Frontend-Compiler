@@ -38,11 +38,15 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
         logging.info("AxfcTFIRBuilder:read_model_graph - path: %s", path)
 
         # read input Tensorflow graph_def
-        self._tf_graph = tf.compat.v1.GraphDef()
+        tf_graph = tf.compat.v1.GraphDef()
 
         with tf.io.gfile.GFile(path, 'rb') as f:
-            self._tf_graph.ParseFromString(f.read())
-            tf.import_graph_def(self._tf_graph)
+            tf_graph.ParseFromString(f.read())
+            tf.import_graph_def(tf_graph)
+
+        # remove identity nodes
+        #self._tf_graph = tf.compat.v1.graph_util.remove_training_nodes(tf_graph)
+        self._tf_graph = tf_graph
 
         return AxfcError.SUCCESS
 
@@ -67,7 +71,66 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
 
         # build AIX IR graph using the nodes of the Tensorflow graph
         for tf_node_def in tf_graph_def.node:
-            self.__append_node_def(tf_node_def)
+            err = self.__append_node_def(tf_node_def)
+            if err != AxfcError.SUCCESS:
+                return err
+
+        # remove unnecessary IR nodes
+        return self.__prune_ir_nodes()
+
+    ## This method is used to prune unnecessary nodes from the IR graph.
+    #  Currently, we will remove "identity" and "pad" nodes for the IR translation.
+    #
+    # @param self this object
+    # @return error info
+    def __prune_ir_nodes(self) -> AxfcError:
+
+        # for each node
+        for ir_node in self._ir_graph.nodes:
+
+            if ir_node.op == "Identity":
+                # check validity of the identity node
+                if len(ir_node.preds) != 1 or len(ir_node.succs) != 1:
+                    return AxfcError.INVALID_IDENTITY_LAYER
+
+                # remove the current node from the graph
+                pred_node = ir_node.preds[0]
+                succ_node = ir_node.succs[0]
+
+                pred_node.succs[0] = succ_node
+
+                for i, node in enumerate(succ_node.preds):
+                    if node == ir_node:
+                        succ_node.preds[i] = pred_node
+                        break
+
+                self._ir_graph.nodes.remove(ir_node)
+
+            elif ir_node.op == "Pad":
+                # check validity of the pad node
+                if len(ir_node.preds) != 2 or len(ir_node.succs) != 1:
+                    return AxfcError.INVALID_PAD_LAYER
+
+                # check the following convolution node
+                succ_node = ir_node.succs[0]
+
+                if succ_node.op.find("Conv") < 0:
+                    return AxfcError.INVALID_PAD_LAYER
+
+                # remove the current node from the graph
+                pred_node = ir_node.preds[0]
+
+                pred_node.succs[0] = succ_node
+                succ_node.preds[0] = pred_node
+
+                # append paddings to the end of the predecessors.
+                pads_node = ir_node.preds[1]
+                pads_node.op = "Pad"
+                succ_node.preds.append(pads_node)
+
+                self._ir_graph.nodes.remove(ir_node)
+            else:
+                continue
 
         return AxfcError.SUCCESS
 

@@ -211,9 +211,7 @@ class AxfcIRTranslator:
         # input nodes
         input_nodes = list()
 
-        for input_name in ir_node.node_def.input:
-            # input node
-            input_node = self._ir_symtab[input_name]
+        for input_node in ir_node.preds:
 
             if not input_node.is_aixh_support:
                 input_nodes.append(input_node)

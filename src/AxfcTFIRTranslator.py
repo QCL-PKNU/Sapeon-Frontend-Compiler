@@ -1055,12 +1055,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
             return aix_tensor
 
         # get the offset (beta) node of the following batchnorm node
-        input_nodes = list()
-
-        for input_name in succ_node.node_def.input:
-            input_nodes.append(self._ir_symtab[input_name])
-
-        offset_node_def = input_nodes[2].node_def
+        offset_node_def = succ_node.preds[2].node_def
 
         # dtype
         aix_tensor.dtype = self.__get_aix_data_type(offset_node_def)
@@ -1297,7 +1292,13 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         if padding is None:
             paddings = [0, 0, 0, 0]
         elif padding == b"VALID":
-            paddings = [0, 0, 0, 0]
+            # if there is an additional node for padding, use the tensor content.
+            if ir_node.preds[-1].op == "Pad":
+                # tensor_content
+                paddings_attr = ir_node.preds[-1].node_def.attr["value"]
+                paddings = tf.make_ndarray(paddings_attr.tensor).flatten()
+            else:
+                paddings = [0, 0, 0, 0]
         elif padding == b"SAME":
             """
             if H1%Sh==0:

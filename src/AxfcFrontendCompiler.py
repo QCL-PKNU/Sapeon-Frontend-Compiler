@@ -106,10 +106,6 @@ class AxfcFrontendCompiler:
             logging.warning("No AIXGraphs found")
             return AxfcError.INVALID_AIX_GRAPH
 
-        # set the default output path if the path was not given
-        if out_path is None:
-            out_path = "aix_graph.out"
-
         # print out the generated AIX graphs
         for i, aix_graph in enumerate(aix_graphs):
 
