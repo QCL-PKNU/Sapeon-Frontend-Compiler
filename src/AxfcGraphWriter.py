@@ -16,6 +16,7 @@ import logging
 from AxfcError import *
 from AxfcIRNode import *
 
+
 #######################################################################
 # AxfcGraphWriter class
 #######################################################################
@@ -39,7 +40,7 @@ class AxfcGraphWriter:
     ## The constructor
     def __init__(self):
         self.__edge_id = 0
-        self.__graph = {'edges':[], 'nodes':[]}
+        self.__graph = {'edges': [], 'nodes': []}
         self.__nodes = set()
         self.__x_axis = 0
         self.__y_axis = 0
@@ -66,7 +67,7 @@ class AxfcGraphWriter:
     # @param ir_node AxfcIRNode node
     # @param x horizontal x-axis when display on graph
     def add_node(self, ir_node: AxfcIRNode):
-            
+
         # check if new node is not dubplicate
         # then add this node into __graph
         if ir_node not in self.__nodes:
@@ -94,7 +95,7 @@ class AxfcGraphWriter:
     # @param error info
     def write_file(self, file_path: str) -> AxfcError:
         try:
-            with open(file_path,'w') as fd:
+            with open(file_path, 'w') as fd:
                 json.dump(self.__graph, fd)
         except IOError as e:
             logging.warning("AxfcGraphWriter: dump_graph - %s", str(e))

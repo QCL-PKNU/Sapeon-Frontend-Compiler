@@ -12,6 +12,7 @@
 
 from AxfcError import *
 
+
 #######################################################################
 # AxfcIRBlock class
 #######################################################################
@@ -56,7 +57,7 @@ class AxfcIRBlock:
     # @param self this object
     # @return error info
     def analyse_liveness(self) -> AxfcError:
-        #logging.info("AxfcIRBlock:analyse_liveness")
+        # logging.info("AxfcIRBlock:analyse_liveness")
 
         # check if the block is ready to be analyzed
         if self.nodes is None:
@@ -79,7 +80,7 @@ class AxfcIRBlock:
 
             # compute the live-out from this block
             for succ in node.succs:
-                #strict substitution -> if self != succ.block_ref:
+                # strict substitution -> if self != succ.block_ref:
                 if not succ.is_aixh_support:
                     self.live_out.add(node.id)
 
@@ -93,7 +94,7 @@ class AxfcIRBlock:
     # @param self this object
     # @return error info.
     def __analyse_inout(self) -> AxfcError:
-        #logging.info("AxfcIRBlock:analyse_inout")
+        # logging.info("AxfcIRBlock:analyse_inout")
 
         # check if the block is ready to be analyzed
         if self.nodes is None:
@@ -137,7 +138,7 @@ class AxfcIRBlock:
     # @param self this object
     # @return error info
     def analyze_profit(self) -> AxfcError:
-        #logging.info("AxfcIRBlock:analyze_profit")
+        # logging.info("AxfcIRBlock:analyze_profit")
 
         # total profit
         profit = 0

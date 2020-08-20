@@ -11,18 +11,18 @@
 #######################################################################
 
 import os
-import logging
 import argparse
 
-from AxfcError import *
 from AxfcFrontendCompiler import *
 
-def __main(args):
-    md_path = args.md_path
-    in_path = args.in_path
-    gv_path = args.graph_path
-    log_path = args.log_path
-    out_path = args.out_path
+
+## main function
+def __main(vargs):
+    md_path = vargs.md_path
+    in_path = vargs.in_path
+    gv_path = vargs.graph_path
+    log_path = vargs.log_path
+    out_path = vargs.out_path
 
     # for logging
     if log_path is not None and os.path.isfile(log_path):
@@ -80,15 +80,15 @@ def __main(args):
 
     return AxfcError.SUCCESS
 
+
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser(
-            description='SKT AIX Frontend Compiler',
-            usage='use "%(prog)s -h/--help" for more information')
+        description='SKT AIX Frontend Compiler',
+        usage='use "%(prog)s -h/--help" for more information')
 
-    parser.add_argument('-m', '--md-path',  metavar='', type=str, required=True,
+    parser.add_argument('-m', '--md-path', metavar='', type=str, required=True,
                         help='path to a machine description file')
-    parser.add_argument('-i', '--in-path',  metavar='', type=str, required=True,
+    parser.add_argument('-i', '--in-path', metavar='', type=str, required=True,
                         help='path to the protocol buffer of a frozen model')
     parser.add_argument('-o', '--out-path', metavar='', type=str, required=False,
                         help='path to output the generated AIXGraph')

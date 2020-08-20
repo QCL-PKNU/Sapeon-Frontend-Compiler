@@ -10,14 +10,7 @@
 #   High Performance Computing Laboratory (hpcl.pknu.ac.kr)
 #######################################################################
 
-import logging
-
-from AxfcError import *
-from AxfcIRGraph import *
-from AxfcIRBuilder import *
 from AxfcTFIRBuilder import *
-from AxfcMachineDesc import *
-from AxfcIRTranslator import *
 from AxfcTFIRTranslator import *
 from AxfcLauncherWriter import *
 

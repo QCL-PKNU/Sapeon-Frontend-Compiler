@@ -10,13 +10,10 @@
 #   High Performance Computing Laboratory (hpcl.pknu.ac.kr)
 #######################################################################
 
-import enum
-import logging
-
-from AxfcError import *
-from AxfcIRBlock import *
+from aixh_pb2 import *
 from AxfcIRGraph import *
 from AxfcMachineDesc import *
+
 
 #######################################################################
 # AIXInputType enum class
@@ -31,6 +28,7 @@ class AIXTensorType(enum.Enum):
     AIX_TENSOR_VARIANCE = 5
     AIX_TENSOR_OUTPUT = 6
     AIX_TENSOR_UNKNOWN = 7
+
 
 #######################################################################
 # AxfcIRTranslator class
@@ -142,7 +140,7 @@ class AxfcIRTranslator:
     # @param ir_node input IR node to be translated
     # @return error info and an output AIXLayer object
     def __emit_aixh_node(self, ir_node: AxfcIRNode) -> {AxfcError, AIXLayer}:
-        #logging.info("AxfcTFIRTranslator:_emit_aixh_node - node %d", ir_node.layer_id)
+        # logging.info("AxfcTFIRTranslator:_emit_aixh_node - node %d", ir_node.layer_id)
 
         # get the operation information specified in the machine description
         layer_info = self._md.get_layer_info(ir_node.op)
@@ -161,7 +159,7 @@ class AxfcIRTranslator:
         # emit the output specific to each AIX layer type
         try:
             emit_aix_layer = self.__emit_aix_layer_tbl[layer_type]
-        except KeyError as e:
+        except KeyError:
             logging.warning("__emit_aixh_node: unsupported layer type - %s, %s", ir_node.op, layer_type)
             return AxfcError.UNSUPPORTED_AIX_LAYER_EMIT, None
 
@@ -206,7 +204,7 @@ class AxfcIRTranslator:
     # @param ir_node current node to emit its input nodes
     # @return a list of emitted input nodes
     def _get_emitted_input_nodes(self, ir_node: AxfcIRNode) -> {AxfcError, list}:
-        #logging.info("AxfcTFIRTranslator:_get_emitted_input_nodes - node %d", ir_node.layer_id)
+        # logging.info("AxfcTFIRTranslator:_get_emitted_input_nodes - node %d", ir_node.layer_id)
 
         # input nodes
         input_nodes = list()
@@ -259,6 +257,9 @@ class AxfcIRTranslator:
     def _emit_aix_layer_avgpool(self, ir_node: AxfcIRNode) -> AxfcError:
         return NotImplementedError()
 
+    def _emit_aix_layer_biasadd(self, ir_node: AxfcIRNode) -> AxfcError:
+        return NotImplementedError()
+
     def _emit_aix_layer_softmax(self, ir_node: AxfcIRNode) -> AxfcError:
         return NotImplementedError()
 
@@ -284,10 +285,7 @@ class AxfcIRTranslator:
     def _emit_aix_tensor_variance(self, ir_node: AxfcIRNode) -> AIXLayer.AIXTensor:
         return NotImplementedError()
 
-    def _emit_aix_tensor_output(self, ir_node: AxfcIRNode) -> AIXLayer.AIXTensor:
-        return NotImplementedError()
-
-    def _emit_aixh_node(self, ir_node: AxfcIRNode, index: int) -> {AxfcError, AIXLayer}:
+    def _emit_aix_tensor_output(self, ir_node: AxfcIRNode, output_dims: list) -> AIXLayer.AIXTensor:
         return NotImplementedError()
 
     ## emission methods for AIX convolution dec

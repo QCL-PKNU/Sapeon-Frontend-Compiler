@@ -10,19 +10,17 @@
 #   High Performance Computing Laboratory (hpcl.pknu.ac.kr)
 #######################################################################
 
-import enum
 import json
 import logging
 
-from aixh_pb2 import *
 from AxfcError import *
+
 
 #######################################################################
 # AxfcMachineDesc class
 #######################################################################
 
 class AxfcMachineDesc:
-
     # for input type
     TYPE_TENSORFLOW = 0
     TYPE_PYTORCH = 1
@@ -32,10 +30,10 @@ class AxfcMachineDesc:
     # for hardware acceleration
     DEFAULT_PROFIT_THRESHOLD = 1000
 
-    ## @var __info
+    ## @var __aix_model_info_tbl
     # general info. of dictionary type for AIX compiler
 
-    ## @var __aix_op
+    ## @var __aix_layer_info_tbl
     # general machine description info. of dictionary type
 
     ## The constructor
@@ -67,7 +65,6 @@ class AxfcMachineDesc:
             self.__aix_layer_info_tbl = dict()
 
             for (layer_type, layer_info) in self.__aix_model_info_tbl["AIX_LAYER"].items():
-
                 aix_layer_info = AxfcMachineDesc.AIXLayerInfo(layer_type)
                 aix_layer_info.layer = layer_info["layer"]
                 aix_layer_info.activation = layer_info["activation"]
@@ -88,11 +85,11 @@ class AxfcMachineDesc:
     # @param self this object
     # @param layer_type the name of an AIX layer type to be returned
     # @return an operation information
-    def get_layer_info(self, layer_type:str):
-        #logging.info("AxfcMachineDesc:get_layer_info - %s", layer_type)
+    def get_layer_info(self, layer_type: str):
+        # logging.info("AxfcMachineDesc:get_layer_info - %s", layer_type)
         try:
             return self.__aix_layer_info_tbl[layer_type]
-        except KeyError as e:
+        except KeyError:
             return None
 
     ## This method indicates whether the given operation is supported by the AIX hardware or not.
@@ -100,8 +97,8 @@ class AxfcMachineDesc:
     # @param self this object
     # @param layer_type the name of an AIX layer type to be checked
     # @return the input type of the frontend compilation
-    def get_axih_support(self, layer_type: str) -> bool:
-        #logging.info("AxfcMachineDesc:get_axih_support - %s", op)
+    def get_aixh_support(self, layer_type: str) -> bool:
+        # logging.info("AxfcMachineDesc:get_aixh_support - %s", op)
         if self.get_layer_info(layer_type) is not None:
             return True
         else:
@@ -112,7 +109,7 @@ class AxfcMachineDesc:
     # @param self this object
     # @return the input type of the frontend compilation
     def get_in_type(self):
-        #logging.info("AxfcMachineDesc:get_in_type")
+        # logging.info("AxfcMachineDesc:get_in_type")
         try:
             in_type = self.__aix_model_info_tbl["AIX_MODEL_TYPE"]
 
@@ -129,18 +126,18 @@ class AxfcMachineDesc:
     # @param self this object
     # @return the profit threshold to determine whether to use hardware acceleration
     def get_profit_threshold(self):
-        #logging.info("AxfcMachineDesc:get_profit_threshold")
+        # logging.info("AxfcMachineDesc:get_profit_threshold")
         try:
             threshold = self.__aix_model_info_tbl["AIX_PROFIT_THRESHOLD"]
             return int(threshold)
         except KeyError as e:
             logging.warning("get_profit_threshold: %s", str(e))
-            return DEFAULT_PROFIT_THRESHOLD
+            return AxfcMachineDesc.DEFAULT_PROFIT_THRESHOLD
 
     ## For debugging
     def __str__(self):
-        str_buf = ">> Machine Description: \n" + str(self.__info)
-        str_buf = ">> AIX Operations: \n" + str(self.__aix_ops)
+        str_buf = ">> Machine Description: \n" + str(self.__aix_model_info_tbl)
+        str_buf += ">> AIX Operations: \n" + str(self.__aix_layer_info_tbl)
         return str_buf + "\n"
 
     #######################################################################

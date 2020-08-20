@@ -11,13 +11,10 @@
 #######################################################################
 
 import tensorflow as tf
-import networkx as nx
-import matplotlib.pyplot as plt
 
-from AxfcError import *
-from AxfcIRGraph import *
 from AxfcIRBuilder import *
 from AxfcGraphWriter import *
+
 
 #######################################################################
 # AxfcTFIRBuilder class
@@ -45,7 +42,7 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
             tf.import_graph_def(tf_graph)
 
         # remove identity nodes
-        #self._tf_graph = tf.compat.v1.graph_util.remove_training_nodes(tf_graph)
+        # self._tf_graph = tf.compat.v1.graph_util.remove_training_nodes(tf_graph)
         self._tf_graph = tf_graph
 
         return AxfcError.SUCCESS
@@ -141,7 +138,7 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
     # @param tf_node_def input node_def object of Tensorflow
     # @return error info.
     def __append_node_def(self, tf_node_def: tf.compat.v1.NodeDef) -> AxfcError:
-        #logging.info("AxfcTFIRBuilder:append_node_def - tf_node_def: %s", tf_node_def.name)
+        # logging.info("AxfcTFIRBuilder:append_node_def - tf_node_def: %s", tf_node_def.name)
 
         # create a new IR node
         ir_node = AxfcIRNode(tf_node_def)
@@ -156,7 +153,7 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
         layer_info = self._md.get_layer_info(ir_node.op)
 
         # check the node that is supported by AIXH hardware
-        if self._md.get_axih_support(ir_node.op):
+        if self._md.get_aixh_support(ir_node.op):
             ir_node.is_aixh_support = True
             ir_node.aixh_profit = layer_info.profit
         else:
@@ -182,5 +179,5 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
 
     ## For debugging
     def __str__(self):
-        #tf.io.write_graph(self._tf_graph, './', '../tst/graph_def.pbtxt', as_text=True)
+        # tf.io.write_graph(self._tf_graph, './', '../tst/graph_def.pbtxt', as_text=True)
         return

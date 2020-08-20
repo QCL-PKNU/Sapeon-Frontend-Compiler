@@ -10,13 +10,9 @@
 #   High Performance Computing Laboratory (hpcl.pknu.ac.kr)
 #######################################################################
 
-import logging
-
-from AxfcError import *
-from AxfcIRNode import *
-from AxfcIRBlock import *
 from AxfcIRGraph import *
 from AxfcMachineDesc import *
+
 
 #######################################################################
 # AxfcIRBuilder class
@@ -85,7 +81,7 @@ class AxfcIRBuilder:
                 return err, None
 
             # just for debugging - YOUNGSUN
-            #if ir_block.is_aixh_support:
+            # if ir_block.is_aixh_support:
             #    print(ir_block)
 
         return AxfcError.SUCCESS, self._ir_graph
@@ -143,7 +139,7 @@ class AxfcIRBuilder:
     # @param an IR block of the successive IR nodes supported by the AIX hardware
     # @return error info
     def __perform_maximal_munch(self, ir_node: AxfcIRNode, ir_block: AxfcIRBlock) -> AxfcError:
-        #logging.info("AxfcIRBuilder:perform_maximal_munch")
+        # logging.info("AxfcIRBuilder:perform_maximal_munch")
 
         if ir_node is None or ir_block is None:
             return AxfcError.INVALID_PARAMETER

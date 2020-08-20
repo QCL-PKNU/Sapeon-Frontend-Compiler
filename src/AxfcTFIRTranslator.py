@@ -10,17 +10,9 @@
 #   High Performance Computing Laboratory (hpcl.pknu.ac.kr)
 #######################################################################
 
-import logging
 import math
-import numpy as np
 import tensorflow as tf
 
-from aixh_pb2 import *
-from AxfcError import *
-from AxfcIRNode import *
-from AxfcIRBlock import *
-from AxfcIRGraph import *
-from AxfcMachineDesc import *
 from AxfcIRTranslator import *
 
 #######################################################################
@@ -44,6 +36,7 @@ aix_tensor_format_tbl = {
     b"NWHC": AIXLayer.AIXTensorFormat.AIX_FORMAT_NWHC,
     b"VECTOR": AIXLayer.AIXTensorFormat.AIX_FORMAT_VECTOR
 }
+
 
 #######################################################################
 # AxfcTFIRTranslator class
@@ -231,8 +224,8 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         output_dims: list = [
             input_dims['N'],  # n
-            math.ceil(output_h / strides['H']), # h
-            math.ceil(output_w / strides['W']), # w
+            math.ceil(output_h / strides['H']),  # h
+            math.ceil(output_w / strides['W']),  # w
             filter_dims['C']  # c
         ]
 
@@ -362,10 +355,10 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
             output_w = 0
 
         output_dims: list = [
-            input_tensor.dims[0], # n
-            math.ceil(output_h / strides[1]), # h
-            math.ceil(output_w / strides[2]), # w
-            input_tensor.dims[3] * filter_tensor.dims[3] # c = k * channel_multiplier
+            input_tensor.dims[0],  # n
+            math.ceil(output_h / strides[1]),  # h
+            math.ceil(output_w / strides[2]),  # w
+            input_tensor.dims[3] * filter_tensor.dims[3]  # c = k * channel_multiplier
         ]
 
         output_tensor = self._emit_aix_tensor_output(ir_node, output_dims)
@@ -549,10 +542,10 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         # output
         output_dims: list = [
-            1, # n
-            1, # h
-            1, # w
-            input_tensor.dims[3] # c
+            1,  # n
+            1,  # h
+            1,  # w
+            input_tensor.dims[3]  # c
         ]
 
         output_tensor = self._emit_aix_tensor_output(ir_node, output_dims)
@@ -639,10 +632,10 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
                 output_dims.append(dim.size)
         else:
             output_dims: list = [
-                1, # n
-                1, # h
-                1, # w
-                input_tensor.dims[3] # c
+                1,  # n
+                1,  # h
+                1,  # w
+                input_tensor.dims[3]  # c
             ]
 
         output_tensor = self._emit_aix_tensor_output(ir_node, output_dims)
@@ -697,7 +690,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         if input_aix_layer is None:
             input_tensor = self._emit_aix_tensor_input(input_nodes[0])
-            input_tensor.format = aix_tensor_format
+            # input_tensor.format = aix_tensor_format
             input_tensor.dtype = aix_data_type
             input_tensor.ptr = 0
         else:
@@ -772,7 +765,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         if input_aix_layer is None:
             input_tensor = self._emit_aix_tensor_input(input_nodes[0])
-            input_tensor.format = aix_tensor_format
+            # input_tensor.format = aix_tensor_format
             input_tensor.dtype = aix_data_type
             input_tensor.ptr = 0
         else:
@@ -939,7 +932,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
     # @param ir_node an IR node to be emitted as an AIX tensor
     # @return an AIX tensor of an input type
     def _emit_aix_tensor_input(self, ir_node: AxfcIRNode) -> AIXLayer.AIXTensor:
-        #logging.info("AxfcTFIRTranslator:_emit_aix_tensor_input - node %s", ir_node.name)
+        # logging.info("AxfcTFIRTranslator:_emit_aix_tensor_input - node %s", ir_node.name)
 
         """
         input {
@@ -960,12 +953,23 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         aix_tensor = AIXLayer.AIXTensor()
 
         # get the Tensorflow node_def of the given node
-        node_attr = ir_node.node_def.attr
+        tf_node_def = ir_node.node_def
+        node_attr = tf_node_def.attr
+
+        # data type
+        aix_data_type = self.__get_aix_data_type(tf_node_def)
+        if aix_data_type is not None:
+            aix_tensor.dtype = aix_data_type
+
+        # tensor format
+        aix_tensor_format = self.__get_aix_tensor_format(tf_node_def)
+        if aix_tensor_format is not None:
+            aix_tensor.format = aix_tensor_format
 
         # tensor shape and size
-        if "shape" in node_attr:                # Placeholder
+        if "shape" in node_attr:  # Placeholder
             shape_dims = node_attr["shape"].shape.dim
-        elif "_output_shapes" in node_attr:     # Pad
+        elif "_output_shapes" in node_attr:  # Pad
             shape_dims = node_attr["_output_shapes"].list.shape[0].dim
         else:
             logging.warning("_emit_aix_tensor_input: invalid shape - %s", str(node_attr))
@@ -1327,14 +1331,14 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
             filter_dims = self.__get_aix_tensor_dims(aix_layer.filter)
             strides = self.__get_values_of_format(strides, aix_layer.filter.format)
 
-            input_h = input_dims['H'] #aix_layer.input.dims[1]
-            input_w = input_dims['W'] #aix_layer.input.dims[2]
+            input_h = input_dims['H']  # aix_layer.input.dims[1]
+            input_w = input_dims['W']  # aix_layer.input.dims[2]
 
-            filter_h = filter_dims['H'] #aix_layer.filter.dims[0]
-            filter_w = filter_dims['W'] #aix_layer.filter.dims[1]
+            filter_h = filter_dims['H']  # aix_layer.filter.dims[0]
+            filter_w = filter_dims['W']  # aix_layer.filter.dims[1]
 
-            stride_h = strides['H'] #strides[1]
-            stride_w = strides['W'] #strides[2]
+            stride_h = strides['H']  # strides[1]
+            stride_w = strides['W']  # strides[2]
 
             # for padding along for height
             if input_h % stride_h == 0:

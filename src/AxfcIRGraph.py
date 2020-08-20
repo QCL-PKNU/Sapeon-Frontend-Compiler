@@ -10,13 +10,9 @@
 #   High Performance Computing Laboratory (hpcl.pknu.ac.kr)
 #######################################################################
 
-import os
-import logging
-
-from AxfcError import *
-from AxfcIRNode import *
 from AxfcIRBlock import *
 from AxfcGraphWriter import *
+
 
 #######################################################################
 # AxfcIRGraph class

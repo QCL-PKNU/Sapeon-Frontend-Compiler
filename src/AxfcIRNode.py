@@ -10,8 +10,6 @@
 #   High Performance Computing Laboratory (hpcl.pknu.ac.kr)
 #######################################################################
 
-from AxfcError import *
-
 #######################################################################
 # AxfcIRNode class
 #######################################################################
@@ -58,9 +56,6 @@ class AxfcIRNode:
     # reference to the AIX layer derived from this node
 
     ## The constructor
-    def __init__(self):
-        self.__init__(None)
-
     def __init__(self, node_def):
         self.id = 0
         self.name = ""
@@ -100,9 +95,10 @@ class AxfcIRNode:
     # @param self this object
     # @param other another AxfcIRNode object
     def __eq__(self, other):
-        
+
         # check other and self type 
-        if not isinstance(other, type(self)): return NotImplemented
+        if not isinstance(other, type(self)):
+            return NotImplemented
 
         return self.id == other.id
 
