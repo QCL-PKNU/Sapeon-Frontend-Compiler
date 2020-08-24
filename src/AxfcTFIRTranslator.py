@@ -19,7 +19,7 @@ from AxfcIRTranslator import *
 # Global tables for AIXDataType and AIXTensorFormat
 #######################################################################
 
-# AIXDataType table
+## AIXDataType table
 aix_data_type_tbl = {
     tf.float16: AIXLayer.AIXDataType.AIX_DATA_HALF,
     tf.float32: AIXLayer.AIXDataType.AIX_DATA_FLOAT,
@@ -29,7 +29,7 @@ aix_data_type_tbl = {
     tf.int16: AIXLayer.AIXDataType.AIX_DATA_SINT16
 }
 
-# AIXTensorFormat table
+## AIXTensorFormat table
 aix_tensor_format_tbl = {
     b"NCHW": AIXLayer.AIXTensorFormat.AIX_FORMAT_NCHW,
     b"NHWC": AIXLayer.AIXTensorFormat.AIX_FORMAT_NHWC,
@@ -43,12 +43,6 @@ aix_tensor_format_tbl = {
 #######################################################################
 
 class AxfcTFIRTranslator(AxfcIRTranslator):
-
-    ## @var __aix_data_type_tbl
-    # a table for AIXDataType
-
-    ## @var __aix_tensor_format_tbl
-    # a table for AIXTensorFormat
 
     ## The constructor
     def __init__(self, md):

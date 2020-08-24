@@ -39,7 +39,7 @@ class AxfcIRTranslator:
     ## @var _md
     # AIX machine description
 
-    ## @var _aix_graphs
+    ## @var aix_graphs
     # a list of AIXGraphs translated from an input model
 
     ## @var _aix_graph

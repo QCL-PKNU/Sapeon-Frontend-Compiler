@@ -65,7 +65,6 @@ class AxfcGraphWriter:
     #
     # @param self this object
     # @param ir_node AxfcIRNode node
-    # @param x horizontal x-axis when display on graph
     def add_node(self, ir_node: AxfcIRNode):
 
         # check if new node is not dubplicate
@@ -91,8 +90,8 @@ class AxfcGraphWriter:
     ## This method is used to write the edges and nodes to Sigma js json format
     #
     # @param self this object
-    # @param dump_path file path for dumping the IR graph
-    # @param error info
+    # @param file_path file path for dumping the IR graph
+    # @return error info
     def write_file(self, file_path: str) -> AxfcError:
         try:
             with open(file_path, 'w') as fd:

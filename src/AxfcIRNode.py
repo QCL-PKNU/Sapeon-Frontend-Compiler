@@ -19,6 +19,9 @@ class AxfcIRNode:
     ## @var id
     # node ID
 
+    ## @var name
+    # node name
+
     ## @var layer_id
     # node layer ID
 

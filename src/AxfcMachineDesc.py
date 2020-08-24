@@ -144,7 +144,27 @@ class AxfcMachineDesc:
     # AIXLayerInfo inner class
     #######################################################################
 
+
     class AIXLayerInfo:
+        ## @var op
+        # layer operation name of the layer info
+
+        ## @var layer
+        # AIX layer ID of the layer info
+
+        ## @var activation
+        # AIX activation ID of the layer info
+
+        ## @var is_group
+        # indicate whether this layer is group layer or not
+
+        ## @var is_conv
+        # indicate whether this layer is convolution layer or not
+
+        ## @var profit
+        # the profit that can be obtained by accelerating this layer using AIXH
+
+        ## The constructor
         def __init__(self, op):
             self.op = op
             self.layer = None
@@ -153,6 +173,7 @@ class AxfcMachineDesc:
             self.is_conv = False
             self.profit = 0
 
+        ## For debugging
         def __str__(self):
             str_buf = ">> AIX Operation Info.: " + str(self.op) + "\n"
             str_buf += "- layer: " + str(self.layer) + "\n"

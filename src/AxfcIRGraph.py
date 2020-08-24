@@ -46,7 +46,7 @@ class AxfcIRGraph:
     ## This method is used to append the given IR node into the graph
     #
     # @param self this object
-    # @param node an IR node to be appended
+    # @param ir_node an IR node to be appended
     def append_node(self, ir_node: AxfcIRNode):
 
         # update the id of the given IR node
@@ -61,7 +61,7 @@ class AxfcIRGraph:
     ## This method is used to append the given IR block into the graph
     #
     # @param self this object
-    # @param node an IR block to be appended
+    # @param ir_block an IR block to be appended
     def append_block(self, ir_block: AxfcIRBlock):
 
         # update the id of the given IR block

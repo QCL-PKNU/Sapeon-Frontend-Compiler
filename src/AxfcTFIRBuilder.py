@@ -131,7 +131,8 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
 
         return AxfcError.SUCCESS
 
-    ## This method is used to create a new IR node from tf.NodeDef and append it to the IR graph.
+    ## @internal
+    #  This method is used to create a new IR node from tf.NodeDef and append it to the IR graph.
     #  The successors and predecessors of the IR node is found using the symbol table.
     #
     # @param self this object

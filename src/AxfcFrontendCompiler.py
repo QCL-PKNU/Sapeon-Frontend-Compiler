@@ -37,7 +37,7 @@ class AxfcFrontendCompiler:
 
     ## This method returns the IR graph.
     #
-    # @para self this object
+    # @param self this object
     # @return the IR graph
     def get_ir_graph(self):
         return self.__ir_builder._ir_graph
