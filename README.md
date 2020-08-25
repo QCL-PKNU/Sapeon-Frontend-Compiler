@@ -11,6 +11,7 @@ This README describes the organization and usage of the SKT AIX Frontend Compile
 * AxfcIRTranslator
 * AxfcMachineDesc
 * AxfcGraphWriter
+* AxfcLauncherWriter
 * AxfcIRGraph
 * AxfcIRBlock
 * AxfcIRNode
@@ -28,11 +29,12 @@ This README describes the organization and usage of the SKT AIX Frontend Compile
 
 ### 2. Usage ###
 
-    $$ python3 AxfcMain.py [-m] [-i] [-o] [-l] [-g]
+    $$ python3 AxfcMain.py [-m] [-i] [-c] [-o] [-l] [-g]
     
     -m: Path to a machine description file
     -i: Path to the protocol buffer of a frozen model
-    -o: Path to output the generated AIXGraph
+    -c: Path to the calibration data of a frozen model (optional)
+    -o: Path to output the generated AIXGraph (optional)
     -l: Path to log out (optional)
     -g: Path to dump out an IR graph (optional)
 

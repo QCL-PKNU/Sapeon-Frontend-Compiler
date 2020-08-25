@@ -131,7 +131,7 @@ class AxfcMachineDesc:
             model_name = self.__aix_model_info_tbl["AIX_MODEL_NAME"]
         except KeyError as e:
             logging.warning("get_model_name: %s", str(e))
-            return ""
+            return "NO_NAME"
 
         return model_name
 
