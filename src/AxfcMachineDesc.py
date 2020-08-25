@@ -108,18 +108,32 @@ class AxfcMachineDesc:
     #
     # @param self this object
     # @return the input type of the frontend compilation
-    def get_in_type(self):
-        # logging.info("AxfcMachineDesc:get_in_type")
+    def get_model_type(self):
+        # logging.info("AxfcMachineDesc:get_model_type")
         try:
-            in_type = self.__aix_model_info_tbl["AIX_MODEL_TYPE"]
+            model_type = self.__aix_model_info_tbl["AIX_MODEL_TYPE"]
 
-            if in_type == "TENSORFLOW":
+            if model_type == "TENSORFLOW":
                 return AxfcMachineDesc.TYPE_TENSORFLOW
             else:
                 return AxfcMachineDesc.TYPE_UNKNOWN
         except KeyError as e:
-            logging.warning("get_in_type: %s", str(e))
+            logging.warning("get_model_type: %s", str(e))
             return AxfcMachineDesc.TYPE_UNKNOWN
+
+    ## This method returns the name of the input AI model.
+    #
+    # @param self this object
+    # @return the model name
+    def get_model_name(self) -> str:
+        # logging.info("AxfcMachineDesc:get_model_name")
+        try:
+            model_name = self.__aix_model_info_tbl["AIX_MODEL_NAME"]
+        except KeyError as e:
+            logging.warning("get_model_name: %s", str(e))
+            return ""
+
+        return model_name
 
     ## This method returns the input type of the frontend compilation.
     #

@@ -16,13 +16,15 @@ import argparse
 from AxfcFrontendCompiler import *
 
 
-## main function
-def __main(vargs):
-    md_path = vargs.md_path
-    in_path = vargs.in_path
-    gv_path = vargs.graph_path
-    log_path = vargs.log_path
-    out_path = vargs.out_path
+## This is a main function for SKT-AIX frontend compiler
+## @param params input parameters for the compilation
+def __main(params):
+    md_path = params.md_path
+    in_path = params.in_path
+    gv_path = params.graph_path
+    log_path = params.log_path
+    out_path = params.out_path
+    cal_path = params.calib_path
 
     # for logging
     if log_path is not None and os.path.isfile(log_path):
@@ -43,14 +45,21 @@ def __main(vargs):
     logging.info("# Start to compile")
     logging.info("##########################")
 
-    # for compilation
     fc = AxfcFrontendCompiler()
 
+    # read a machine description file
     err = fc.read_md_file(md_path)
     if err is not AxfcError.SUCCESS:
         logging.error("Error] Read machine description: %s", err)
         return err
 
+    # read a calibration data file
+    err = fc.read_calib_file(cal_path)
+    if err is not AxfcError.SUCCESS:
+        logging.error("Error] Read calibration data: %s", err)
+        return err
+
+    # perform the compilation
     err, aix_graphs = fc.compile(in_path)
     if err is not AxfcError.SUCCESS:
         logging.error("Error] Compile TF graph to AXIGraph: %s", err)
@@ -90,6 +99,8 @@ if __name__ == "__main__":
                         help='path to a machine description file')
     parser.add_argument('-i', '--in-path', metavar='', type=str, required=True,
                         help='path to the protocol buffer of a frozen model')
+    parser.add_argument('-c', '--calib-path', metavar='', type=str, required=False,
+                        help='path to the calibration data of a frozen model')
     parser.add_argument('-o', '--out-path', metavar='', type=str, required=False,
                         help='path to output the generated AIXGraph')
     parser.add_argument('-l', '--log-path', metavar='', type=str, required=False,

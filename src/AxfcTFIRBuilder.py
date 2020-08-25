@@ -149,11 +149,19 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
 
         # set the operation of this node
         ir_node.op = tf_node_def.op
-        ir_node.name = tf_node_def.name
 
-        layer_info = self._md.get_layer_info(ir_node.op)
+        # set the name of this node by pruning unnecessary prefixes
+        model_name = self._md.get_model_name()
+
+        prefix_index = tf_node_def.name.find(model_name)
+        if prefix_index >= 0:
+            ir_node.name = tf_node_def.name[prefix_index:]
+        else:
+            ir_node.name = tf_node_def.name
 
         # check the node that is supported by AIXH hardware
+        layer_info = self._md.get_layer_info(ir_node.op)
+
         if self._md.get_aixh_support(ir_node.op):
             ir_node.is_aixh_support = True
             ir_node.aixh_profit = layer_info.profit

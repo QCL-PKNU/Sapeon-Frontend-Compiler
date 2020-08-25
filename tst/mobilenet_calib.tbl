@@ -1,90 +1,89 @@
-  0                input     output              0.0         1.000000
-  1MobilenetV1/MobilenetV1/Conv2d_0/Conv2D     output              0.0         1.394482
-  2MobilenetV1/MobilenetV1/Conv2d_0/BatchNorm/FusedBatchNorm     output              0.0         4.993301
-  3MobilenetV1/MobilenetV1/Conv2d_0/Relu6     output              0.0         5.542557
-  4MobilenetV1/MobilenetV1/Conv2d_1_depthwise/depthwise     output              0.0        33.813263
-  5MobilenetV1/MobilenetV1/Conv2d_1_depthwise/BatchNorm/FusedBatchNorm     output              0.0         6.184373
-  6MobilenetV1/MobilenetV1/Conv2d_1_depthwise/Relu6     output              0.0         5.542557
-  7MobilenetV1/MobilenetV1/Conv2d_1_pointwise/Conv2D     output              0.0         7.899239
-  8MobilenetV1/MobilenetV1/Conv2d_1_pointwise/BatchNorm/FusedBatchNorm     output              0.0         5.837967
-  9MobilenetV1/MobilenetV1/Conv2d_1_pointwise/Relu6     output              0.0         5.893513
- 10MobilenetV1/MobilenetV1/Conv2d_2_depthwise/depthwise     output              0.0        18.309839
- 11MobilenetV1/MobilenetV1/Conv2d_2_depthwise/BatchNorm/FusedBatchNorm     output              0.0         6.063628
- 12MobilenetV1/MobilenetV1/Conv2d_2_depthwise/Relu6     output              0.0         5.997000
- 13MobilenetV1/MobilenetV1/Conv2d_2_pointwise/Conv2D     output              0.0         7.503814
- 14MobilenetV1/MobilenetV1/Conv2d_2_pointwise/BatchNorm/FusedBatchNorm     output              0.0         7.667636
- 15MobilenetV1/MobilenetV1/Conv2d_2_pointwise/Relu6     output              0.0         5.893513
- 16MobilenetV1/MobilenetV1/Conv2d_3_depthwise/depthwise     output              0.0        12.700567
- 17MobilenetV1/MobilenetV1/Conv2d_3_depthwise/BatchNorm/FusedBatchNorm     output              0.0         6.315380
- 18MobilenetV1/MobilenetV1/Conv2d_3_depthwise/Relu6     output              0.0         5.697038
- 19MobilenetV1/MobilenetV1/Conv2d_3_pointwise/Conv2D     output              0.0        10.174918
- 20MobilenetV1/MobilenetV1/Conv2d_3_pointwise/BatchNorm/FusedBatchNorm     output              0.0        13.323832
- 21MobilenetV1/MobilenetV1/Conv2d_3_pointwise/Relu6     output              0.0         5.997000
- 22MobilenetV1/MobilenetV1/Conv2d_4_depthwise/depthwise     output              0.0        21.690851
- 23MobilenetV1/MobilenetV1/Conv2d_4_depthwise/BatchNorm/FusedBatchNorm     output              0.0         9.441423
- 24MobilenetV1/MobilenetV1/Conv2d_4_depthwise/Relu6     output              0.0         5.997000
- 25MobilenetV1/MobilenetV1/Conv2d_4_pointwise/Conv2D     output              0.0         7.951455
- 26MobilenetV1/MobilenetV1/Conv2d_4_pointwise/BatchNorm/FusedBatchNorm     output              0.0         7.546180
- 27MobilenetV1/MobilenetV1/Conv2d_4_pointwise/Relu6     output              0.0         5.997000
- 28MobilenetV1/MobilenetV1/Conv2d_5_depthwise/depthwise     output              0.0        10.183417
- 29MobilenetV1/MobilenetV1/Conv2d_5_depthwise/BatchNorm/FusedBatchNorm     output              0.0        14.407196
- 30MobilenetV1/MobilenetV1/Conv2d_5_depthwise/Relu6     output              0.0         5.997000
- 31MobilenetV1/MobilenetV1/Conv2d_5_pointwise/Conv2D     output              0.0         9.653512
- 32MobilenetV1/MobilenetV1/Conv2d_5_pointwise/BatchNorm/FusedBatchNorm     output              0.0         7.667829
- 33MobilenetV1/MobilenetV1/Conv2d_5_pointwise/Relu6     output              0.0         5.997000
- 34MobilenetV1/MobilenetV1/Conv2d_6_depthwise/depthwise     output              0.0        10.630536
- 35MobilenetV1/MobilenetV1/Conv2d_6_depthwise/BatchNorm/FusedBatchNorm     output              0.0         7.119302
- 36MobilenetV1/MobilenetV1/Conv2d_6_depthwise/Relu6     output              0.0         5.893513
- 37MobilenetV1/MobilenetV1/Conv2d_6_pointwise/Conv2D     output              0.0         7.155815
- 38MobilenetV1/MobilenetV1/Conv2d_6_pointwise/BatchNorm/FusedBatchNorm     output              0.0         8.556471
- 39MobilenetV1/MobilenetV1/Conv2d_6_pointwise/Relu6     output              0.0         5.997000
- 40MobilenetV1/MobilenetV1/Conv2d_7_depthwise/depthwise     output              0.0         7.785377
- 41MobilenetV1/MobilenetV1/Conv2d_7_depthwise/BatchNorm/FusedBatchNorm     output              0.0         9.728534
- 42MobilenetV1/MobilenetV1/Conv2d_7_depthwise/Relu6     output              0.0         5.997000
- 43MobilenetV1/MobilenetV1/Conv2d_7_pointwise/Conv2D     output              0.0        10.175512
- 44MobilenetV1/MobilenetV1/Conv2d_7_pointwise/BatchNorm/FusedBatchNorm     output              0.0         7.713006
- 45MobilenetV1/MobilenetV1/Conv2d_7_pointwise/Relu6     output              0.0         5.893513
- 46MobilenetV1/MobilenetV1/Conv2d_8_depthwise/depthwise     output              0.0         7.092206
- 47MobilenetV1/MobilenetV1/Conv2d_8_depthwise/BatchNorm/FusedBatchNorm     output              0.0         8.126726
- 48MobilenetV1/MobilenetV1/Conv2d_8_depthwise/Relu6     output              0.0         5.997000
- 49MobilenetV1/MobilenetV1/Conv2d_8_pointwise/Conv2D     output              0.0         7.367568
- 50MobilenetV1/MobilenetV1/Conv2d_8_pointwise/BatchNorm/FusedBatchNorm     output              0.0         7.019606
- 51MobilenetV1/MobilenetV1/Conv2d_8_pointwise/Relu6     output              0.0         5.997000
- 52MobilenetV1/MobilenetV1/Conv2d_9_depthwise/depthwise     output              0.0         5.774383
- 53MobilenetV1/MobilenetV1/Conv2d_9_depthwise/BatchNorm/FusedBatchNorm     output              0.0         8.547805
- 54MobilenetV1/MobilenetV1/Conv2d_9_depthwise/Relu6     output              0.0         5.997000
- 55MobilenetV1/MobilenetV1/Conv2d_9_pointwise/Conv2D     output              0.0         6.468984
- 56MobilenetV1/MobilenetV1/Conv2d_9_pointwise/BatchNorm/FusedBatchNorm     output              0.0         7.784554
- 57MobilenetV1/MobilenetV1/Conv2d_9_pointwise/Relu6     output              0.0         5.997000
- 58MobilenetV1/MobilenetV1/Conv2d_10_depthwise/depthwise     output              0.0         5.582568
- 59MobilenetV1/MobilenetV1/Conv2d_10_depthwise/BatchNorm/FusedBatchNorm     output              0.0         6.872409
- 60MobilenetV1/MobilenetV1/Conv2d_10_depthwise/Relu6     output              0.0         5.997000
- 61MobilenetV1/MobilenetV1/Conv2d_10_pointwise/Conv2D     output              0.0         6.684269
- 62MobilenetV1/MobilenetV1/Conv2d_10_pointwise/BatchNorm/FusedBatchNorm     output              0.0         8.068658
- 63MobilenetV1/MobilenetV1/Conv2d_10_pointwise/Relu6     output              0.0         5.997000
- 64MobilenetV1/MobilenetV1/Conv2d_11_depthwise/depthwise     output              0.0         4.983020
- 65MobilenetV1/MobilenetV1/Conv2d_11_depthwise/BatchNorm/FusedBatchNorm     output              0.0         6.884231
- 66MobilenetV1/MobilenetV1/Conv2d_11_depthwise/Relu6     output              0.0         5.997000
- 67MobilenetV1/MobilenetV1/Conv2d_11_pointwise/Conv2D     output              0.0         7.674576
- 68MobilenetV1/MobilenetV1/Conv2d_11_pointwise/BatchNorm/FusedBatchNorm     output              0.0         7.070041
- 69MobilenetV1/MobilenetV1/Conv2d_11_pointwise/Relu6     output              0.0         5.997000
- 70MobilenetV1/MobilenetV1/Conv2d_12_depthwise/depthwise     output              0.0         3.847855
- 71MobilenetV1/MobilenetV1/Conv2d_12_depthwise/BatchNorm/FusedBatchNorm     output              0.0         2.725520
- 72MobilenetV1/MobilenetV1/Conv2d_12_depthwise/Relu6     output              0.0         5.542557
- 73MobilenetV1/MobilenetV1/Conv2d_12_pointwise/Conv2D     output              0.0         8.480393
- 74MobilenetV1/MobilenetV1/Conv2d_12_pointwise/BatchNorm/FusedBatchNorm     output              0.0         8.676384
- 75MobilenetV1/MobilenetV1/Conv2d_12_pointwise/Relu6     output              0.0         5.997000
- 76MobilenetV1/MobilenetV1/Conv2d_13_depthwise/depthwise     output              0.0         1.983111
- 77MobilenetV1/MobilenetV1/Conv2d_13_depthwise/BatchNorm/FusedBatchNorm     output              0.0        10.771639
- 78MobilenetV1/MobilenetV1/Conv2d_13_depthwise/Relu6     output              0.0         5.542557
- 79MobilenetV1/MobilenetV1/Conv2d_13_pointwise/Conv2D     output              0.0         4.284498
- 80MobilenetV1/MobilenetV1/Conv2d_13_pointwise/BatchNorm/FusedBatchNorm     output              0.0        26.890002
- 81MobilenetV1/MobilenetV1/Conv2d_13_pointwise/Relu6     output              0.0         5.997000
- 82MobilenetV1/Logits/AvgPool_1a/AvgPool     output              0.0         5.566554
- 83MobilenetV1/Logits/Conv2d_1c_1x1/Conv2D     output              0.0        24.934220
- 84MobilenetV1/Logits/Conv2d_1c_1x1/BiasAdd     output              0.0        27.343617
- 85MobilenetV1/Logits/SpatialSqueeze     output              0.0        27.343617
- 86MobilenetV1/Predictions/Reshape     output              0.0        27.343617
- 87MobilenetV1/Predictions/Shape     output              0.0      1001.000000
- 88MobilenetV1/Predictions/Reshape_1     output              0.0         0.053118
-??
+  0 input     output              0.0         1.000000
+  1 MobilenetV1/MobilenetV1/Conv2d_0/Conv2D     output              0.0         1.394482
+  2 MobilenetV1/MobilenetV1/Conv2d_0/BatchNorm/FusedBatchNorm     output              0.0         4.993301
+  3 MobilenetV1/MobilenetV1/Conv2d_0/Relu6     output              0.0         5.542557
+  4 MobilenetV1/MobilenetV1/Conv2d_1_depthwise/depthwise     output              0.0        33.813263
+  5 MobilenetV1/MobilenetV1/Conv2d_1_depthwise/BatchNorm/FusedBatchNorm     output              0.0         6.184373
+  6 MobilenetV1/MobilenetV1/Conv2d_1_depthwise/Relu6     output              0.0         5.542557
+  7 MobilenetV1/MobilenetV1/Conv2d_1_pointwise/Conv2D     output              0.0         7.899239
+  8 MobilenetV1/MobilenetV1/Conv2d_1_pointwise/BatchNorm/FusedBatchNorm     output              0.0         5.837967
+  9 MobilenetV1/MobilenetV1/Conv2d_1_pointwise/Relu6     output              0.0         5.893513
+ 10 MobilenetV1/MobilenetV1/Conv2d_2_depthwise/depthwise     output              0.0        18.309839
+ 11 MobilenetV1/MobilenetV1/Conv2d_2_depthwise/BatchNorm/FusedBatchNorm     output              0.0         6.063628
+ 12 MobilenetV1/MobilenetV1/Conv2d_2_depthwise/Relu6     output              0.0         5.997000
+ 13 MobilenetV1/MobilenetV1/Conv2d_2_pointwise/Conv2D     output              0.0         7.503814
+ 14 MobilenetV1/MobilenetV1/Conv2d_2_pointwise/BatchNorm/FusedBatchNorm     output              0.0         7.667636
+ 15 MobilenetV1/MobilenetV1/Conv2d_2_pointwise/Relu6     output              0.0         5.893513
+ 16 MobilenetV1/MobilenetV1/Conv2d_3_depthwise/depthwise     output              0.0        12.700567
+ 17 MobilenetV1/MobilenetV1/Conv2d_3_depthwise/BatchNorm/FusedBatchNorm     output              0.0         6.315380
+ 18 MobilenetV1/MobilenetV1/Conv2d_3_depthwise/Relu6     output              0.0         5.697038
+ 19 MobilenetV1/MobilenetV1/Conv2d_3_pointwise/Conv2D     output              0.0        10.174918
+ 20 MobilenetV1/MobilenetV1/Conv2d_3_pointwise/BatchNorm/FusedBatchNorm     output              0.0        13.323832
+ 21 MobilenetV1/MobilenetV1/Conv2d_3_pointwise/Relu6     output              0.0         5.997000
+ 22 MobilenetV1/MobilenetV1/Conv2d_4_depthwise/depthwise     output              0.0        21.690851
+ 23 MobilenetV1/MobilenetV1/Conv2d_4_depthwise/BatchNorm/FusedBatchNorm     output              0.0         9.441423
+ 24 MobilenetV1/MobilenetV1/Conv2d_4_depthwise/Relu6     output              0.0         5.997000
+ 25 MobilenetV1/MobilenetV1/Conv2d_4_pointwise/Conv2D     output              0.0         7.951455
+ 26 MobilenetV1/MobilenetV1/Conv2d_4_pointwise/BatchNorm/FusedBatchNorm     output              0.0         7.546180
+ 27 MobilenetV1/MobilenetV1/Conv2d_4_pointwise/Relu6     output              0.0         5.997000
+ 28 MobilenetV1/MobilenetV1/Conv2d_5_depthwise/depthwise     output              0.0        10.183417
+ 29 MobilenetV1/MobilenetV1/Conv2d_5_depthwise/BatchNorm/FusedBatchNorm     output              0.0        14.407196
+ 30 MobilenetV1/MobilenetV1/Conv2d_5_depthwise/Relu6     output              0.0         5.997000
+ 31 MobilenetV1/MobilenetV1/Conv2d_5_pointwise/Conv2D     output              0.0         9.653512
+ 32 MobilenetV1/MobilenetV1/Conv2d_5_pointwise/BatchNorm/FusedBatchNorm     output              0.0         7.667829
+ 33 MobilenetV1/MobilenetV1/Conv2d_5_pointwise/Relu6     output              0.0         5.997000
+ 34 MobilenetV1/MobilenetV1/Conv2d_6_depthwise/depthwise     output              0.0        10.630536
+ 35 MobilenetV1/MobilenetV1/Conv2d_6_depthwise/BatchNorm/FusedBatchNorm     output              0.0         7.119302
+ 36 MobilenetV1/MobilenetV1/Conv2d_6_depthwise/Relu6     output              0.0         5.893513
+ 37 MobilenetV1/MobilenetV1/Conv2d_6_pointwise/Conv2D     output              0.0         7.155815
+ 38 MobilenetV1/MobilenetV1/Conv2d_6_pointwise/BatchNorm/FusedBatchNorm     output              0.0         8.556471
+ 39 MobilenetV1/MobilenetV1/Conv2d_6_pointwise/Relu6     output              0.0         5.997000
+ 40 MobilenetV1/MobilenetV1/Conv2d_7_depthwise/depthwise     output              0.0         7.785377
+ 41 MobilenetV1/MobilenetV1/Conv2d_7_depthwise/BatchNorm/FusedBatchNorm     output              0.0         9.728534
+ 42 MobilenetV1/MobilenetV1/Conv2d_7_depthwise/Relu6     output              0.0         5.997000
+ 43 MobilenetV1/MobilenetV1/Conv2d_7_pointwise/Conv2D     output              0.0        10.175512
+ 44 MobilenetV1/MobilenetV1/Conv2d_7_pointwise/BatchNorm/FusedBatchNorm     output              0.0         7.713006
+ 45 MobilenetV1/MobilenetV1/Conv2d_7_pointwise/Relu6     output              0.0         5.893513
+ 46 MobilenetV1/MobilenetV1/Conv2d_8_depthwise/depthwise     output              0.0         7.092206
+ 47 MobilenetV1/MobilenetV1/Conv2d_8_depthwise/BatchNorm/FusedBatchNorm     output              0.0         8.126726
+ 48 MobilenetV1/MobilenetV1/Conv2d_8_depthwise/Relu6     output              0.0         5.997000
+ 49 MobilenetV1/MobilenetV1/Conv2d_8_pointwise/Conv2D     output              0.0         7.367568
+ 50 MobilenetV1/MobilenetV1/Conv2d_8_pointwise/BatchNorm/FusedBatchNorm     output              0.0         7.019606
+ 51 MobilenetV1/MobilenetV1/Conv2d_8_pointwise/Relu6     output              0.0         5.997000
+ 52 MobilenetV1/MobilenetV1/Conv2d_9_depthwise/depthwise     output              0.0         5.774383
+ 53 MobilenetV1/MobilenetV1/Conv2d_9_depthwise/BatchNorm/FusedBatchNorm     output              0.0         8.547805
+ 54 MobilenetV1/MobilenetV1/Conv2d_9_depthwise/Relu6     output              0.0         5.997000
+ 55 MobilenetV1/MobilenetV1/Conv2d_9_pointwise/Conv2D     output              0.0         6.468984
+ 56 MobilenetV1/MobilenetV1/Conv2d_9_pointwise/BatchNorm/FusedBatchNorm     output              0.0         7.784554
+ 57 MobilenetV1/MobilenetV1/Conv2d_9_pointwise/Relu6     output              0.0         5.997000
+ 58 MobilenetV1/MobilenetV1/Conv2d_10_depthwise/depthwise     output              0.0         5.582568
+ 59 MobilenetV1/MobilenetV1/Conv2d_10_depthwise/BatchNorm/FusedBatchNorm     output              0.0         6.872409
+ 60 MobilenetV1/MobilenetV1/Conv2d_10_depthwise/Relu6     output              0.0         5.997000
+ 61 MobilenetV1/MobilenetV1/Conv2d_10_pointwise/Conv2D     output              0.0         6.684269
+ 62 MobilenetV1/MobilenetV1/Conv2d_10_pointwise/BatchNorm/FusedBatchNorm     output              0.0         8.068658
+ 63 MobilenetV1/MobilenetV1/Conv2d_10_pointwise/Relu6     output              0.0         5.997000
+ 64 MobilenetV1/MobilenetV1/Conv2d_11_depthwise/depthwise     output              0.0         4.983020
+ 65 MobilenetV1/MobilenetV1/Conv2d_11_depthwise/BatchNorm/FusedBatchNorm     output              0.0         6.884231
+ 66 MobilenetV1/MobilenetV1/Conv2d_11_depthwise/Relu6     output              0.0         5.997000
+ 67 MobilenetV1/MobilenetV1/Conv2d_11_pointwise/Conv2D     output              0.0         7.674576
+ 68 MobilenetV1/MobilenetV1/Conv2d_11_pointwise/BatchNorm/FusedBatchNorm     output              0.0         7.070041
+ 69 MobilenetV1/MobilenetV1/Conv2d_11_pointwise/Relu6     output              0.0         5.997000
+ 70 MobilenetV1/MobilenetV1/Conv2d_12_depthwise/depthwise     output              0.0         3.847855
+ 71 MobilenetV1/MobilenetV1/Conv2d_12_depthwise/BatchNorm/FusedBatchNorm     output              0.0         2.725520
+ 72 MobilenetV1/MobilenetV1/Conv2d_12_depthwise/Relu6     output              0.0         5.542557
+ 73 MobilenetV1/MobilenetV1/Conv2d_12_pointwise/Conv2D     output              0.0         8.480393
+ 74 MobilenetV1/MobilenetV1/Conv2d_12_pointwise/BatchNorm/FusedBatchNorm     output              0.0         8.676384
+ 75 MobilenetV1/MobilenetV1/Conv2d_12_pointwise/Relu6     output              0.0         5.997000
+ 76 MobilenetV1/MobilenetV1/Conv2d_13_depthwise/depthwise     output              0.0         1.983111
+ 77 MobilenetV1/MobilenetV1/Conv2d_13_depthwise/BatchNorm/FusedBatchNorm     output              0.0        10.771639
+ 78 MobilenetV1/MobilenetV1/Conv2d_13_depthwise/Relu6     output              0.0         5.542557
+ 79 MobilenetV1/MobilenetV1/Conv2d_13_pointwise/Conv2D     output              0.0         4.284498
+ 80 MobilenetV1/MobilenetV1/Conv2d_13_pointwise/BatchNorm/FusedBatchNorm     output              0.0        26.890002
+ 81 MobilenetV1/MobilenetV1/Conv2d_13_pointwise/Relu6     output              0.0         5.997000
+ 82 MobilenetV1/Logits/AvgPool_1a/AvgPool     output              0.0         5.566554
+ 83 MobilenetV1/Logits/Conv2d_1c_1x1/Conv2D     output              0.0        24.934220
+ 84 MobilenetV1/Logits/Conv2d_1c_1x1/BiasAdd     output              0.0        27.343617
+ 85 MobilenetV1/Logits/SpatialSqueeze     output              0.0        27.343617
+ 86 MobilenetV1/Predictions/Reshape     output              0.0        27.343617
+ 87 MobilenetV1/Predictions/Shape     output              0.0      1001.000000
+ 88 MobilenetV1/Predictions/Reshape_1     output              0.0         0.053118

@@ -39,6 +39,9 @@ class AxfcIRTranslator:
     ## @var _md
     # AIX machine description
 
+    ## @var _calib_data
+    # calibration data
+
     ## @var aix_graphs
     # a list of AIXGraphs translated from an input model
 
@@ -56,6 +59,7 @@ class AxfcIRTranslator:
         self._md = md
         self.aix_graphs = None
         self._ir_symtab = None
+        self._calib_data = None
 
         self.__emit_aix_layer_tbl = {
             AIXLayer.AIXLayerType.AIX_LAYER_CONVOLUTION: self._emit_aix_layer_convolution,
@@ -74,12 +78,16 @@ class AxfcIRTranslator:
     #
     # @param self this object
     # @param ir_graph input IR graph
+    # @param calib_data external calibration data
     # @return error info and a list of AIXGraphs
-    def emit_aixh_graphs(self, ir_graph: AxfcIRGraph) -> {AxfcError, list}:
+    def emit_aixh_graphs(self, ir_graph: AxfcIRGraph, calib_data: dict) -> {AxfcError, list}:
         logging.info("AxfcIRTranslator:emit_aixh_graph")
 
         # get the symbol table
         self._ir_symtab = ir_graph.symtab
+
+        # set the calibration data
+        self._calib_data = calib_data
 
         # create a new list of AIX graphs to output
         self.aix_graphs = list()
@@ -193,6 +201,14 @@ class AxfcIRTranslator:
         activation = layer_info.activation
         if activation is not None:
             aix_layer.activation = AIXLayer.AIXActivationMode.Value(activation)
+
+        # calibration
+        if self._calib_data is not None:
+            # get calibration data of this layer
+            calib_data = self._calib_data[ir_node.name]
+            aix_layer.output_threshold = calib_data["output"]
+        else:
+            aix_layer.output_threshold = 0
 
         return AxfcError.SUCCESS, aix_layer
 

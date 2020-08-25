@@ -52,3 +52,7 @@ class AxfcError(enum.Enum):
     INVALID_EWADD_LAYER = 25
     IVNALID_BIASADD_LAYER = 26
     UNREMOVED_IDENTITY = 27
+
+    # Calibration data
+    INVALID_CALIB_FILE_PATH = 28
+    INVALID_CALIB_DATA_FORMAT = 29

@@ -1,5 +1,6 @@
 {
-	"AIX_MODEL_TYPE": "TENSORFLOW",  
+	"AIX_MODEL_TYPE": "TENSORFLOW", 
+	"AIX_MODEL_NAME": "MobilenetV1", 
 	"AIX_PROFIT_THRESHOLD": 500,
 	"AIX_LAYER": { 
 		"Conv2D": {
