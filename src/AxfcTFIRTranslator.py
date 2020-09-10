@@ -362,7 +362,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         aix_layer.output.CopyFrom(output_tensor)
 
         # CHKME - YOUNGSUN (2020.08.10)
-        # bias - update using the calibration data
+        # bias - we need to check what values are to be used for the bias
         bias_tensor = self._emit_aix_tensor_bias(ir_node, True)
         aix_layer.bias.CopyFrom(bias_tensor)
 
@@ -453,6 +453,11 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         output_tensor.dtype = aix_data_type
 
         aix_layer.output.CopyFrom(output_tensor)
+
+        # CHKME - YOUNGSUN (2020.08.10)
+        # bias - we need to check what values are to be used for the bias
+        bias_tensor = self._emit_aix_tensor_bias(ir_node, True)
+        aix_layer.bias.CopyFrom(bias_tensor)
 
         # scale
         scale_tensor = self._emit_aix_tensor_scale(input_nodes[1])
@@ -547,6 +552,22 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         output_tensor.dtype = aix_data_type
 
         aix_layer.output.CopyFrom(output_tensor)
+
+        # bias
+        bias_tensor = self._emit_aix_tensor_bias(ir_node, True)
+        aix_layer.bias.CopyFrom(bias_tensor)
+
+        # scale
+        scale_tensor = self._emit_aix_tensor_scale(ir_node, True)
+        aix_layer.scale.CopyFrom(scale_tensor)
+
+        # mean
+        mean_tensor = self._emit_aix_tensor_mean(ir_node, True)
+        aix_layer.mean.CopyFrom(mean_tensor)
+
+        # variance
+        variance_tensor = self._emit_aix_tensor_variance(ir_node, True)
+        aix_layer.variance.CopyFrom(variance_tensor)
 
         # convdesc
         convolution_desc = self._emit_aix_convolution_desc(ir_node)
@@ -841,6 +862,22 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         # output
         aix_layer.output.CopyFrom(input_tensor)
 
+        # bias
+        bias_tensor = self._emit_aix_tensor_bias(ir_node, True)
+        aix_layer.bias.CopyFrom(bias_tensor)
+
+        # scale
+        scale_tensor = self._emit_aix_tensor_scale(ir_node, True)
+        aix_layer.scale.CopyFrom(scale_tensor)
+
+        # mean
+        mean_tensor = self._emit_aix_tensor_mean(ir_node, True)
+        aix_layer.mean.CopyFrom(mean_tensor)
+
+        # variance
+        variance_tensor = self._emit_aix_tensor_variance(ir_node, True)
+        aix_layer.variance.CopyFrom(variance_tensor)
+
         return AxfcError.SUCCESS
 
     ##  This method emits some tensorflow-specific information of the given IR node
@@ -913,6 +950,22 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         # output
         aix_layer.output.CopyFrom(input_tensor)
+
+        # bias
+        bias_tensor = self._emit_aix_tensor_bias(ir_node, True)
+        aix_layer.bias.CopyFrom(bias_tensor)
+
+        # scale
+        scale_tensor = self._emit_aix_tensor_scale(ir_node, True)
+        aix_layer.scale.CopyFrom(scale_tensor)
+
+        # mean
+        mean_tensor = self._emit_aix_tensor_mean(ir_node, True)
+        aix_layer.mean.CopyFrom(mean_tensor)
+
+        # variance
+        variance_tensor = self._emit_aix_tensor_variance(ir_node, True)
+        aix_layer.variance.CopyFrom(variance_tensor)
 
         # convdesc
         convolution_desc = self._emit_aix_convolution_desc(ir_node)
@@ -1058,30 +1111,30 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         # get the bias (offset) values from the batchnorm node that follows this node.
         succ_node = ir_node.succs[0]
 
-        if succ_node.op != "BatchNorm" and succ_node.op != "FusedBatchNorm":
-            logging.warning("_emit_aix_tensor_bias: the successor is not a batchnorm node")
-            return aix_tensor
+        if succ_node.op == "BatchNorm" or succ_node.op == "FusedBatchNorm":
+            # get the offset (beta) node of the following batchnorm node
+            node_def = succ_node.preds[2].node_def
 
-        # get the offset (beta) node of the following batchnorm node
-        offset_node_def = succ_node.preds[2].node_def
+            # get attribute values of the tensor node
+            attr_value = node_def.attr["value"]
+
+            # tensor shape and size
+            tensor_shape = attr_value.tensor.tensor_shape
+            aix_tensor.size = tensor_shape.dim[0].size
+            aix_tensor.dims.append(aix_tensor.size)
+
+            # tensor_content
+            for value in tf.make_ndarray(attr_value.tensor).flatten():
+                aix_tensor.fval.append(value)
+        else:
+            # logging.warning("_emit_aix_tensor_bias: the successor is not a batchnorm node")
+            node_def = ir_node.node_def
 
         # dtype
-        aix_tensor.dtype = self.__get_aix_data_type(offset_node_def)
+        aix_tensor.dtype = self.__get_aix_data_type(node_def)
 
         # tensor format
         aix_tensor.format = AIXLayer.AIXTensorFormat.AIX_FORMAT_VECTOR
-
-        # get attribute values of the tensor node
-        attr_value = offset_node_def.attr["value"]
-
-        # tensor shape and size
-        tensor_shape = attr_value.tensor.tensor_shape
-        aix_tensor.size = tensor_shape.dim[0].size
-        aix_tensor.dims.append(aix_tensor.size)
-
-        # tensor_content
-        for value in tf.make_ndarray(attr_value.tensor).flatten():
-            aix_tensor.fval.append(value)
 
         return aix_tensor
 
