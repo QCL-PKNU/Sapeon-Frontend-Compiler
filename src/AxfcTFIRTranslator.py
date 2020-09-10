@@ -252,6 +252,9 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         # CHKME - YOUNGSUN (2020.08.10)
         # output_threshold - update using the calibration data
 
+        # epsilon
+        aix_layer.epsilon = 0
+
         # convdesc
         convolution_desc = self._emit_aix_convolution_desc(ir_node)
         aix_layer.convdesc.CopyFrom(convolution_desc)
@@ -383,6 +386,9 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         # CHKME - YOUNGSUN (2020.08.10)
         # output_threshold - update using the calibration data
+
+        # epsilon
+        aix_layer.epsilon = 0
 
         # convdesc
         convolution_desc = self._emit_aix_convolution_desc(ir_node)
@@ -569,6 +575,9 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         variance_tensor = self._emit_aix_tensor_variance(ir_node, True)
         aix_layer.variance.CopyFrom(variance_tensor)
 
+        # epsilon
+        aix_layer.epsilon = 0
+
         # convdesc
         convolution_desc = self._emit_aix_convolution_desc(ir_node)
         aix_layer.convdesc.CopyFrom(convolution_desc)
@@ -659,6 +668,9 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         aix_layer.output.CopyFrom(output_tensor)
 
+        # epsilon
+        aix_layer.epsilon = 0
+        
         # convdesc
         convolution_desc = self._emit_aix_convolution_desc(ir_node)
         aix_layer.convdesc.CopyFrom(convolution_desc)
@@ -878,6 +890,13 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         variance_tensor = self._emit_aix_tensor_variance(ir_node, True)
         aix_layer.variance.CopyFrom(variance_tensor)
 
+        # epsilon
+        aix_layer.epsilon = 0
+
+        # convdesc
+        convolution_desc = self._emit_aix_convolution_desc(ir_node)
+        aix_layer.convdesc.CopyFrom(convolution_desc)
+
         return AxfcError.SUCCESS
 
     ##  This method emits some tensorflow-specific information of the given IR node
@@ -966,6 +985,9 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         # variance
         variance_tensor = self._emit_aix_tensor_variance(ir_node, True)
         aix_layer.variance.CopyFrom(variance_tensor)
+
+        # epsilon
+        aix_layer.epsilon = 0
 
         # convdesc
         convolution_desc = self._emit_aix_convolution_desc(ir_node)
