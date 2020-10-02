@@ -12,9 +12,9 @@
 		},
 		"DepthwiseConv2dNative": {
 			"layer": "AIX_LAYER_GROUP_CONV",
-			"activation": "AIX_ACTIVATION_IDENTITY",
+			"activation": null,
 			"is_group": true,
-			"is_conv": true,
+			"is_conv": false,
 			"profit": 100
 		},
 		"FusedBatchNorm": {

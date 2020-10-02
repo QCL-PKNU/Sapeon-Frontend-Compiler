@@ -76,4 +76,7 @@ def print_def(tensor):
 # @param operation the operation object
 # @return value the decoded value of tensor content
 def print_tensor_content(operation):
-    return tf.make_ndarray(operation.get_attr('value'))
+    if 'value' in operation.node_def.attr:
+        return tf.make_ndarray(operation.get_attr('value'))
+    else:
+        return None

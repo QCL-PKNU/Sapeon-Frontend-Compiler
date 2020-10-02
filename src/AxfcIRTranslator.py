@@ -13,6 +13,29 @@
 from aixh_pb2 import *
 from AxfcIRGraph import *
 from AxfcMachineDesc import *
+import tensorflow as tf
+from util import *
+import json
+import numpy as np
+from math import ceil
+
+aix_data_type_tbl = {
+    tf.float16: AIXLayer.AIXDataType.AIX_DATA_HALF,
+    tf.float32: AIXLayer.AIXDataType.AIX_DATA_FLOAT,
+    tf.float64: AIXLayer.AIXDataType.AIX_DATA_DOUBLE,
+    tf.uint8: AIXLayer.AIXDataType.AIX_DATA_UINT8,
+    tf.int8: AIXLayer.AIXDataType.AIX_DATA_SINT8,
+    tf.int16: AIXLayer.AIXDataType.AIX_DATA_SINT16
+}
+
+aix_tensor_format_tbl = {
+    b"NCHW": AIXLayer.AIXTensorFormat.AIX_FORMAT_NCHW,
+    b"NHWC": AIXLayer.AIXTensorFormat.AIX_FORMAT_NHWC,
+    b"NWHC": AIXLayer.AIXTensorFormat.AIX_FORMAT_NWHC,
+    b"VECTOR": AIXLayer.AIXTensorFormat.AIX_FORMAT_VECTOR
+}
+
+DEFAULT_TYPE = 'NCHW'
 
 
 #######################################################################
@@ -29,6 +52,12 @@ class AIXTensorType(enum.Enum):
     AIX_TENSOR_OUTPUT = 6
     AIX_TENSOR_UNKNOWN = 7
 
+class AIXHyperParam(enum.Enum):
+    FILTER = 0
+    SCALE = 1
+    MEAN = 2
+    VARIANCE = 3
+    BIAS = 4
 
 #######################################################################
 # AxfcIRTranslator class
@@ -72,6 +101,11 @@ class AxfcIRTranslator:
             AIXLayer.AIXLayerType.AIX_LAYER_BIASADD: self._emit_aix_layer_biasadd,
             AIXLayer.AIXLayerType.AIX_LAYER_ACTIVATION: self._emit_aix_layer_activation
         }
+
+        model_path = '/Users/hengsengthai/Documents/06. Projects/skt-aix-frontend-compiler/tst/mobilenet_remove_identity.pb'
+        graph_def = loadFrozenModel(model_path)
+        with tf.Graph().as_default() as self.graph:
+            tf.import_graph_def(graph_def, name='')
 
     ## This method translates IR blocks of the given IR graph into AIXGraphs and
     #  return them.
@@ -161,25 +195,13 @@ class AxfcIRTranslator:
         aix_layer.name = ir_node.name
 
         # layer types
+        if not layer_info.is_conv:
+            aix_layer.type.append(AIXLayer.AIX_LAYER_SKIP_CONV)
         layer_type = AIXLayer.AIXLayerType.Value(layer_info.layer)
         aix_layer.type.append(layer_type)
 
-        # emit the output specific to each AIX layer type
-        try:
-            emit_aix_layer = self.__emit_aix_layer_tbl[layer_type]
-        except KeyError:
-            logging.warning("__emit_aixh_node: unsupported layer type - %s, %s", ir_node.op, layer_type)
-            return AxfcError.UNSUPPORTED_AIX_LAYER_EMIT, None
-
-        # register the generated AIX layer
-        ir_node.aix_layer = aix_layer
-
-        # perform the emission of AIX layers
-        err = emit_aix_layer(ir_node)
-
-        if err is not AxfcError.SUCCESS:
-            logging.warning("AxfcIRTranslator:__emit_aixh_node - %s", err)
-            return err, None
+        # setup layer: input, output, filter, bias, scale, variance, convdesc, samplingdesc
+        self._setup_aix_layer(aix_layer)
 
         # layer input and output
         if ir_node.is_input:
@@ -211,6 +233,267 @@ class AxfcIRTranslator:
             aix_layer.output_threshold = 0
 
         return AxfcError.SUCCESS, aix_layer
+
+    ## This method is used to setup the aix layer such as:
+    # Input, Output, default inputs attributes, filter, scale mean,
+    # variance, biase, Convdesc, epsilon
+    #
+    # @param self this object
+    # @param aix_layer is the object of AIXLayer from proto
+    def _setup_aix_layer(self, aix_layer):
+
+        tensor = self.graph.get_tensor_by_name('import/' + aix_layer.name + ':0')
+
+        aix_input_tensor_format_type = {
+            'gamma': aix_layer.scale,
+            'moving_variance': aix_layer.variance,
+            'moving_mean': aix_layer.mean,
+            'weights': aix_layer.filter,
+            # 'beta' : aix_layer.bias,
+            'biases': aix_layer.bias
+        }
+
+        # Input
+        input_tensors = list(filter(lambda x: x.op.type != 'Const', tensor.op.inputs))
+        if input_tensors:
+            aix_layer.input.CopyFrom(self._emit_input_tensor(input_tensors[0], isInoutTensor=True))
+
+        # Output
+        aix_layer.output.CopyFrom(self._emit_input_tensor(tensor, isInoutTensor=True))
+
+        # set default filter
+        self._setup_default_hyperparam(aix_layer, AIXHyperParam.FILTER)
+
+
+        # set default mean, scale , variance to Batchnorm and Conv2
+        type = aix_layer.type[-1]
+        if type in [AIXLayer.AIX_LAYER_CONVOLUTION, AIXLayer.AIX_LAYER_BATCHNORM]:
+            self._setup_default_hyperparam(aix_layer, AIXHyperParam.SCALE)
+            self._setup_default_hyperparam(aix_layer, AIXHyperParam.MEAN)
+            self._setup_default_hyperparam(aix_layer, AIXHyperParam.VARIANCE)
+
+        # # bias is not in BN or ACT
+        # if type not in [AIXLayer.AIX_LAYER_BATCHNORM, AIXLayer.AIX_LAYER_ACTIVATION] :
+        #     self.__setup_default_hyperparam(aix_layer, AIXHyperParam.BIAS)
+
+        # filter, scale, mean, variance, bias
+        for i in tensor.op.inputs:
+            for name, func in aix_input_tensor_format_type.items():
+                if name in i.name:
+                    func.CopyFrom(self._emit_input_tensor(i))
+
+                    # set the number of filter = output channel
+                    if name is 'weights':
+                        func.dims[-1] = aix_layer.output.dims[2]
+
+        # Convdesc
+        self._setup_convdesc(aix_layer, tensor)
+
+        # samplidesc
+        self._setup_samplingdesc(aix_layer)
+
+        # epsilon
+        if 'epsilon' in tensor.op.node_def.attr:
+            aix_layer.epsilon = tensor.op.node_def.attr['epsilon'].f
+        else:
+            aix_layer.epsilon = 1e-06
+
+    ## This method is used to emit the AIXTensor to be the input, output, scale, filter, biase, and variance
+    #
+    # @param self this object
+    # @param attr_tensor AIXTensor object
+    # @param isInoutTensor if it is Input or output tensor it must be true
+    # @return aix_tensor AIXTensor object
+    def _emit_input_tensor(self, attr_tensor, isInoutTensor = False) -> AIXLayer.AIXTensor:
+
+        aix_tensor = AIXLayer.AIXTensor()
+
+        # set dtype
+        aix_tensor.dtype = aix_data_type_tbl[attr_tensor.dtype]
+
+        if "data_format" in attr_tensor.op.node_def.attr:
+            data_format = attr_tensor.op.node_def.attr["data_format"].s
+            # set fixed data_format for darknet
+            # TODO: delete this line when darknet's data_format support all
+            data_format = DEFAULT_TYPE.encode()
+        elif attr_tensor.shape.ndims == 1:
+            data_format = b'VECTOR'
+        else:
+            data_format = DEFAULT_TYPE.encode()
+
+        # set format
+        aix_tensor.format = aix_tensor_format_tbl[data_format]
+
+        # set fval
+        # check if the dataformat is int32 so it uses bval
+        dims = print_tensor_content(attr_tensor.op)
+
+        if dims is not None:
+            for dim in dims.flatten():
+                aix_tensor.fval.append(dim)
+
+        # set dims
+        shape = list(map(lambda x: 1 if not x else x, attr_tensor.shape))
+        print(attr_tensor.name)
+        if isInoutTensor:
+            # set None element to 1
+
+            # map 'NHWC' format with opt_shape
+            shape_dict = dict(zip('NHWC', shape))
+
+            # reverse appending (following aix compiler structure)
+            for t in reversed(DEFAULT_TYPE):
+                aix_tensor.dims.append(shape_dict[t])
+        else:
+            aix_tensor.dims.extend(shape)
+
+        # set size
+        aix_tensor.size = np.prod(aix_tensor.dims)
+
+        return aix_tensor
+
+    ## This method is used to set the default hyperparam: filter, scale, mean, variance
+    #
+    # @param self this object
+    # @param layer AIXLayer object
+    # @param hyper_param AIXHyperParam : FILTER, MEAN, SCALE, VARIANCE
+    def _setup_default_hyperparam(self, aix_layer: AIXLayer, hyper_param: AIXHyperParam):
+
+        tensor = AIXLayer.AIXTensor()
+
+        # set filter
+        if hyper_param is AIXHyperParam.FILTER:
+
+            tensor.dtype = aix_layer.input.dtype
+            tensor.format = aix_layer.input.format
+            tensor.dims.append(1) # width
+            tensor.dims.append(1) # height
+            tensor.dims.append(aix_layer.input.dims[2]) # channel
+            tensor.dims.append(aix_layer.output.dims[2]) # number of filter
+
+            aix_layer.filter.CopyFrom(tensor)
+
+        else:
+
+            tensor.dtype = aix_layer.output.dtype
+            tensor.format = AIXLayer.AIX_FORMAT_VECTOR
+
+            # set the output channel to tensor dim
+            output_channel = aix_layer.output.dims[2]
+            tensor.dims.append(output_channel)
+            tensor.size = output_channel
+
+            # set mean value to 0
+            if hyper_param is AIXHyperParam.MEAN:
+                tensor.fval.extend([0]*output_channel)
+                aix_layer.mean.CopyFrom(tensor)
+
+            # set scale value to 1
+            elif hyper_param is AIXHyperParam.SCALE:
+                tensor.fval.extend([1] * output_channel)
+                aix_layer.scale.CopyFrom(tensor)
+
+            # set variance to 1
+            elif hyper_param is AIXHyperParam.VARIANCE:
+                tensor.fval.extend([1] * output_channel)
+                aix_layer.variance.CopyFrom(tensor)
+
+            # set bias to 1
+            elif hyper_param is AIXHyperParam.BIAS:
+                tensor.fval.extend([1] * output_channel)
+                aix_layer.bias.CopyFrom(tensor)
+
+    ## This method is used to set the convdesc to layer
+    #
+    # @param layer AIXLayer object
+    # @param tensor AIXTensor object
+    def _setup_convdesc(self, aix_layer, tensor):
+
+        convdesc = AIXLayer.AIXConvolutionDesc()
+
+        # dtype
+        convdesc.dtype = aix_layer.input.dtype
+
+        # strides
+        # format from NHWC -> NCHW
+        if 'strides' in tensor.op.node_def.attr:
+            stride_dict = dict(zip('ABCD', tensor.op.get_attr('strides')))
+            for val in 'ADBC':
+                convdesc.stride.append(stride_dict[val])
+        else:
+            convdesc.stride.extend([1, 1, 0, 0])
+
+        # paddings
+        if 'padding' in tensor.op.node_def.attr:
+
+            if tensor.op.get_attr('padding') == b'VALID':
+                convdesc.padding.extend([0, 0, 0, 0])
+            else:  # SAME
+                input_h = aix_layer.input.dims[1]
+                stride_h = convdesc.stride[0]
+                filter_h = aix_layer.filter.dims[0]
+
+                input_w = aix_layer.input.dims[0]
+                stride_w = convdesc.stride[1]
+                filter_w = aix_layer.filter.dims[1]
+
+                if input_h % stride_h == 0:
+                    pad_along_height = max((filter_h - stride_h), 0)
+                else:
+                    pad_along_height = max(filter_h - (input_h % stride_h), 0)
+                if input_w % stride_w == 0:
+                    pad_along_width = max((filter_w - stride_w), 0)
+                else:
+                    pad_along_width = max(filter_w - (input_w % stride_w), 0)
+
+                ## Tensorflow system
+                # pad_top = pad_along_height // 2
+                # pad_bottom = pad_along_height - pad_top
+                # pad_left = pad_along_width // 2
+                # pad_right = pad_along_width - pad_left
+
+                ## Darknet system
+                pad_bottom = pad_along_height // 2
+                pad_top = pad_along_height - pad_bottom
+                pad_right = pad_along_width // 2
+                pad_left = pad_along_width - pad_right
+
+                convdesc.padding.extend([pad_top, pad_bottom, pad_left, pad_right])
+
+        else:
+            convdesc.padding.extend([0, 0, 0, 0])
+
+        # dilation
+        if 'dilations' in tensor.op.node_def.attr:
+            convdesc.dilation.extend(tensor.op.get_attr('dilations'))
+        else:
+            convdesc.dilation.extend([1,1,1,1])
+
+        # groups
+        if AIXLayer.AIX_LAYER_GROUP_CONV in aix_layer.type:
+            convdesc.groups = aix_layer.input.dims[2]
+        else:
+            convdesc.groups = 1
+
+        aix_layer.convdesc.CopyFrom(convdesc)
+
+    ## This method is used to set the samplingdesc to layer
+    def _setup_samplingdesc(self, aix_layer):
+
+        if len(aix_layer.type) > 1:
+
+            if aix_layer.type[1] in [AIXLayer.AIX_LAYER_MAXPOOL,
+                                 AIXLayer.AIX_LAYER_AVGPOOL,
+                                 AIXLayer.AIX_LAYER_UPSAMPLE,
+                                 AIXLayer.AIX_LAYER_REORG]:
+
+                samplingdesc = AIXLayer.AIXSamplingDesc()
+                samplingdesc.mode = AIXLayer.AIX_POOLING_AVERAGE
+                samplingdesc.padding.extend([0, 0, 0, 0])
+                samplingdesc.stride.extend([0, 0, 0, 0])
+                samplingdesc.window.extend([0, 0, 0, 0])
+
+                aix_layer.samplingdesc.CopyFrom(samplingdesc)
 
     ## This method is used to return a list of already emitted input nodes.
     #  If there are input nodes that have not translated yet,
