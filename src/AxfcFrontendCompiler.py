@@ -121,7 +121,7 @@ class AxfcFrontendCompiler:
 
         if model_type is AxfcMachineDesc.TYPE_TENSORFLOW:
             self.__ir_builder = AxfcTFIRBuilder(self.__md)
-            self.__ir_translator = AxfcTFIRTranslator(self.__md)
+            self.__ir_translator = AxfcTFIRTranslator(self.__md, path)
         else:
             # currently, we support only Tensorflow as an input type for the compilation
             logging.warning("Not supported input type: %d", in_type)

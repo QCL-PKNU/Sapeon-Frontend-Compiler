@@ -37,6 +37,12 @@ aix_tensor_format_tbl = {
     b"VECTOR": AIXLayer.AIXTensorFormat.AIX_FORMAT_VECTOR
 }
 
+#######################################################################
+# Global variable
+#######################################################################
+
+# following the Darknet format
+DEFAULT_TYPE = 'NCHW'
 
 #######################################################################
 # AxfcTFIRTranslator class
@@ -45,8 +51,12 @@ aix_tensor_format_tbl = {
 class AxfcTFIRTranslator(AxfcIRTranslator):
 
     ## The constructor
-    def __init__(self, md):
+    def __init__(self, md, path):
         super().__init__(md)
+
+        graph_def = loadFrozenModel(path)
+        with tf.Graph().as_default() as self.graph:
+            tf.import_graph_def(graph_def, name='')
 
     ###################################################################
     # private methods
@@ -107,6 +117,14 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         return self.__get_values_of_format(aix_tensor.dims, aix_tensor.format)
 
+    ## This method is used get the tensor by name
+    # @param self this object
+    # @param name tensor's name
+    # @return tensor TensorProto object
+    def __get_tensor_by_name(self, name: str):
+
+        return self.graph.get_tensor_by_name('import/' + name + ':0')
+
     ##  This method get data from aix_tensor_format format as dictionary
     #
     # @param self this object
@@ -125,6 +143,96 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         # map the data format with its value
         return dict(zip(data_format, values))
 
+    ## This method is used to emit the AIXTensor to be the input, output, scale, filter, biase, and variance
+    #
+    # @param self this object
+    # @param attr_tensor AIXTensor object
+    # @param isInoutTensor if it is Input or output tensor it must be true
+    # @return aix_tensor AIXTensor object
+    def __emit_aix_tensor(self, tensor, is_inout_tensor= False) -> AIXLayer.AIXTensor:
+
+        aix_tensor = AIXLayer.AIXTensor()
+
+        # set dtype
+        aix_tensor.dtype = aix_data_type_tbl[tensor.dtype]
+
+        if "data_format" in tensor.op.node_def.attr:
+            data_format = tensor.op.node_def.attr["data_format"].s
+            # set fixed data_format for darknet
+            # TODO: delete this line when darknet's data_format support all
+            data_format = DEFAULT_TYPE.encode()
+        elif tensor.shape.ndims == 1:
+            data_format = b'VECTOR'
+        else:
+            data_format = DEFAULT_TYPE.encode()
+
+        # set format
+        aix_tensor.format = aix_tensor_format_tbl[data_format]
+
+        # set fval
+        # check if the dataformat is int32 so it uses bval
+        dims = print_tensor_content(tensor.op)
+
+        if dims is not None:
+            for dim in dims.flatten():
+                aix_tensor.fval.append(dim)
+
+        # set dims
+        shape = list(map(lambda x: 1 if not x else x, tensor.shape))
+
+        if is_inout_tensor:
+            # set None element to 1
+
+            # map 'NHWC' format with opt_shape
+            shape_dict = dict(zip('NHWC', shape))
+
+            # reverse appending (following aix compiler structure)
+            for t in reversed(DEFAULT_TYPE):
+                aix_tensor.dims.append(shape_dict[t])
+        else:
+            aix_tensor.dims.extend(shape)
+
+        # set size
+        aix_tensor.size = np.prod(aix_tensor.dims)
+
+        return aix_tensor
+
+    ## This method is used to set the default hyperparameters: scale, mean, variance
+    #
+    # @param self this object
+    # @param layer AIXLayer object
+    # @return AIXTensor it can be mean, scale, or variance tensor
+    def __emit_default_hyper_parameter(self, aix_layer: AIXLayer, default_value:int) -> AIXLayer.AIXTensor:
+
+        tensor = AIXLayer.AIXTensor()
+
+        tensor.dtype = aix_layer.output.dtype
+        tensor.format = AIXLayer.AIX_FORMAT_VECTOR
+
+        # set the output channel to tensor dims [2]
+        output_channel = aix_layer.output.dims[2]
+        tensor.dims.append(output_channel)
+        tensor.size = output_channel
+        tensor.fval.extend([default_value] * output_channel)
+
+        return tensor
+
+    ## TEST: testing function for samplingdesc
+    # TODO: implement samplingdesc
+    def __emit_samplingdesc(self, ir_node: AxfcIRNode):
+
+        if ir_node.aix_layer.type[-1] in [AIXLayer.AIX_LAYER_MAXPOOL,
+                                 AIXLayer.AIX_LAYER_AVGPOOL,
+                                 AIXLayer.AIX_LAYER_UPSAMPLE,
+                                 AIXLayer.AIX_LAYER_REORG]:
+
+            samplingdesc = AIXLayer.AIXSamplingDesc()
+            samplingdesc.mode = AIXLayer.AIX_POOLING_AVERAGE
+            samplingdesc.padding.extend([0, 0, 0, 0])
+            samplingdesc.stride.extend([0, 0, 0, 0])
+            samplingdesc.window.extend([0, 0, 0, 0])
+
+            return samplingdesc
     ###################################################################
     # protected methods
     ###################################################################
@@ -136,7 +244,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
     # @param self this object
     # @param ir_node an IR node to be emitted
     # @return an output AIX convolution layer
-    def _emit_aix_layer_convolution(self, ir_node: AxfcIRNode) -> AxfcError:
+    def _emit_aix_layer_convolution(self, ir_node: AxfcIRNode, **kwargs) -> AxfcError:
         logging.info("AxfcTFIRTranslator:_emit_aix_layer_convolution - node %d", ir_node.layer_id)
 
         """
@@ -145,119 +253,25 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         )
         """
 
-        # get the aix layer of the given IR node
         aix_layer = ir_node.aix_layer
 
-        # tensorflow node_def for the given ir_node
-        tf_node_def = ir_node.node_def
+        tensor = self.__get_tensor_by_name(ir_node.name)
 
-        # data type
-        aix_data_type = self.__get_aix_data_type(tf_node_def)
-        if aix_data_type is None:
-            return AxfcError.INVALID_AIX_LAYER_TYPE
+        # filter, scale, mean, variance
+        aix_layer.filter.CopyFrom(self._emit_aix_tensor_filter(ir_node, tensor=tensor))
+        aix_layer.scale.CopyFrom(self._emit_aix_tensor_scale(ir_node, tensor=tensor))
+        aix_layer.mean.CopyFrom(self._emit_aix_tensor_mean(ir_node, tensor=tensor))
+        aix_layer.variance.CopyFrom(self._emit_aix_tensor_variance(ir_node, tensor=tensor))
+        aix_layer.bias.CopyFrom(self._emit_aix_tensor_bias(ir_node, tensor=tensor))
 
-        # tensor format
-        aix_tensor_format = self.__get_aix_tensor_format(tf_node_def)
-        if aix_tensor_format is None:
-            return AxfcError.INVALID_AIX_TENSOR_FORMAT
-
-        # inputs/input
-        err, input_nodes = self._get_emitted_input_nodes(ir_node)
-        if err != AxfcError.SUCCESS:
-            return err
-
-        input_aix_layer = input_nodes[0].aix_layer
-
-        if input_aix_layer is None:
-            input_tensor = self._emit_aix_tensor_input(input_nodes[0])
-            input_tensor.format = aix_tensor_format
-            input_tensor.dtype = aix_data_type
-            input_tensor.ptr = 0
-        else:
-            input_tensor = input_aix_layer.output
-
-        aix_layer.input.CopyFrom(input_tensor)
-
-        # inputs/filter
-        filter_tensor = self._emit_aix_tensor_filter(input_nodes[1])
-        filter_tensor.format = aix_tensor_format
-        filter_tensor.dtype = aix_data_type
-
-        aix_layer.filter.CopyFrom(filter_tensor)
-
-        # strides
-        node_attr = tf_node_def.attr
-
-        if "strides" in node_attr:
-            strides = node_attr["strides"].list.i
-        else:
-            return AxfcError.INVALID_CONVOLUTION_LAYER
-
-        # padding
-        if "padding" in node_attr:
-            padding = node_attr["padding"].s
-        else:
-            return AxfcError.INVALID_CONVOLUTION_LAYER
-
-        # output - the current IR node
-
-        # get data as dictionary has a key as the element of format
-        input_dims = self.__get_aix_tensor_dims(input_tensor)
-        filter_dims = self.__get_aix_tensor_dims(filter_tensor)
-        strides = self.__get_values_of_format(strides, filter_tensor.format)
-
-        if padding == b"SAME":
-            output_h = input_dims['H']
-            output_w = input_dims['W']
-        elif padding == b"VALID":
-            output_h = input_dims['H'] - filter_dims['H'] + 1
-            output_w = input_dims['W'] - filter_dims['W'] + 1
-        else:
-            output_h = 0
-            output_w = 0
-
-        output_dims: list = [
-            input_dims['N'],  # n
-            math.ceil(output_h / strides['H']),  # h
-            math.ceil(output_w / strides['W']),  # w
-            filter_dims['C']  # c
-        ]
-
-        output_tensor = self._emit_aix_tensor_output(ir_node, output_dims)
-        output_tensor.format = aix_tensor_format
-        output_tensor.dtype = aix_data_type
-
-        aix_layer.output.CopyFrom(output_tensor)
-
-        # CHKME - YOUNGSUN (2020.08.10)
-        # bias - update using the calibration data
-        bias_tensor = self._emit_aix_tensor_bias(ir_node, True)
-        aix_layer.bias.CopyFrom(bias_tensor)
-
-        # scale
-        scale_tensor = self._emit_aix_tensor_scale(ir_node, True)
-        aix_layer.scale.CopyFrom(scale_tensor)
-
-        # mean
-        mean_tensor = self._emit_aix_tensor_mean(ir_node, True)
-        aix_layer.mean.CopyFrom(mean_tensor)
-
-        # variance
-        variance_tensor = self._emit_aix_tensor_variance(ir_node, True)
-        aix_layer.variance.CopyFrom(variance_tensor)
-
-        # CHKME - YOUNGSUN (2020.08.10)
-        # input_threshold - update using the calibration data
-
-        # CHKME - YOUNGSUN (2020.08.10)
-        # output_threshold - update using the calibration data
+        # convolution desc
+        aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node, tensor=tensor))
 
         # epsilon
-        aix_layer.epsilon = 0
-
-        # convdesc
-        convolution_desc = self._emit_aix_convolution_desc(ir_node)
-        aix_layer.convdesc.CopyFrom(convolution_desc)
+        if 'epsilon' in tensor.op.node_def.attr:
+            aix_layer.epsilon = tensor.op.node_def.attr['epsilon'].f
+        else:
+            aix_layer.epsilon = 1e-06
 
         return AxfcError.SUCCESS
 
@@ -268,7 +282,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
     # @param self this object
     # @param ir_node an IR node to be emitted
     # @return an output AIX convolution layer
-    def _emit_aix_layer_group_conv(self, ir_node: AxfcIRNode) -> AxfcError:
+    def _emit_aix_layer_group_conv(self, ir_node: AxfcIRNode, **kwargs) -> AxfcError:
         logging.info("AxfcTFIRTranslator:_emit_aix_layer_convolution - node %d", ir_node.layer_id)
 
         """
@@ -277,122 +291,25 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         )
         """
 
-        # get the aix layer of the given IR node
         aix_layer = ir_node.aix_layer
 
-        # tensorflow node_def for the given ir_node
-        tf_node_def = ir_node.node_def
+        tensor = self.__get_tensor_by_name(ir_node.name)
 
-        # data type
-        aix_data_type = self.__get_aix_data_type(tf_node_def)
-        if aix_data_type is None:
-            return AxfcError.INVALID_AIX_LAYER_TYPE
+        # filter
+        aix_layer.filter.CopyFrom(self._emit_aix_tensor_filter(ir_node, tensor=tensor))
+        aix_layer.scale.CopyFrom(self._emit_aix_tensor_scale(ir_node, tensor=tensor))
+        aix_layer.mean.CopyFrom(self._emit_aix_tensor_mean(ir_node, tensor=tensor))
+        aix_layer.variance.CopyFrom(self._emit_aix_tensor_variance(ir_node, tensor=tensor))
+        aix_layer.bias.CopyFrom(self._emit_aix_tensor_bias(ir_node, tensor=tensor))
 
-        # tensor format
-        aix_tensor_format = self.__get_aix_tensor_format(tf_node_def)
-        if aix_tensor_format is None:
-            return AxfcError.INVALID_AIX_TENSOR_FORMAT
-
-        # emit tensor inputs
-        input_nodes = list()
-
-        for input_name in tf_node_def.input:
-            input_nodes.append(self._ir_symtab[input_name])
-
-        # type
-        aix_layer.type.append(AIXLayer.AIXLayerType.AIX_LAYER_SKIP_CONV)
-
-        # inputs/input
-        err, input_nodes = self._get_emitted_input_nodes(ir_node)
-        if err != AxfcError.SUCCESS:
-            return err
-
-        input_aix_layer = input_nodes[0].aix_layer
-
-        if input_aix_layer is None:
-            input_tensor = self._emit_aix_tensor_input(input_nodes[0])
-            input_tensor.format = aix_tensor_format
-            input_tensor.dtype = aix_data_type
-            input_tensor.ptr = 0
-        else:
-            input_tensor = input_aix_layer.output
-
-        aix_layer.input.CopyFrom(input_tensor)
-
-        # inputs/filter
-        filter_tensor = self._emit_aix_tensor_filter(input_nodes[1])
-        filter_tensor.format = aix_tensor_format
-        filter_tensor.dtype = aix_data_type
-
-        aix_layer.filter.CopyFrom(filter_tensor)
-
-        # strides
-        node_attr = tf_node_def.attr
-
-        if "strides" in node_attr:
-            strides = node_attr["strides"].list.i
-        else:
-            return AxfcError.INVALID_CONVOLUTION_LAYER
-
-        # padding
-        if "padding" in node_attr:
-            padding = node_attr["padding"].s
-        else:
-            return AxfcError.INVALID_CONVOLUTION_LAYER
-
-        # output - the current IR node
-        if padding == b"SAME":
-            output_h = input_tensor.dims[1]
-            output_w = input_tensor.dims[2]
-        elif padding == b"VALID":
-            output_h = input_tensor.dims[1] - filter_tensor.dims[0] + 1
-            output_w = input_tensor.dims[2] - filter_tensor.dims[1] + 1
-        else:
-            output_h = 0
-            output_w = 0
-
-        output_dims: list = [
-            input_tensor.dims[0],  # n
-            math.ceil(output_h / strides[1]),  # h
-            math.ceil(output_w / strides[2]),  # w
-            input_tensor.dims[3] * filter_tensor.dims[3]  # c = k * channel_multiplier
-        ]
-
-        output_tensor = self._emit_aix_tensor_output(ir_node, output_dims)
-        output_tensor.format = aix_tensor_format
-        output_tensor.dtype = aix_data_type
-
-        aix_layer.output.CopyFrom(output_tensor)
-
-        # CHKME - YOUNGSUN (2020.08.10)
-        # bias - we need to check what values are to be used for the bias
-        bias_tensor = self._emit_aix_tensor_bias(ir_node, True)
-        aix_layer.bias.CopyFrom(bias_tensor)
-
-        # scale
-        scale_tensor = self._emit_aix_tensor_scale(ir_node, True)
-        aix_layer.scale.CopyFrom(scale_tensor)
-
-        # mean
-        mean_tensor = self._emit_aix_tensor_mean(ir_node, True)
-        aix_layer.mean.CopyFrom(mean_tensor)
-
-        # variance
-        variance_tensor = self._emit_aix_tensor_variance(ir_node, True)
-        aix_layer.variance.CopyFrom(variance_tensor)
-
-        # CHKME - YOUNGSUN (2020.08.10)
-        # input_threshold - update using the calibration data
-
-        # CHKME - YOUNGSUN (2020.08.10)
-        # output_threshold - update using the calibration data
+        # convolution desc
+        aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node, tensor=tensor))
 
         # epsilon
-        aix_layer.epsilon = 0
-
-        # convdesc
-        convolution_desc = self._emit_aix_convolution_desc(ir_node)
-        aix_layer.convdesc.CopyFrom(convolution_desc)
+        if 'epsilon' in tensor.op.node_def.attr:
+            aix_layer.epsilon = tensor.op.node_def.attr['epsilon'].f
+        else:
+            aix_layer.epsilon = 1e-06
 
         return AxfcError.SUCCESS
 
@@ -403,7 +320,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
     # @param self this object
     # @param ir_node an IR node to be emitted
     # @return an output AIX batchnorm layer
-    def _emit_aix_layer_batchnorm(self, ir_node: AxfcIRNode) -> AxfcError:
+    def _emit_aix_layer_batchnorm(self, ir_node: AxfcIRNode, **kwargs) -> AxfcError:
         logging.info("AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node %d", ir_node.layer_id)
 
         """
@@ -412,80 +329,24 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         )
         """
 
-        # get the aix layer of the given IR node
         aix_layer = ir_node.aix_layer
-        aix_layer.type.append(AIXLayer.AIXLayerType.AIX_LAYER_SKIP_CONV)
 
-        # tensorflow node_def for the given ir_node
-        tf_node_def = ir_node.node_def
+        tensor = self.__get_tensor_by_name(ir_node.name)
 
-        # data type
-        aix_data_type = self.__get_aix_data_type(tf_node_def)
-        if aix_data_type is None:
-            return AxfcError.INVALID_AIX_LAYER_TYPE
+        # filter, scale, mean, variance
+        aix_layer.filter.CopyFrom(self._emit_aix_tensor_filter(ir_node, tensor=tensor))
+        aix_layer.scale.CopyFrom(self._emit_aix_tensor_scale(ir_node, tensor=tensor))
+        aix_layer.mean.CopyFrom(self._emit_aix_tensor_mean(ir_node, tensor=tensor))
+        aix_layer.variance.CopyFrom(self._emit_aix_tensor_variance(ir_node, tensor=tensor))
 
-        # tensor format
-        aix_tensor_format = self.__get_aix_tensor_format(tf_node_def)
-        if aix_tensor_format is None:
-            return AxfcError.INVALID_AIX_TENSOR_FORMAT
-
-        # inputs/input
-        err, input_nodes = self._get_emitted_input_nodes(ir_node)
-        if err != AxfcError.SUCCESS:
-            return err
-
-        input_aix_layer = input_nodes[0].aix_layer
-
-        if input_aix_layer is None:
-            input_tensor = self._emit_aix_tensor_input(input_nodes[0])
-            input_tensor.format = aix_tensor_format
-            input_tensor.dtype = aix_data_type
-            input_tensor.ptr = 0
-        else:
-            input_tensor = input_aix_layer.output
-
-        aix_layer.input.CopyFrom(input_tensor)
-
-        # inputs/filter
-        filter_tensor = self._emit_aix_tensor_filter(ir_node, True)
-        filter_tensor.format = aix_tensor_format
-        filter_tensor.dtype = aix_data_type
-
-        aix_layer.filter.CopyFrom(filter_tensor)
-
-        # output - the current IR node
-        output_tensor = self._emit_aix_tensor_output(ir_node, input_tensor.dims)
-        output_tensor.format = aix_tensor_format
-        output_tensor.dtype = aix_data_type
-
-        aix_layer.output.CopyFrom(output_tensor)
-
-        # CHKME - YOUNGSUN (2020.08.10)
-        # bias - we need to check what values are to be used for the bias
-        bias_tensor = self._emit_aix_tensor_bias(ir_node, True)
-        aix_layer.bias.CopyFrom(bias_tensor)
-
-        # scale
-        scale_tensor = self._emit_aix_tensor_scale(input_nodes[1])
-        aix_layer.scale.CopyFrom(scale_tensor)
-
-        # mean
-        mean_tensor = self._emit_aix_tensor_mean(input_nodes[3])
-        aix_layer.mean.CopyFrom(mean_tensor)
-
-        # variance
-        variance_tensor = self._emit_aix_tensor_variance(input_nodes[4])
-        aix_layer.variance.CopyFrom(variance_tensor)
-
-        # CHKME - YOUNGSUN (2020.08.10)
-        # output_threshold - update using the calibration data
+        # convolution desc
+        aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node, tensor=tensor))
 
         # epsilon
-        aix_layer.epsilon = tf_node_def.attr["epsilon"].f
-
-        # convdesc
-        convolution_desc = self._emit_aix_convolution_desc(ir_node)
-        aix_layer.convdesc.CopyFrom(convolution_desc)
+        if 'epsilon' in tensor.op.node_def.attr:
+            aix_layer.epsilon = tensor.op.node_def.attr['epsilon'].f
+        else:
+            aix_layer.epsilon = 1e-06
 
         return AxfcError.SUCCESS
 
@@ -496,7 +357,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
     # @param self this object
     # @param ir_node an IR node to be emitted
     # @return an output AIX avgpool layer
-    def _emit_aix_layer_avgpool(self, ir_node: AxfcIRNode) -> AxfcError:
+    def _emit_aix_layer_avgpool(self, ir_node: AxfcIRNode, **kwargs) -> AxfcError:
         logging.info("AxfcTFIRTranslator:_emit_aix_layer_avgpool - node %d", ir_node.layer_id)
 
         """
@@ -504,86 +365,24 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
             input, ksize, strides, padding, data_format, name
         )
         """
-        # get the aix layer of the given IR node
         aix_layer = ir_node.aix_layer
-        aix_layer.type.append(AIXLayer.AIXLayerType.AIX_LAYER_SKIP_CONV)
 
-        # tensorflow node_def for the given ir_node
-        tf_node_def = ir_node.node_def
+        tensor = self.__get_tensor_by_name(ir_node.name)
 
-        # data type
-        aix_data_type = self.__get_aix_data_type(tf_node_def)
-        if aix_data_type is None:
-            return AxfcError.INVALID_AIX_LAYER_TYPE
+        # filter
+        aix_layer.filter.CopyFrom(self._emit_aix_tensor_filter(ir_node, tensor=tensor))
 
-        # tensor format
-        aix_tensor_format = self.__get_aix_tensor_format(tf_node_def)
-        if aix_tensor_format is None:
-            return AxfcError.INVALID_AIX_TENSOR_FORMAT
-
-        # inputs/input
-        err, input_nodes = self._get_emitted_input_nodes(ir_node)
-        if err != AxfcError.SUCCESS:
-            return err
-
-        input_aix_layer = input_nodes[0].aix_layer
-
-        if input_aix_layer is None:
-            input_tensor = self._emit_aix_tensor_input(input_nodes[0])
-            input_tensor.format = aix_tensor_format
-            input_tensor.dtype = aix_data_type
-            input_tensor.ptr = 0
-        else:
-            input_tensor = input_aix_layer.output
-
-        aix_layer.input.CopyFrom(input_tensor)
-
-        # inputs/filter
-        filter_tensor = self._emit_aix_tensor_filter(ir_node, True)
-        filter_tensor.format = aix_tensor_format
-        filter_tensor.dtype = aix_data_type
-
-        aix_layer.filter.CopyFrom(filter_tensor)
-
-        # output
-        output_dims: list = [
-            1,  # n
-            1,  # h
-            1,  # w
-            input_tensor.dims[3]  # c
-        ]
-
-        output_tensor = self._emit_aix_tensor_output(ir_node, output_dims)
-        output_tensor.format = aix_tensor_format
-        output_tensor.dtype = aix_data_type
-
-        aix_layer.output.CopyFrom(output_tensor)
-
-        # bias
-        bias_tensor = self._emit_aix_tensor_bias(ir_node, True)
-        aix_layer.bias.CopyFrom(bias_tensor)
-
-        # scale
-        scale_tensor = self._emit_aix_tensor_scale(ir_node, True)
-        aix_layer.scale.CopyFrom(scale_tensor)
-
-        # mean
-        mean_tensor = self._emit_aix_tensor_mean(ir_node, True)
-        aix_layer.mean.CopyFrom(mean_tensor)
-
-        # variance
-        variance_tensor = self._emit_aix_tensor_variance(ir_node, True)
-        aix_layer.variance.CopyFrom(variance_tensor)
+        # convolution desc
+        aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node, tensor=tensor))
 
         # epsilon
-        aix_layer.epsilon = 0
-
-        # convdesc
-        convolution_desc = self._emit_aix_convolution_desc(ir_node)
-        aix_layer.convdesc.CopyFrom(convolution_desc)
+        if 'epsilon' in tensor.op.node_def.attr:
+            aix_layer.epsilon = tensor.op.node_def.attr['epsilon'].f
+        else:
+            aix_layer.epsilon = 1e-06
 
         # samplingdesc
-        sampling_desc = self._emit_aix_sampling_desc(ir_node)
+        sampling_desc = self.__emit_samplingdesc(ir_node)
         aix_layer.samplingdesc.CopyFrom(sampling_desc)
 
         return AxfcError.SUCCESS
@@ -595,7 +394,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
     # @param self this object
     # @param ir_node an IR node to be emitted
     # @return an output AIX avgpool layer
-    def _emit_aix_layer_maxpool(self, ir_node: AxfcIRNode) -> AxfcError:
+    def _emit_aix_layer_maxpool(self, ir_node: AxfcIRNode, **kwargs) -> AxfcError:
         logging.info("AxfcTFIRTranslator:_emit_aix_layer_maxpool - node %d", ir_node.layer_id)
 
         """
@@ -603,80 +402,25 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
             input, ksize, strides, padding, data_format=None, name=None
         )
         """
-        # get the aix layer of the given IR node
+
         aix_layer = ir_node.aix_layer
-        aix_layer.type.append(AIXLayer.AIXLayerType.AIX_LAYER_SKIP_CONV)
 
-        # tensorflow node_def for the given ir_node
-        tf_node_def = ir_node.node_def
+        tensor = self.__get_tensor_by_name(ir_node.name)
 
-        # data type
-        aix_data_type = self.__get_aix_data_type(tf_node_def)
-        if aix_data_type is None:
-            return AxfcError.INVALID_AIX_LAYER_TYPE
+        # filter
+        aix_layer.filter.CopyFrom(self._emit_aix_tensor_filter(ir_node, tensor=tensor))
 
-        # tensor format
-        aix_tensor_format = self.__get_aix_tensor_format(tf_node_def)
-        if aix_tensor_format is None:
-            return AxfcError.INVALID_AIX_TENSOR_FORMAT
-
-        # inputs/input
-        err, input_nodes = self._get_emitted_input_nodes(ir_node)
-        if err != AxfcError.SUCCESS:
-            return err
-
-        input_aix_layer = input_nodes[0].aix_layer
-
-        if input_aix_layer is None:
-            input_tensor = self._emit_aix_tensor_input(input_nodes[0])
-            input_tensor.format = aix_tensor_format
-            input_tensor.dtype = aix_data_type
-            input_tensor.ptr = 0
-        else:
-            input_tensor = input_aix_layer.output
-
-        aix_layer.input.CopyFrom(input_tensor)
-
-        # inputs/filter
-        filter_tensor = self._emit_aix_tensor_filter(ir_node, True)
-        filter_tensor.format = aix_tensor_format
-        filter_tensor.dtype = aix_data_type
-
-        aix_layer.filter.CopyFrom(filter_tensor)
-
-        # output
-        node_attr = tf_node_def.attr
-
-        if "_output_shapes" in node_attr:
-            output_dims = list()
-
-            for dim in node_attr["_output_shapes"].list.shape[0].dim:
-                if dim.size < 0:
-                    dim.size = 1
-                output_dims.append(dim.size)
-        else:
-            output_dims: list = [
-                1,  # n
-                1,  # h
-                1,  # w
-                input_tensor.dims[3]  # c
-            ]
-
-        output_tensor = self._emit_aix_tensor_output(ir_node, output_dims)
-        output_tensor.format = aix_tensor_format
-        output_tensor.dtype = aix_data_type
-
-        aix_layer.output.CopyFrom(output_tensor)
+        # convolution desc
+        aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node, tensor=tensor))
 
         # epsilon
-        aix_layer.epsilon = 0
-        
-        # convdesc
-        convolution_desc = self._emit_aix_convolution_desc(ir_node)
-        aix_layer.convdesc.CopyFrom(convolution_desc)
+        if 'epsilon' in tensor.op.node_def.attr:
+            aix_layer.epsilon = tensor.op.node_def.attr['epsilon'].f
+        else:
+            aix_layer.epsilon = 1e-06
 
         # samplingdesc
-        sampling_desc = self._emit_aix_sampling_desc(ir_node)
+        sampling_desc = self.__emit_samplingdesc(ir_node)
         aix_layer.samplingdesc.CopyFrom(sampling_desc)
 
         return AxfcError.SUCCESS
@@ -688,7 +432,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
     # @param self this object
     # @param ir_node an IR node to be emitted
     # @return an output AIX avgpool layer
-    def _emit_aix_layer_ewadd(self, ir_node: AxfcIRNode) -> AxfcError:
+    def _emit_aix_layer_ewadd(self, ir_node: AxfcIRNode, **kwargs) -> AxfcError:
         logging.info("AxfcTFIRTranslator:_emit_aix_layer_ewadd - node %d", ir_node.layer_id)
 
         """
@@ -698,62 +442,20 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         """
         # get the aix layer of the given IR node
         aix_layer = ir_node.aix_layer
-        aix_layer.type.append(AIXLayer.AIXLayerType.AIX_LAYER_SKIP_CONV)
 
-        # tensorflow node_def for the given ir_node
-        tf_node_def = ir_node.node_def
+        tensor = self.__get_tensor_by_name(ir_node.name)
 
-        # data type
-        aix_data_type = self.__get_aix_data_type(tf_node_def)
-        if aix_data_type is None:
-            return AxfcError.INVALID_AIX_LAYER_TYPE
+        # filter
+        aix_layer.filter.CopyFrom(self._emit_aix_tensor_filter(ir_node, tensor=tensor))
 
-        # inputs/input
-        err, input_nodes = self._get_emitted_input_nodes(ir_node)
-        if err != AxfcError.SUCCESS:
-            return err
+        # convolution desc
+        aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node, tensor=tensor))
 
-        input_aix_layer = input_nodes[0].aix_layer
-
-        if input_aix_layer is None:
-            input_tensor = self._emit_aix_tensor_input(input_nodes[0])
-            # input_tensor.format = aix_tensor_format
-            input_tensor.dtype = aix_data_type
-            input_tensor.ptr = 0
+        # epsilon
+        if 'epsilon' in tensor.op.node_def.attr:
+            aix_layer.epsilon = tensor.op.node_def.attr['epsilon'].f
         else:
-            input_tensor = input_aix_layer.output
-
-        aix_layer.input.CopyFrom(input_tensor)
-
-        # inputs/filter
-        filter_tensor = self._emit_aix_tensor_filter(ir_node, True)
-        filter_tensor.format = input_tensor.format
-        filter_tensor.dtype = aix_data_type
-
-        aix_layer.filter.CopyFrom(filter_tensor)
-
-        # output
-        node_attr = tf_node_def.attr
-
-        if "_output_shapes" in node_attr:
-            output_dims = list()
-
-            for dim in node_attr["_output_shapes"].list.shape[0].dim:
-                if dim.size < 0:
-                    dim.size = 1
-                output_dims.append(dim.size)
-
-            output_tensor = self._emit_aix_tensor_output(ir_node, output_dims)
-            output_tensor.format = input_tensor.format
-            output_tensor.dtype = aix_data_type
-
-            aix_layer.output.CopyFrom(output_tensor)
-        else:
-            aix_layer.output.CopyFrom(input_tensor)
-
-        # convdesc
-        convolution_desc = self._emit_aix_convolution_desc(ir_node)
-        aix_layer.convdesc.CopyFrom(convolution_desc)
+            aix_layer.epsilon = 1e-06
         return AxfcError.SUCCESS
 
     ##  This method emits some tensorflow-specific information of the given IR node
@@ -763,7 +465,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
     # @param self this object
     # @param ir_node an IR node to be emitted
     # @return an output AIX softmax layer
-    def _emit_aix_layer_softmax(self, ir_node: AxfcIRNode) -> AxfcError:
+    def _emit_aix_layer_softmax(self, ir_node: AxfcIRNode, **kwargs) -> AxfcError:
         logging.info("AxfcTFIRTranslator:_emit_aix_layer_softmax - node %d", ir_node.layer_id)
 
         """
@@ -771,57 +473,22 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
             logits, axis=None, name=None
         )
         """
-        # get the aix layer of the given IR node
         aix_layer = ir_node.aix_layer
-        aix_layer.type.append(AIXLayer.AIXLayerType.AIX_LAYER_SKIP_CONV)
 
-        # tensorflow node_def for the given ir_node
-        tf_node_def = ir_node.node_def
+        tensor = self.__get_tensor_by_name(ir_node.name)
 
-        # data type
-        aix_data_type = self.__get_aix_data_type(tf_node_def)
-        if aix_data_type is None:
-            return AxfcError.INVALID_AIX_LAYER_TYPE
+        # filter
+        aix_layer.filter.CopyFrom(self._emit_aix_tensor_filter(ir_node, tensor=tensor))
 
-        # inputs/input
-        err, input_nodes = self._get_emitted_input_nodes(ir_node)
-        if err != AxfcError.SUCCESS:
-            return err
+        # convolution desc
+        aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node, tensor=tensor))
 
-        input_aix_layer = input_nodes[0].aix_layer
-
-        if input_aix_layer is None:
-            input_tensor = self._emit_aix_tensor_input(input_nodes[0])
-            # input_tensor.format = aix_tensor_format
-            input_tensor.dtype = aix_data_type
-            input_tensor.ptr = 0
+        # epsilon
+        if 'epsilon' in tensor.op.node_def.attr:
+            aix_layer.epsilon = tensor.op.node_def.attr['epsilon'].f
         else:
-            input_tensor = input_aix_layer.output
+            aix_layer.epsilon = 1e-06
 
-        aix_layer.input.CopyFrom(input_tensor)
-
-        # output
-        node_attr = tf_node_def.attr
-
-        if "_output_shapes" in node_attr:
-            output_dims = list()
-
-            for dim in node_attr["_output_shapes"].list.shape[0].dim:
-                if dim.size < 0:
-                    dim.size = 1
-                output_dims.append(dim.size)
-
-            output_tensor = self._emit_aix_tensor_output(ir_node, output_dims)
-            output_tensor.format = input_tensor.format
-            output_tensor.dtype = aix_data_type
-
-            aix_layer.output.CopyFrom(output_tensor)
-        else:
-            aix_layer.output.CopyFrom(input_tensor)
-
-        # convdesc
-        convolution_desc = self._emit_aix_convolution_desc(ir_node)
-        aix_layer.convdesc.CopyFrom(convolution_desc)
         return AxfcError.SUCCESS
 
     ##  This method emits some tensorflow-specific information of the given IR node
@@ -831,7 +498,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
     # @param self this object
     # @param ir_node an IR node to be emitted
     # @return an output AIX avgpool layer
-    def _emit_aix_layer_biasadd(self, ir_node: AxfcIRNode) -> AxfcError:
+    def _emit_aix_layer_biasadd(self, ir_node: AxfcIRNode, **kwargs) -> AxfcError:
         logging.info("AxfcTFIRTranslator:_emit_aix_layer_biasadd - node %d", ir_node.layer_id)
 
         """
@@ -839,63 +506,23 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
             input, ksize, strides, padding, data_format, name
         )
         """
-        # get the aix layer of the given IR node
+
         aix_layer = ir_node.aix_layer
-        aix_layer.type.append(AIXLayer.AIXLayerType.AIX_LAYER_SKIP_CONV)
 
-        # tensorflow node_def for the given ir_node
-        tf_node_def = ir_node.node_def
+        tensor = self.__get_tensor_by_name(ir_node.name)
 
-        # data type
-        aix_data_type = self.__get_aix_data_type(tf_node_def)
-        if aix_data_type is None:
-            return AxfcError.INVALID_AIX_LAYER_TYPE
+        # filter, bias
+        aix_layer.filter.CopyFrom(self._emit_aix_tensor_filter(ir_node, tensor=tensor))
+        aix_layer.bias.CopyFrom(self._emit_aix_tensor_bias(ir_node, tensor=tensor))
 
-        # tensor format
-        aix_tensor_format = self.__get_aix_tensor_format(tf_node_def)
-        if aix_tensor_format is None:
-            return AxfcError.INVALID_AIX_TENSOR_FORMAT
-
-        # inputs/input
-        err, input_nodes = self._get_emitted_input_nodes(ir_node)
-        if err != AxfcError.SUCCESS:
-            return err
-
-        input_aix_layer = input_nodes[0].aix_layer
-
-        if input_aix_layer is None:
-            input_tensor = self._emit_aix_tensor_input(input_nodes[0])
-            input_tensor.format = aix_tensor_format
-            input_tensor.dtype = aix_data_type
-            input_tensor.ptr = 0
-        else:
-            input_tensor = input_aix_layer.output
-
-        # output
-        aix_layer.output.CopyFrom(input_tensor)
-
-        # bias
-        bias_tensor = self._emit_aix_tensor_bias(ir_node, True)
-        aix_layer.bias.CopyFrom(bias_tensor)
-
-        # scale
-        scale_tensor = self._emit_aix_tensor_scale(ir_node, True)
-        aix_layer.scale.CopyFrom(scale_tensor)
-
-        # mean
-        mean_tensor = self._emit_aix_tensor_mean(ir_node, True)
-        aix_layer.mean.CopyFrom(mean_tensor)
-
-        # variance
-        variance_tensor = self._emit_aix_tensor_variance(ir_node, True)
-        aix_layer.variance.CopyFrom(variance_tensor)
+        # convolution desc
+        aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node, tensor=tensor))
 
         # epsilon
-        aix_layer.epsilon = 0
-
-        # convdesc
-        convolution_desc = self._emit_aix_convolution_desc(ir_node)
-        aix_layer.convdesc.CopyFrom(convolution_desc)
+        if 'epsilon' in tensor.op.node_def.attr:
+            aix_layer.epsilon = tensor.op.node_def.attr['epsilon'].f
+        else:
+            aix_layer.epsilon = 1e-06
 
         return AxfcError.SUCCESS
 
@@ -906,7 +533,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
     # @param self this object
     # @param ir_node an IR node to be emitted
     # @return an output AIX activation layer
-    def _emit_aix_layer_activation(self, ir_node: AxfcIRNode) -> AxfcError:
+    def _emit_aix_layer_activation(self, ir_node: AxfcIRNode, **kwargs) -> AxfcError:
         logging.info("AxfcTFIRTranslator:_emit_aix_layer_activation - node %d, %s",
                      ir_node.layer_id, ir_node.op)
         """
@@ -931,67 +558,21 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         )
         """
 
-        # get the aix layer of the given IR node
         aix_layer = ir_node.aix_layer
-        aix_layer.type.append(AIXLayer.AIXLayerType.AIX_LAYER_SKIP_CONV)
 
-        # tensorflow node_def for the given ir_node
-        tf_node_def = ir_node.node_def
+        tensor = self.__get_tensor_by_name(ir_node.name)
 
-        # data type
-        aix_data_type = self.__get_aix_data_type(tf_node_def)
-        if aix_data_type is None:
-            return AxfcError.INVALID_AIX_LAYER_TYPE
+        # filter
+        aix_layer.filter.CopyFrom(self._emit_aix_tensor_filter(ir_node, tensor=tensor))
 
-        # inputs/input
-        err, input_nodes = self._get_emitted_input_nodes(ir_node)
-        if err != AxfcError.SUCCESS:
-            return err
-
-        input_aix_layer = input_nodes[0].aix_layer
-
-        if input_aix_layer is None:
-            input_tensor = self._emit_aix_tensor_input(input_nodes[0])
-            input_tensor.format = aix_layer.format
-            input_tensor.dtype = aix_data_type
-            input_tensor.ptr = 0
-        else:
-            input_tensor = input_aix_layer.output
-
-        aix_layer.input.CopyFrom(input_tensor)
-
-        # inputs/filter
-        filter_tensor = self._emit_aix_tensor_filter(ir_node, True)
-        filter_tensor.format = input_tensor.format
-        filter_tensor.dtype = aix_data_type
-
-        aix_layer.filter.CopyFrom(filter_tensor)
-
-        # output
-        aix_layer.output.CopyFrom(input_tensor)
-
-        # bias
-        bias_tensor = self._emit_aix_tensor_bias(ir_node, True)
-        aix_layer.bias.CopyFrom(bias_tensor)
-
-        # scale
-        scale_tensor = self._emit_aix_tensor_scale(ir_node, True)
-        aix_layer.scale.CopyFrom(scale_tensor)
-
-        # mean
-        mean_tensor = self._emit_aix_tensor_mean(ir_node, True)
-        aix_layer.mean.CopyFrom(mean_tensor)
-
-        # variance
-        variance_tensor = self._emit_aix_tensor_variance(ir_node, True)
-        aix_layer.variance.CopyFrom(variance_tensor)
+        # convolution desc
+        aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node, tensor=tensor))
 
         # epsilon
-        aix_layer.epsilon = 0
-
-        # convdesc
-        convolution_desc = self._emit_aix_convolution_desc(ir_node)
-        aix_layer.convdesc.CopyFrom(convolution_desc)
+        if 'epsilon' in tensor.op.node_def.attr:
+            aix_layer.epsilon = tensor.op.node_def.attr['epsilon'].f
+        else:
+            aix_layer.epsilon = 1e-06
 
         return AxfcError.SUCCESS
 
@@ -999,8 +580,9 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
     #
     # @param self this object
     # @param ir_node an IR node to be emitted as an AIX tensor
+    # @param kwargs keyword arguments used for pass the 'tensor'
     # @return an AIX tensor of an input type
-    def _emit_aix_tensor_input(self, ir_node: AxfcIRNode) -> AIXLayer.AIXTensor:
+    def _emit_aix_tensor_input(self, ir_node: AxfcIRNode, **kwargs) -> AIXLayer.AIXTensor:
         # logging.info("AxfcTFIRTranslator:_emit_aix_tensor_input - node %s", ir_node.name)
 
         """
@@ -1014,45 +596,14 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
             size: 150528
             ptr: 94234087239120
         }
-        
+
         dims: [batch_size, input_height, input_width, input_depth]
         """
+        tensor = self.__get_tensor_by_name(ir_node.name)
 
-        # create a new tensor
-        aix_tensor = AIXLayer.AIXTensor()
-
-        # get the Tensorflow node_def of the given node
-        tf_node_def = ir_node.node_def
-        node_attr = tf_node_def.attr
-
-        # data type
-        aix_data_type = self.__get_aix_data_type(tf_node_def)
-        if aix_data_type is not None:
-            aix_tensor.dtype = aix_data_type
-
-        # tensor format
-        aix_tensor_format = self.__get_aix_tensor_format(tf_node_def)
-        if aix_tensor_format is not None:
-            aix_tensor.format = aix_tensor_format
-
-        # tensor shape and size
-        if "shape" in node_attr:  # Placeholder
-            shape_dims = node_attr["shape"].shape.dim
-        elif "_output_shapes" in node_attr:  # Pad
-            shape_dims = node_attr["_output_shapes"].list.shape[0].dim
-        else:
-            logging.warning("_emit_aix_tensor_input: invalid shape - %s", str(node_attr))
-            return None
-
-        tensor_size = 1
-
-        for dim in shape_dims:
-            if dim.size < 0:
-                dim.size = 1
-            aix_tensor.dims.append(dim.size)
-            tensor_size *= dim.size
-
-        aix_tensor.size = tensor_size
+        input_tensors = list(filter(lambda x: x.op.type != 'Const', tensor.op.inputs))
+        if input_tensors:
+            aix_tensor = self.__emit_aix_tensor(input_tensors[0], is_inout_tensor=True)
 
         return aix_tensor
 
@@ -1060,9 +611,9 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
     #
     # @param self this object
     # @param ir_node an IR node to be emitted as an AIX tensor
-    # @param is_default indicates if default values are used to emit
+    # @param kwargs keyword arguments used for pass the 'tensor'
     # @return an AIX tensor of an filter type
-    def _emit_aix_tensor_filter(self, ir_node: AxfcIRNode, is_default: bool = False) \
+    def _emit_aix_tensor_filter(self, ir_node: AxfcIRNode, **kwargs) \
             -> AIXLayer.AIXTensor:
         """
         filter {
@@ -1079,41 +630,30 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         dims: [filter_height, filter_width, filter_depth, number_of_filters]
         """
+        if 'tensor' in kwargs:
+            tensor = kwargs['tensor']
+        else:
+            logging.error('AxfcTFIRTranslator:_emit_aix_tensor_filter - need TensorProto object')
 
-        # get the aix layer of thid node
-        aix_layer = ir_node.aix_layer
+        tensors = [tensor for tensor in tensor.op.inputs]
+        aix_tensor = None
 
-        # create a new tensor
-        aix_tensor = AIXLayer.AIXTensor()
+        for tensor in tensors:
+            if 'weights' in tensor.name:
+                aix_tensor = self.__emit_aix_tensor(tensor)
+                aix_tensor.dims[-1] = ir_node.aix_layer.output.dims[2]
+                break
 
-        # configure the tensor with default scale values
-        if is_default:
-            input_dim = aix_layer.input.dims[3]
-
-            aix_tensor.dims.append(1)
-            aix_tensor.dims.append(input_dim)
-            aix_tensor.dims.append(input_dim)
-            aix_tensor.dims.append(1)
-
-            return aix_tensor
-
-        # get the Tensorflow node_def of the given node
-        tf_node_def = ir_node.node_def
-        attr_value = tf_node_def.attr["value"]
-
-        # tensor shape and size
-        tensor_shape = attr_value.tensor.tensor_shape
-        tensor_size = 1
-
-        for dim in tensor_shape.dim:
-            aix_tensor.dims.append(dim.size)
-            tensor_size *= dim.size
-
-        aix_tensor.size = tensor_size
-
-        # tensor_content
-        for value in tf.make_ndarray(attr_value.tensor).flatten():
-            aix_tensor.fval.append(value)
+        # set default
+        if aix_tensor is None:
+            aix_layer = ir_node.aix_layer
+            aix_tensor = AIXLayer.AIXTensor()
+            aix_tensor.dtype = aix_layer.input.dtype
+            aix_tensor.format = aix_layer.input.format
+            aix_tensor.dims.append(1)  # width
+            aix_tensor.dims.append(1)  # height
+            aix_tensor.dims.append(aix_layer.input.dims[2])  # channel
+            aix_tensor.dims.append(aix_layer.output.dims[2])  # number of filter
 
         return aix_tensor
 
@@ -1121,42 +661,28 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
     #
     # @param self this object
     # @param ir_node an IR node to be emitted as an AIX tensor
-    # @param is_default indicates if default values are used to emit
+    # @param kwargs keyword arguments used for pass the 'tensor'
     # @return an AIX tensor of an bias type
-    def _emit_aix_tensor_bias(self, ir_node: AxfcIRNode, is_default: bool = False) \
+    def _emit_aix_tensor_bias(self, ir_node: AxfcIRNode, **kwargs) \
             -> AIXLayer.AIXTensor:
 
-        # create a new tensor
-        aix_tensor = AIXLayer.AIXTensor()
-
-        # CHKME - YOUNGSUN (2020.08.12)
-        # get the bias (offset) values from the batchnorm node that follows this node.
-        succ_node = ir_node.succs[0]
-
-        if succ_node.op == "BatchNorm" or succ_node.op == "FusedBatchNorm":
-            # get the offset (beta) node of the following batchnorm node
-            node_def = succ_node.preds[2].node_def
-
-            # get attribute values of the tensor node
-            attr_value = node_def.attr["value"]
-
-            # tensor shape and size
-            tensor_shape = attr_value.tensor.tensor_shape
-            aix_tensor.size = tensor_shape.dim[0].size
-            aix_tensor.dims.append(aix_tensor.size)
-
-            # tensor_content
-            for value in tf.make_ndarray(attr_value.tensor).flatten():
-                aix_tensor.fval.append(value)
+        if 'tensor' in kwargs:
+            tensor = kwargs['tensor']
         else:
-            # logging.warning("_emit_aix_tensor_bias: the successor is not a batchnorm node")
-            node_def = ir_node.node_def
+            logging.error('AxfcTFIRTranslator:_emit_aix_tensor_bias - need TensorProto object')
 
-        # dtype
-        aix_tensor.dtype = self.__get_aix_data_type(node_def)
+        tensors = [tensor for tensor in tensor.op.inputs]
+        aix_tensor = None
 
-        # tensor format
-        aix_tensor.format = AIXLayer.AIXTensorFormat.AIX_FORMAT_VECTOR
+        for tensor in tensors:
+            # TODO: SENGTHAI: 'beta' is also bias
+            if 'biases' in tensor.name:
+                aix_tensor = self.__emit_aix_tensor(tensor, )
+                break
+
+        # set default
+        if aix_tensor is None:
+            aix_tensor = self.__emit_default_hyper_parameter(ir_node.aix_layer, 1)
 
         return aix_tensor
 
@@ -1164,44 +690,27 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
     #
     # @param self this object
     # @param ir_node an IR node to be emitted as an AIX tensor
-    # @param is_default indicates if default values are used to emit
+    # @param kwargs keyword arguments used for pass the 'tensor'
     # @return an AIX tensor of an scale type
-    def _emit_aix_tensor_scale(self, ir_node: AxfcIRNode, is_default: bool = False) \
+    def _emit_aix_tensor_scale(self, ir_node: AxfcIRNode, **kwargs) \
             -> AIXLayer.AIXTensor:
 
-        # create a new tensor
-        aix_tensor = AIXLayer.AIXTensor()
+        if 'tensor' in kwargs:
+            tensor = kwargs['tensor']
+        else:
+            logging.error('AxfcTFIRTranslator:_emit_aix_tensor_scale - need TensorProto object')
 
-        # dtype
-        aix_tensor.dtype = self.__get_aix_data_type(ir_node.node_def)
+        tensors = [tensor for tensor in tensor.op.inputs]
+        aix_tensor = None
 
-        # tensor format
-        aix_tensor.format = AIXLayer.AIXTensorFormat.AIX_FORMAT_VECTOR
+        for tensor in tensors:
+            if 'gamma' in tensor.name:
+                aix_tensor = self.__emit_aix_tensor(tensor, )
+                break
 
-        # configure the tensor with default scale values
-        if is_default:
-            # dim (k)
-            aix_tensor.size = ir_node.aix_layer.output.dims[3]
-            aix_tensor.dims.append(aix_tensor.size)
-
-            # fval
-            for i in range(aix_tensor.size):
-                aix_tensor.fval.append(1)
-
-            return aix_tensor
-
-        # get the Tensorflow node_def of the given node
-        tf_node_def = ir_node.node_def
-        attr_value = tf_node_def.attr["value"]
-
-        # tensor shape and size
-        tensor_shape = attr_value.tensor.tensor_shape
-        aix_tensor.size = tensor_shape.dim[0].size
-        aix_tensor.dims.append(aix_tensor.size)
-
-        # tensor_content
-        for value in tf.make_ndarray(attr_value.tensor).flatten():
-            aix_tensor.fval.append(value)
+        # set default
+        if aix_tensor is None:
+            aix_tensor = self.__emit_default_hyper_parameter(ir_node.aix_layer, 1)
 
         return aix_tensor
 
@@ -1209,44 +718,27 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
     #
     # @param self this object
     # @param ir_node an IR node to be emitted as an AIX tensor
-    # @param is_default indicates if default values are used to emit
+    # @param kwargs keyword arguments used for pass the 'tensor'
     # @return an AIX tensor of an mean type
-    def _emit_aix_tensor_mean(self, ir_node: AxfcIRNode, is_default: bool = False) \
+    def _emit_aix_tensor_mean(self, ir_node: AxfcIRNode, **kwargs) \
             -> AIXLayer.AIXTensor:
 
-        # create a new tensor
-        aix_tensor = AIXLayer.AIXTensor()
+        if 'tensor' in kwargs:
+            tensor = kwargs['tensor']
+        else:
+            logging.error('AxfcTFIRTranslator:_emit_aix_tensor_mean - need TensorProto object')
 
-        # dtype
-        aix_tensor.dtype = self.__get_aix_data_type(ir_node.node_def)
+        tensors = [tensor for tensor in tensor.op.inputs]
+        aix_tensor = None
 
-        # tensor format
-        aix_tensor.format = AIXLayer.AIXTensorFormat.AIX_FORMAT_VECTOR
+        for tensor in tensors:
+            if 'moving_mean' in tensor.name:
+                aix_tensor = self.__emit_aix_tensor(tensor, )
+                break
 
-        # configure the tensor with default scale values
-        if is_default:
-            # dim (k)
-            aix_tensor.size = ir_node.aix_layer.output.dims[3]
-            aix_tensor.dims.append(aix_tensor.size)
-
-            # fval
-            for i in range(aix_tensor.size):
-                aix_tensor.fval.append(0)
-
-            return aix_tensor
-
-        # get the Tensorflow node_def of the given node
-        tf_node_def = ir_node.node_def
-        attr_value = tf_node_def.attr["value"]
-
-        # tensor shape and size
-        tensor_shape = attr_value.tensor.tensor_shape
-        aix_tensor.size = tensor_shape.dim[0].size
-        aix_tensor.dims.append(aix_tensor.size)
-
-        # tensor_content
-        for value in tf.make_ndarray(attr_value.tensor).flatten():
-            aix_tensor.fval.append(value)
+        # set default
+        if aix_tensor is None:
+            aix_tensor = self.__emit_default_hyper_parameter(ir_node.aix_layer, 1)
 
         return aix_tensor
 
@@ -1256,42 +748,25 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
     # @param ir_node an IR node to be emitted as an AIX tensor
     # @param is_default indicates if default values are used to emit
     # @return an AIX tensor of an variance type
-    def _emit_aix_tensor_variance(self, ir_node: AxfcIRNode, is_default: bool = False) \
+    def _emit_aix_tensor_variance(self, ir_node: AxfcIRNode, **kwargs) \
             -> AIXLayer.AIXTensor:
 
-        # create a new tensor
-        aix_tensor = AIXLayer.AIXTensor()
+        if 'tensor' in kwargs:
+            tensor = kwargs['tensor']
+        else:
+            logging.error('AxfcTFIRTranslator:_emit_aix_tensor_mean - need TensorProto object')
 
-        # dtype
-        aix_tensor.dtype = self.__get_aix_data_type(ir_node.node_def)
+        tensors = [tensor for tensor in tensor.op.inputs]
+        aix_tensor = None
 
-        # tensor format
-        aix_tensor.format = AIXLayer.AIXTensorFormat.AIX_FORMAT_VECTOR
+        for tensor in tensors:
+            if 'moving_variance' in tensor.name:
+                aix_tensor = self.__emit_aix_tensor(tensor, )
+                break
 
-        # configure the tensor with default scale values
-        if is_default:
-            # dim (k)
-            aix_tensor.size = ir_node.aix_layer.output.dims[3]
-            aix_tensor.dims.append(aix_tensor.size)
-
-            # fval
-            for i in range(aix_tensor.size):
-                aix_tensor.fval.append(1)
-
-            return aix_tensor
-
-        # get the Tensorflow node_def of the given node
-        tf_node_def = ir_node.node_def
-        attr_value = tf_node_def.attr["value"]
-
-        # tensor shape and size
-        tensor_shape = attr_value.tensor.tensor_shape
-        aix_tensor.size = tensor_shape.dim[0].size
-        aix_tensor.dims.append(aix_tensor.size)
-
-        # tensor_content
-        for value in tf.make_ndarray(attr_value.tensor).flatten():
-            aix_tensor.fval.append(value)
+        # set default
+        if aix_tensor is None:
+            aix_tensor = self.__emit_default_hyper_parameter(ir_node.aix_layer, 1)
 
         return aix_tensor
 
@@ -1299,28 +774,18 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
     #
     # @param self this object
     # @param ir_node an IR node to be emitted as an AIX tensor
-    # @param output_dims output dimensions
+    # @param kwargs keyword arguments used for pass the 'tensor'
     # @return an AIX tensor of an output type
-    def _emit_aix_tensor_output(self, ir_node: AxfcIRNode, output_dims: list) -> AIXLayer.AIXTensor:
+    def _emit_aix_tensor_output(self, ir_node: AxfcIRNode, **kwargs) -> AIXLayer.AIXTensor:
         """
          output[b, i, j, k] =
             sum_{di, dj, q} input[b, strides[1] * i + di, strides[2] * j + dj, q] *
                             filter[di, dj, q, k]
         """
 
-        # create a new tensor
-        aix_tensor = AIXLayer.AIXTensor()
+        tensor = self.__get_tensor_by_name(ir_node.name)
 
-        # strides
-        output_size = 1
-
-        for dim in output_dims:
-            aix_tensor.dims.append(dim)
-
-            # calculate the total output size
-            output_size *= dim
-
-        aix_tensor.size = output_size
+        aix_tensor = (self.__emit_aix_tensor(tensor, is_inout_tensor=True))
 
         return aix_tensor
 
@@ -1328,120 +793,80 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
     #
     # @param self this object
     # @param ir_node an IR node to be emitted as an AIX tensor
+    # @param kwargs keyword arguments used for pass the 'tensor'
     # @return an AIX convolution description
-    def _emit_aix_convolution_desc(self, ir_node: AxfcIRNode) -> AIXLayer.AIXConvolutionDesc:
+    def _emit_aix_convolution_desc(self, ir_node: AxfcIRNode, **kwargs) -> AIXLayer.AIXConvolutionDesc:
+
+        if 'tensor' in kwargs:
+            tensor = kwargs['tensor']
+        else:
+            logging.error('AxfcTFIRTranslator: _emit_aix_convolution_desc - need TensorProto object')
 
         convolution_desc = AIXLayer.AIXConvolutionDesc()
 
-        # get the aix layer and node_def of the given IR node
         aix_layer = ir_node.aix_layer
-        tf_node_def = ir_node.node_def
-
-        # get the layer info of the given IR node
-        aix_layer_info = self._md.get_layer_info(ir_node.op)
 
         # dtype
         convolution_desc.dtype = aix_layer.input.dtype
 
-        # stride
-        node_attr = tf_node_def.attr
-
-        if "strides" in node_attr:
-            strides = node_attr["strides"].list.i
+        # strides
+        if 'strides' in tensor.op.node_def.attr:
+            stride_dict = dict(zip('AHWB', tensor.op.get_attr('strides')))
+            convolution_desc.stride.extend([stride_dict['H'], stride_dict['W'],0,0])
         else:
-            strides = [1, 1, 1, 1]
+            convolution_desc.stride.extend([1, 1, 0, 0])
 
-        for val in strides:
-            convolution_desc.stride.append(val)
+        # paddings
+        if 'padding' in tensor.op.node_def.attr:
+
+            if tensor.op.get_attr('padding') == b'VALID':
+                convolution_desc.padding.extend([0, 0, 0, 0])
+            else:  # SAME
+                input_h = aix_layer.input.dims[1]
+                stride_h = convolution_desc.stride[0]
+                filter_h = aix_layer.filter.dims[0]
+
+                input_w = aix_layer.input.dims[0]
+                stride_w = convolution_desc.stride[1]
+                filter_w = aix_layer.filter.dims[1]
+
+                if input_h % stride_h == 0:
+                    pad_along_height = max((filter_h - stride_h), 0)
+                else:
+                    pad_along_height = max(filter_h - (input_h % stride_h), 0)
+                if input_w % stride_w == 0:
+                    pad_along_width = max((filter_w - stride_w), 0)
+                else:
+                    pad_along_width = max(filter_w - (input_w % stride_w), 0)
+
+                ## Tensorflow system
+                # pad_top = pad_along_height // 2
+                # pad_bottom = pad_along_height - pad_top
+                # pad_left = pad_along_width // 2
+                # pad_right = pad_along_width - pad_left
+
+                ## Darknet system
+                pad_bottom = pad_along_height // 2
+                pad_top = pad_along_height - pad_bottom
+                pad_right = pad_along_width // 2
+                pad_left = pad_along_width - pad_right
+
+                convolution_desc.padding.extend([pad_top, pad_bottom, pad_left, pad_right])
+
+        else:
+            convolution_desc.padding.extend([0, 0, 0, 0])
 
         # dilation
-        if "dilation" in node_attr:
-            dilations = node_attr["dilation"].list.i
+        if 'dilations' in tensor.op.node_def.attr:
+            convolution_desc.dilation.extend(tensor.op.get_attr('dilations'))
         else:
-            dilations = [1, 1, 1, 1]
-
-        for val in dilations:
-            convolution_desc.dilation.append(val)
-
-        # padding
-        # CHKME - YOUNGSUN (2020.08.10)
-        # We need to check how to configure the values of padding.
-
-        if "padding" in node_attr:
-            padding = node_attr["padding"].s
-        else:
-            padding = None
-
-        if padding is None:
-            paddings = [0, 0, 0, 0]
-        elif padding == b"VALID":
-            # if there is an additional node for padding, use the tensor content.
-            if ir_node.preds[-1].op == "Pad":
-                # tensor_content
-                paddings_attr = ir_node.preds[-1].node_def.attr["value"]
-                paddings = tf.make_ndarray(paddings_attr.tensor).flatten()
-            else:
-                paddings = [0, 0, 0, 0]
-        elif padding == b"SAME":
-            """
-            if H1%Sh==0:
-                padding along height=Ph=max(Fh−Sh,0)
-            else:                
-                padding along height=Ph=max(Fh−(H1%Sh),0)
-                
-            if W1%Sw==0:
-                padding along width=Pw=max(Fw−Sw,0)
-            else:
-                padding along width=Pw=max(Fw−(W1%Sw),0)
-            """
-
-            # get data as dictionary has a key as element of format
-            input_dims = self.__get_aix_tensor_dims(aix_layer.input)
-            filter_dims = self.__get_aix_tensor_dims(aix_layer.filter)
-            strides = self.__get_values_of_format(strides, aix_layer.filter.format)
-
-            input_h = input_dims['H']  # aix_layer.input.dims[1]
-            input_w = input_dims['W']  # aix_layer.input.dims[2]
-
-            filter_h = filter_dims['H']  # aix_layer.filter.dims[0]
-            filter_w = filter_dims['W']  # aix_layer.filter.dims[1]
-
-            stride_h = strides['H']  # strides[1]
-            stride_w = strides['W']  # strides[2]
-
-            # for padding along for height
-            if input_h % stride_h == 0:
-                padding_h = max(0, (filter_h - stride_h))
-            else:
-                padding_h = max(0, (filter_h - (input_h % stride_h)))
-
-            # for padding along for width
-            if input_w % stride_w == 0:
-                padding_w = max(0, (filter_w - stride_w))
-            else:
-                padding_w = max(0, (filter_w - (input_w % stride_w)))
-
-            # padding top and left
-            padding_t = math.floor(padding_h / 2)
-            padding_l = math.floor(padding_w / 2)
-
-            paddings = [
-                padding_t,  # top
-                padding_h - padding_t,  # bottom
-                padding_l,  # left
-                padding_w - padding_l  # right
-            ]
-        else:
-            paddings = [0, 0, 0, 0]
-
-        for val in paddings:
-            convolution_desc.padding.append(val)
+            convolution_desc.dilation.extend([1, 1, 1, 1])
 
         # groups
-        if not aix_layer_info.is_group:
-            convolution_desc.groups = 1
+        if AIXLayer.AIX_LAYER_GROUP_CONV in aix_layer.type:
+            convolution_desc.groups = aix_layer.input.dims[2]
         else:
-            convolution_desc.groups = aix_layer.output.dims[3]
+            convolution_desc.groups = 1
 
         return convolution_desc
 
@@ -1450,7 +875,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
     # @param self this object
     # @param ir_node an IR node to be emitted as an AIX tensor
     # @return an AIX sampling description
-    def _emit_aix_sampling_desc(self, ir_node: AxfcIRNode) -> AIXLayer.AIXSamplingDesc:
+    def _emit_aix_sampling_desc(self, ir_node: AxfcIRNode, **kwargs) -> AIXLayer.AIXSamplingDesc:
 
         sampling_desc = AIXLayer.AIXSamplingDesc()
 
@@ -1500,3 +925,4 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
             sampling_desc.window.append(val)
 
         return sampling_desc
+
