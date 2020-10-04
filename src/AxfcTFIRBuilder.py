@@ -68,7 +68,36 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
 
         # build AIX IR graph using the nodes of the Tensorflow graph
         for tf_node_def in tf_graph_def.node:
+
+            # Process separate: BN -> BN + BiasAdd
+            for index, pred_name in enumerate(tf_node_def.input):
+                # find the predecessor using the symbol table
+                if not(pred_name in self._ir_symtab):
+                    continue
+
+                pred_node = self._ir_symtab[pred_name]
+                if pred_node is not None:
+                    if pred_node.op == 'FusedBatchNorm':
+                        tf_node_def.input[index] += '/BiasaddClone'
+                        print('pred_node', pred_node.name)
+
             err = self.__append_node_def(tf_node_def)
+
+            if tf_node_def.op == 'FusedBatchNorm':
+                tf_node_clone_def = tf.compat.v1.NodeDef()
+                tf_node_clone_def.CopyFrom(tf_node_def)
+
+                # clear all elements in input
+                tf_node_clone_def.input[:] = []
+
+                tf_node_clone_def.input.append(tf_node_def.name)
+                tf_node_clone_def.name += '/BiasaddClone'
+                tf_node_clone_def.op = 'BiasAdd'
+
+                err = self.__append_node_def(tf_node_clone_def)
+            # end process separate
+
+
             if err != AxfcError.SUCCESS:
                 return err
 

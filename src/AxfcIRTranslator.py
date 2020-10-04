@@ -173,7 +173,6 @@ class AxfcIRTranslator:
         aix_layer.type.append(layer_type)
 
         # input
-        test = self._emit_aix_tensor_input(ir_node)
         aix_layer.input.CopyFrom(self._emit_aix_tensor_input(ir_node))
 
         # output

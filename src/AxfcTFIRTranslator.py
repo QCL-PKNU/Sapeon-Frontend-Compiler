@@ -123,6 +123,11 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
     # @return tensor TensorProto object
     def __get_tensor_by_name(self, name: str):
 
+        # check the BiasaddClone
+        postfix_name = name.split('/')[-1]
+        if postfix_name == 'BiasaddClone':
+            name = name.strip('/BiasaddClone')
+
         return self.graph.get_tensor_by_name('import/' + name + ':0')
 
     ##  This method get data from aix_tensor_format format as dictionary
@@ -262,7 +267,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         aix_layer.scale.CopyFrom(self._emit_aix_tensor_scale(ir_node, tensor=tensor))
         aix_layer.mean.CopyFrom(self._emit_aix_tensor_mean(ir_node, tensor=tensor))
         aix_layer.variance.CopyFrom(self._emit_aix_tensor_variance(ir_node, tensor=tensor))
-        aix_layer.bias.CopyFrom(self._emit_aix_tensor_bias(ir_node, tensor=tensor))
+        # aix_layer.bias.CopyFrom(self._emit_aix_tensor_bias(ir_node, tensor=tensor))
 
         # convolution desc
         aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node, tensor=tensor))
@@ -300,7 +305,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         aix_layer.scale.CopyFrom(self._emit_aix_tensor_scale(ir_node, tensor=tensor))
         aix_layer.mean.CopyFrom(self._emit_aix_tensor_mean(ir_node, tensor=tensor))
         aix_layer.variance.CopyFrom(self._emit_aix_tensor_variance(ir_node, tensor=tensor))
-        aix_layer.bias.CopyFrom(self._emit_aix_tensor_bias(ir_node, tensor=tensor))
+        # aix_layer.bias.CopyFrom(self._emit_aix_tensor_bias(ir_node, tensor=tensor))
 
         # convolution desc
         aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node, tensor=tensor))
@@ -676,7 +681,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         for tensor in tensors:
             # TODO: SENGTHAI: 'beta' is also bias
-            if 'biases' in tensor.name:
+            if 'biases' in tensor.name or 'beta' in tensor.name:
                 aix_tensor = self.__emit_aix_tensor(tensor, )
                 break
 
