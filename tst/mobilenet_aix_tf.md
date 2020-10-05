@@ -14,7 +14,7 @@
 			"layer": "AIX_LAYER_GROUP_CONV",
 			"activation": null,
 			"is_group": true,
-			"is_conv": false,
+			"is_conv": true,
 			"profit": 100
 		},
 		"FusedBatchNorm": {

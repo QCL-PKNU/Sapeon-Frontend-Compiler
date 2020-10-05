@@ -222,22 +222,6 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         return tensor
 
-    ## TEST: testing function for samplingdesc
-    # TODO: implement samplingdesc
-    def __emit_samplingdesc(self, ir_node: AxfcIRNode):
-
-        if ir_node.aix_layer.type[-1] in [AIXLayer.AIX_LAYER_MAXPOOL,
-                                 AIXLayer.AIX_LAYER_AVGPOOL,
-                                 AIXLayer.AIX_LAYER_UPSAMPLE,
-                                 AIXLayer.AIX_LAYER_REORG]:
-
-            samplingdesc = AIXLayer.AIXSamplingDesc()
-            samplingdesc.mode = AIXLayer.AIX_POOLING_AVERAGE
-            samplingdesc.padding.extend([0, 0, 0, 0])
-            samplingdesc.stride.extend([0, 0, 0, 0])
-            samplingdesc.window.extend([0, 0, 0, 0])
-
-            return samplingdesc
     ###################################################################
     # protected methods
     ###################################################################
@@ -387,7 +371,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
             aix_layer.epsilon = 1e-06
 
         # samplingdesc
-        sampling_desc = self.__emit_samplingdesc(ir_node)
+        sampling_desc = self._emit_aix_sampling_desc(ir_node, tensor=tensor)
         aix_layer.samplingdesc.CopyFrom(sampling_desc)
 
         return AxfcError.SUCCESS
@@ -425,7 +409,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
             aix_layer.epsilon = 1e-06
 
         # samplingdesc
-        sampling_desc = self.__emit_samplingdesc(ir_node)
+        sampling_desc = self._emit_aix_sampling_desc(ir_node, tensor=tensor)
         aix_layer.samplingdesc.CopyFrom(sampling_desc)
 
         return AxfcError.SUCCESS
@@ -604,8 +588,11 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         dims: [batch_size, input_height, input_width, input_depth]
         """
+
+        # get TensorProto object
         tensor = self.__get_tensor_by_name(ir_node.name)
 
+        # get input Tensor
         input_tensors = list(filter(lambda x: x.op.type != 'Const', tensor.op.inputs))
         if input_tensors:
             aix_tensor = self.__emit_aix_tensor(input_tensors[0], is_inout_tensor=True)
@@ -641,6 +628,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
             logging.error('AxfcTFIRTranslator:_emit_aix_tensor_filter - need TensorProto object')
 
         tensors = [tensor for tensor in tensor.op.inputs]
+
         aix_tensor = None
 
         for tensor in tensors:
@@ -677,10 +665,10 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
             logging.error('AxfcTFIRTranslator:_emit_aix_tensor_bias - need TensorProto object')
 
         tensors = [tensor for tensor in tensor.op.inputs]
+
         aix_tensor = None
 
         for tensor in tensors:
-            # TODO: SENGTHAI: 'beta' is also bias
             if 'biases' in tensor.name or 'beta' in tensor.name:
                 aix_tensor = self.__emit_aix_tensor(tensor, )
                 break
@@ -706,6 +694,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
             logging.error('AxfcTFIRTranslator:_emit_aix_tensor_scale - need TensorProto object')
 
         tensors = [tensor for tensor in tensor.op.inputs]
+
         aix_tensor = None
 
         for tensor in tensors:
@@ -734,6 +723,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
             logging.error('AxfcTFIRTranslator:_emit_aix_tensor_mean - need TensorProto object')
 
         tensors = [tensor for tensor in tensor.op.inputs]
+
         aix_tensor = None
 
         for tensor in tensors:
@@ -762,6 +752,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
             logging.error('AxfcTFIRTranslator:_emit_aix_tensor_mean - need TensorProto object')
 
         tensors = [tensor for tensor in tensor.op.inputs]
+
         aix_tensor = None
 
         for tensor in tensors:
@@ -876,26 +867,29 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         return convolution_desc
 
     ##  This method emits the AIX sampling description of the given IR node.
+    #  This method must called after _emit_aix_convolution_desc()
     #
     # @param self this object
     # @param ir_node an IR node to be emitted as an AIX tensor
     # @return an AIX sampling description
     def _emit_aix_sampling_desc(self, ir_node: AxfcIRNode, **kwargs) -> AIXLayer.AIXSamplingDesc:
 
+        """
+        This method is used in AIXLayer.AIX_LAYER_MAXPOOL,
+                                 AIXLayer.AIX_LAYER_AVGPOOL,
+                                 AIXLayer.AIX_LAYER_UPSAMPLE,
+                                 AIXLayer.AIX_LAYER_REORG
+        """
+
+        if 'tensor' in kwargs:
+            tensor = kwargs['tensor']
+        else:
+            logging.error('AxfcTFIRTranslator:_emit_aix_sampling_desc - need TensorProto object')
+
         sampling_desc = AIXLayer.AIXSamplingDesc()
 
-        # get the aix layer and node_def of the given IR node
-        aix_layer = ir_node.aix_layer
-        tf_node_def = ir_node.node_def
-
-        # to use the already resolved convolution description
-        convolution_desc = aix_layer.convdesc
-
-        if convolution_desc is None:
-            return None
-
         # mode
-        layer_type = aix_layer.type[0]
+        layer_type = ir_node.aix_layer.type[-1]
 
         if layer_type == AIXLayer.AIXLayerType.AIX_LAYER_MAXPOOL:
             sampling_desc.mode = AIXLayer.AIXSamplingMode.AIX_POOLING_MAX
@@ -910,24 +904,19 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         else:
             return None
 
-        # padding
-        for val in convolution_desc.padding:
-            sampling_desc.padding.append(val)
-
-        # stride
-        for val in convolution_desc.stride:
-            sampling_desc.stride.append(val)
-
-        # window (ksize)
-        node_attr = tf_node_def.attr
-
-        if "ksize" in node_attr:
-            windows = node_attr["ksize"].list.i
+        # strides
+        if 'ksize' in tensor.op.node_def.attr:
+            stride_dict = dict(zip('AHWB', tensor.op.get_attr('ksize')))
+            sampling_desc.window.extend([stride_dict['H'], stride_dict['W'], 0, 0])
         else:
-            windows = [0, 0, 0, 0]
+            sampling_desc.window.extend([1, 1, 0, 0])
 
-        for val in windows:
-            sampling_desc.window.append(val)
+        # strides
+        # TODO: CHECK the strides formula
+        # sampling_desc.stride.extend(ir_node.aix_layer.convdesc.stride)
+        sampling_desc.stride.extend([0,0,0,0])
+        # padding
+        sampling_desc.padding.extend(ir_node.aix_layer.convdesc.padding)
 
         return sampling_desc
 
