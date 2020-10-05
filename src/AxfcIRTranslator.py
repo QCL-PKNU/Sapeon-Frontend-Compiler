@@ -138,13 +138,15 @@ class AxfcIRTranslator:
 
             self._aix_graph.layer.append(aix_layer)
 
-            # update AIXGraph.input_layers
-            if ir_node.is_input:
-                self._aix_graph.input_layers.append(aix_layer.id)
-
-            # update AIXGraph.output_layers
-            if ir_node.is_output:
-                self._aix_graph.output_layers.append(aix_layer.id)
+            # SENGTHAI: we can omit input_layers / output_layers
+            # because after merge, the merger will generate it automatically.
+            # # update AIXGraph.input_layers
+            # if ir_node.is_input:
+            #     self._aix_graph.input_layers.append(aix_layer.id)
+            #
+            # # update AIXGraph.output_layers
+            # if ir_node.is_output:
+            #     self._aix_graph.output_layers.append(aix_layer.id)
 
         return AxfcError.SUCCESS, self._aix_graph
 
@@ -198,6 +200,7 @@ class AxfcIRTranslator:
         # layer input and output
         if ir_node.is_input:
             aix_layer.type.append(AIXLayer.AIXLayerType.AIX_LAYER_INPUT)
+            aix_layer.input_threshold = 1
 
         if ir_node.is_output:
             aix_layer.type.append(AIXLayer.AIXLayerType.AIX_LAYER_OUTPUT)
@@ -219,7 +222,11 @@ class AxfcIRTranslator:
         # calibration
         if self._calib_data is not None:
             # get calibration data of this layer
-            calib_data = self._calib_data[ir_node.name]
+            postfix_name = ir_node.name.split('/')[-1]
+            name = ir_node.name
+            if postfix_name == 'BiasaddClone':
+                name = ir_node.name.strip('/BiasaddClone')
+            calib_data = self._calib_data[name]
             aix_layer.output_threshold = calib_data["output"]
         else:
             aix_layer.output_threshold = 0

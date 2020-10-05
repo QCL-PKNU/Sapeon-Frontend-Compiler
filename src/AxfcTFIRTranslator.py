@@ -259,8 +259,8 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         # epsilon
         if 'epsilon' in tensor.op.node_def.attr:
             aix_layer.epsilon = tensor.op.node_def.attr['epsilon'].f
-        else:
-            aix_layer.epsilon = 1e-06
+        # else:
+        #     aix_layer.epsilon = 0
 
         return AxfcError.SUCCESS
 
@@ -297,8 +297,8 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         # epsilon
         if 'epsilon' in tensor.op.node_def.attr:
             aix_layer.epsilon = tensor.op.node_def.attr['epsilon'].f
-        else:
-            aix_layer.epsilon = 1e-06
+        # else:
+        #     aix_layer.epsilon = 0
 
         return AxfcError.SUCCESS
 
@@ -334,8 +334,8 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         # epsilon
         if 'epsilon' in tensor.op.node_def.attr:
             aix_layer.epsilon = tensor.op.node_def.attr['epsilon'].f
-        else:
-            aix_layer.epsilon = 1e-06
+        # else:
+        #     aix_layer.epsilon = 0
 
         return AxfcError.SUCCESS
 
@@ -367,8 +367,8 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         # epsilon
         if 'epsilon' in tensor.op.node_def.attr:
             aix_layer.epsilon = tensor.op.node_def.attr['epsilon'].f
-        else:
-            aix_layer.epsilon = 1e-06
+        # else:
+        #     aix_layer.epsilon = 0
 
         # samplingdesc
         sampling_desc = self._emit_aix_sampling_desc(ir_node, tensor=tensor)
@@ -405,8 +405,8 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         # epsilon
         if 'epsilon' in tensor.op.node_def.attr:
             aix_layer.epsilon = tensor.op.node_def.attr['epsilon'].f
-        else:
-            aix_layer.epsilon = 1e-06
+        # else:
+        #     aix_layer.epsilon = 0
 
         # samplingdesc
         sampling_desc = self._emit_aix_sampling_desc(ir_node, tensor=tensor)
@@ -443,8 +443,8 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         # epsilon
         if 'epsilon' in tensor.op.node_def.attr:
             aix_layer.epsilon = tensor.op.node_def.attr['epsilon'].f
-        else:
-            aix_layer.epsilon = 1e-06
+        # else:
+        #     aix_layer.epsilon = 0
         return AxfcError.SUCCESS
 
     ##  This method emits some tensorflow-specific information of the given IR node
@@ -475,8 +475,8 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         # epsilon
         if 'epsilon' in tensor.op.node_def.attr:
             aix_layer.epsilon = tensor.op.node_def.attr['epsilon'].f
-        else:
-            aix_layer.epsilon = 1e-06
+        # else:
+        #     aix_layer.epsilon = 0
 
         return AxfcError.SUCCESS
 
@@ -510,8 +510,8 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         # epsilon
         if 'epsilon' in tensor.op.node_def.attr:
             aix_layer.epsilon = tensor.op.node_def.attr['epsilon'].f
-        else:
-            aix_layer.epsilon = 1e-06
+        # else:
+        #     aix_layer.epsilon = 0
 
         return AxfcError.SUCCESS
 
@@ -560,8 +560,8 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         # epsilon
         if 'epsilon' in tensor.op.node_def.attr:
             aix_layer.epsilon = tensor.op.node_def.attr['epsilon'].f
-        else:
-            aix_layer.epsilon = 1e-06
+        # else:
+        #     aix_layer.epsilon = 0
 
         return AxfcError.SUCCESS
 
@@ -733,7 +733,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         # set default
         if aix_tensor is None:
-            aix_tensor = self.__emit_default_hyper_parameter(ir_node.aix_layer, 1)
+            aix_tensor = self.__emit_default_hyper_parameter(ir_node.aix_layer, 0)
 
         return aix_tensor
 
