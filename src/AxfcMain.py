@@ -75,6 +75,15 @@ def __main(params):
         logging.error("Error] Dump out AIXGraphs: %s", err)
         return err
 
+    #AIX Launcher
+    result = fc.dump_launcher(path=in_path,
+                              kernel_op_path='../tst/custom_op_kernel.so',
+                              aix_graph_path='../tst/aix_graph.out.00',
+                              image_path='../tst/img/dog.jpg')
+
+    with open('finalResult.txt', 'a') as fil:
+        fil.write(str(result.tolist()))
+
     # for AIXIR graph viewer
     if gv_path is not None:
         aix_ir_graph = fc.get_ir_graph()

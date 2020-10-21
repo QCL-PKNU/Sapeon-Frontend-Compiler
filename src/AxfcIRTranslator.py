@@ -225,7 +225,7 @@ class AxfcIRTranslator:
             postfix_name = ir_node.name.split('/')[-1]
             name = ir_node.name
             if postfix_name == 'BiasaddClone':
-                name = ir_node.name.strip('/BiasaddClone')
+                name = ir_node.name.replace('/BiasaddClone','')
             calib_data = self._calib_data[name]
             aix_layer.output_threshold = calib_data["output"]
         else:

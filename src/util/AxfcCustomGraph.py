@@ -46,9 +46,9 @@ class AxfcCustomGraph:
     def __init__(self, input_tensor_names: list,
                  graph_def,
                  path_module: str,
-                 last_subgraph_names: dict,
                  output_type,
                  aix_graph_path: str,
+                 last_subgraph_names = None
                  ):
         self.input_tensor_names = input_tensor_names
         self.last_subgraph_names = last_subgraph_names
@@ -123,12 +123,15 @@ class AxfcCustomGraph:
 
         aix_tensor, aix_graph = self.__load_aix_op()
 
-        tensors_def = self.__axfc_util.extract_sub_graph(self.last_subgraph_names['input'],
-                                                         self.last_subgraph_names['output'])
+        if self.last_subgraph_names is not None:
 
-        with aix_graph.as_default() as custom_graph:
-            tf.import_graph_def(tensors_def,
-                                input_map={self.last_subgraph_names['input'][0]: aix_tensor[0]}, name='')
+            tensors_def = self.__axfc_util.extract_sub_graph(self.last_subgraph_names['input'],
+                                                             self.last_subgraph_names['output'])
 
-        custom_graph = self.__optimize_graph(custom_graph)
-        return custom_graph
+            with aix_graph.as_default() as custom_graph:
+                tf.import_graph_def(tensors_def,
+                                    input_map={self.last_subgraph_names['input'][0]: aix_tensor[0]}, name='')
+
+            aix_graph = self.__optimize_graph(custom_graph)
+
+        return aix_graph

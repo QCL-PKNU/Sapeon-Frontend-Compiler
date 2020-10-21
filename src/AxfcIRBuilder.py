@@ -102,9 +102,17 @@ class AxfcIRBuilder:
         logging.warning("** YOUNGSUN - Need to determine how to organize a block for hardware acceleration **")
         logging.warning("** YOUNGSUN - Need to determine how to calculate the profit of hardware acceleration **")
 
-        for ir_node in self._ir_graph.nodes:
-            # ignore nodes that are already evaluated and not supported by AIXH
-            if ir_node.eval_flag or not ir_node.is_aixh_support:
+        # filter nodes that supported by AIXH
+        supported_nodes = list(filter(lambda node: node.is_aixh_support, self._ir_graph.nodes))
+
+        # indexing all ir_node
+        for index, node in enumerate(supported_nodes):
+            node.temp_id = index
+
+        for ir_node in supported_nodes:
+
+            # ignore nodes that are already evaluated
+            if ir_node.eval_flag:
                 continue
 
             # create a new IR block and perform maximal munching
@@ -129,6 +137,10 @@ class AxfcIRBuilder:
             else:
                 ir_block.is_aixh_support = False
 
+        # sort the nodes in each block by layer id
+        for block in self._ir_graph.blocks:
+            block.nodes.sort(key=lambda node: node.layer_id)
+
         return AxfcError.SUCCESS
 
     ## This method performs maximal munch algorithm to
@@ -152,7 +164,7 @@ class AxfcIRBuilder:
 
         # skip if this node is not supported by hardware
         if ir_node.is_aixh_support:
-            ir_node.layer_id = len(ir_block.nodes)
+            ir_node.layer_id = ir_node.temp_id
             ir_node.block_ref = ir_block
             ir_block.nodes.append(ir_node)
         else:

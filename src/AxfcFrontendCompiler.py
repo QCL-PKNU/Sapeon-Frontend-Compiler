@@ -15,6 +15,7 @@ from AxfcTFIRBuilder import *
 from AxfcTFIRTranslator import *
 from AxfcLauncherWriter import *
 
+from tensorflow.keras.preprocessing import image
 
 #######################################################################
 # AxfcFrontendCompiler
@@ -167,8 +168,33 @@ class AxfcFrontendCompiler:
 
         return AxfcError.SUCCESS
 
-    def dump_launcher(self, path: str) -> AxfcError:
-        pass
+
+    ## This method is used to dump out result of launcher
+    #
+    # @param self this object
+    # @param path a file path of AI model
+    # @param kernel_op_path a file path of custom operaiton kernel
+    # @param aix_graph_path a file path of aix_graph
+    # @param image_path a file path of an image for testing
+    # @return result the value by evaluation model
+    def dump_launcher(self, path: str, kernel_op_path: str, aix_graph_path: str, image_path = str) -> AxfcError:
+
+        # AIX Launcher
+        aix_launcher = AxfcLauncherWriter(frozen_model_path=path,
+                                          aix_graph_path= aix_graph_path,
+                                          kernel_op_path=kernel_op_path,
+                                          ir_graph=self.get_ir_graph())
+
+        # load image
+        img_dog = image.load_img(image_path, target_size=(224, 224))
+        img_array = image.img_to_array(img_dog)
+        img_array_expanded_dims = np.expand_dims(img_array, axis=0)
+
+        # evaluate custom model
+        result = aix_launcher.evaluate(feed_input=img_array_expanded_dims)
+
+        print('Shape',result.shape)
+        return result
 
     ## For debugging
     def __str__(self):

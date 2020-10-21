@@ -143,6 +143,7 @@ class AxfcMachineDesc:
         # logging.info("AxfcMachineDesc:get_profit_threshold")
         try:
             threshold = self.__aix_model_info_tbl["AIX_PROFIT_THRESHOLD"]
+            AxfcMachineDesc.DEFAULT_PROFIT_THRESHOLD = int(threshold)
             return int(threshold)
         except KeyError as e:
             logging.warning("get_profit_threshold: %s", str(e))

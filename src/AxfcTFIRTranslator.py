@@ -122,13 +122,13 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
     # @param name tensor's name
     # @return tensor TensorProto object
     def __get_tensor_by_name(self, name: str):
-
+        hello = name
         # check the BiasaddClone
         postfix_name = name.split('/')[-1]
         if postfix_name == 'BiasaddClone':
-            name = name.strip('/BiasaddClone')
+            name = name.replace('/BiasaddClone','')
 
-        return self.graph.get_tensor_by_name('import/' + name + ':0')
+        return self.graph.get_tensor_by_name(name + ':0')
 
     ##  This method get data from aix_tensor_format format as dictionary
     #
@@ -180,7 +180,8 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         if dims is not None:
             for dim in dims.flatten():
-                aix_tensor.fval.append(dim)
+                # aix_tensor.fval.append(dim)
+                aix_tensor.fval.append(np.maximum(dim, 0.007874016))
 
         # set dims
         shape = list(map(lambda x: 1 if not x else x, tensor.shape))
@@ -362,7 +363,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         aix_layer.filter.CopyFrom(self._emit_aix_tensor_filter(ir_node, tensor=tensor))
 
         # convolution desc
-        aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node, tensor=tensor))
+        aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node, tensor=tensor, is_default=True))
 
         # epsilon
         if 'epsilon' in tensor.op.node_def.attr:
@@ -400,7 +401,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         aix_layer.filter.CopyFrom(self._emit_aix_tensor_filter(ir_node, tensor=tensor))
 
         # convolution desc
-        aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node, tensor=tensor))
+        aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node, tensor=tensor, is_default=True))
 
         # epsilon
         if 'epsilon' in tensor.op.node_def.attr:
@@ -439,6 +440,14 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         # convolution desc
         aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node, tensor=tensor))
+
+        # ewaddec
+        ewadddesc = AIXLayer.AIXEWAddDesc()
+        scale_size = len(tensor.op.inputs)
+
+        ewadddesc.scale.extend([1]*scale_size)
+
+        aix_layer.ewadddesc.CopyFrom(ewadddesc)
 
         # epsilon
         if 'epsilon' in tensor.op.node_def.attr:
@@ -632,7 +641,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         aix_tensor = None
 
         for tensor in tensors:
-            if 'weights' in tensor.name:
+            if 'weights' in tensor.name or 'kernel' in tensor.name:
                 aix_tensor = self.__emit_aix_tensor(tensor)
                 aix_tensor.dims[-1] = ir_node.aix_layer.output.dims[2]
                 break
@@ -798,6 +807,11 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         else:
             logging.error('AxfcTFIRTranslator: _emit_aix_convolution_desc - need TensorProto object')
 
+        if 'is_default' in kwargs:
+            is_default = kwargs['is_default']
+        else:
+            is_default = False
+
         convolution_desc = AIXLayer.AIXConvolutionDesc()
 
         aix_layer = ir_node.aix_layer
@@ -806,14 +820,14 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         convolution_desc.dtype = aix_layer.input.dtype
 
         # strides
-        if 'strides' in tensor.op.node_def.attr:
+        if 'strides' in tensor.op.node_def.attr and not is_default:
             stride_dict = dict(zip('AHWB', tensor.op.get_attr('strides')))
             convolution_desc.stride.extend([stride_dict['H'], stride_dict['W'],0,0])
         else:
             convolution_desc.stride.extend([1, 1, 0, 0])
 
         # paddings
-        if 'padding' in tensor.op.node_def.attr:
+        if 'padding' in tensor.op.node_def.attr and not is_default:
 
             if tensor.op.get_attr('padding') == b'VALID':
                 convolution_desc.padding.extend([0, 0, 0, 0])
@@ -852,14 +866,37 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         else:
             convolution_desc.padding.extend([0, 0, 0, 0])
 
+        # pad layer
+        for input_tensor in tensor.op.inputs :
+            if input_tensor.op.type == 'Pad'and not is_default:
+                for pad in input_tensor.op.inputs:
+                    if pad.op.type == 'Const':
+
+                        value = print_tensor_content(pad.op)
+
+                        pad_top = value[1][0]
+                        pad_bottom = value[1][1]
+                        pad_left = value[2][0]
+                        pad_right = value[2][1]
+                        convolution_desc.padding[:] = []
+                        convolution_desc.padding.extend([pad_top, pad_bottom, pad_left, pad_right])
+
+                        # config with width and height of input
+                        aix_layer.input.dims[0] -= (pad_left + pad_right)
+                        aix_layer.input.dims[1] -= (pad_top + pad_bottom)
+
+                        # re-set input size
+                        aix_layer.input.size = aix_layer.input.dims[0] * aix_layer.input.dims[1] * aix_layer.input.dims[2]
+
+
         # dilation
-        if 'dilations' in tensor.op.node_def.attr:
+        if 'dilations' in tensor.op.node_def.attr and not is_default:
             convolution_desc.dilation.extend(tensor.op.get_attr('dilations'))
         else:
             convolution_desc.dilation.extend([1, 1, 1, 1])
 
         # groups
-        if AIXLayer.AIX_LAYER_GROUP_CONV in aix_layer.type:
+        if AIXLayer.AIX_LAYER_GROUP_CONV in aix_layer.type and not is_default:
             convolution_desc.groups = aix_layer.input.dims[2]
         else:
             convolution_desc.groups = 1
@@ -880,6 +917,8 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
                                  AIXLayer.AIX_LAYER_UPSAMPLE,
                                  AIXLayer.AIX_LAYER_REORG
         """
+
+        aix_layer = ir_node.aix_layer
 
         if 'tensor' in kwargs:
             tensor = kwargs['tensor']
@@ -904,7 +943,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         else:
             return None
 
-        # strides
+        # window
         if 'ksize' in tensor.op.node_def.attr:
             stride_dict = dict(zip('AHWB', tensor.op.get_attr('ksize')))
             sampling_desc.window.extend([stride_dict['H'], stride_dict['W'], 0, 0])
@@ -912,11 +951,51 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
             sampling_desc.window.extend([1, 1, 0, 0])
 
         # strides
-        # TODO: CHECK the strides formula
-        # sampling_desc.stride.extend(ir_node.aix_layer.convdesc.stride)
-        sampling_desc.stride.extend([0,0,0,0])
+        if 'strides' in tensor.op.node_def.attr:
+            stride_dict = dict(zip('AHWB', tensor.op.get_attr('strides')))
+            sampling_desc.stride.extend([stride_dict['H'], stride_dict['W'], 0, 0])
+        else:
+            sampling_desc.stride.extend([1, 1, 0, 0])
+
         # padding
-        sampling_desc.padding.extend(ir_node.aix_layer.convdesc.padding)
+        if 'padding' in tensor.op.node_def.attr:
+
+            if tensor.op.get_attr('padding') == b'VALID':
+                sampling_desc.padding.extend([0, 0, 0, 0])
+            else:  # SAME
+                input_h = aix_layer.input.dims[1]
+                stride_h = sampling_desc.stride[0]
+                filter_h = aix_layer.filter.dims[0]
+
+                input_w = aix_layer.input.dims[0]
+                stride_w = sampling_desc.stride[1]
+                filter_w = aix_layer.filter.dims[1]
+
+                if input_h % stride_h == 0:
+                    pad_along_height = max((filter_h - stride_h), 0)
+                else:
+                    pad_along_height = max(filter_h - (input_h % stride_h), 0)
+                if input_w % stride_w == 0:
+                    pad_along_width = max((filter_w - stride_w), 0)
+                else:
+                    pad_along_width = max(filter_w - (input_w % stride_w), 0)
+
+                ## Tensorflow system
+                # pad_top = pad_along_height // 2
+                # pad_bottom = pad_along_height - pad_top
+                # pad_left = pad_along_width // 2
+                # pad_right = pad_along_width - pad_left
+
+                ## Darknet system
+                pad_bottom = pad_along_height // 2
+                pad_top = pad_along_height - pad_bottom
+                pad_right = pad_along_width // 2
+                pad_left = pad_along_width - pad_right
+
+                sampling_desc.padding.extend([pad_top, pad_bottom, pad_left, pad_right])
+
+        else:
+            sampling_desc.padding.extend([0, 0, 0, 0])
 
         return sampling_desc
 
