@@ -31,9 +31,6 @@ class AxfcLauncherWriter:
     # @var __kernel_op_path
     # the custom kernel library (*.so) path
 
-    # @var __first_layer_tensor_name
-    # the input layer tensor name
-
     # @var __last_inout_tensors
     # the last unsupported subgraphs.
     # it refers to the layers that not supported by AIX hardware/simulator.
@@ -59,7 +56,6 @@ class AxfcLauncherWriter:
         self.__frozen_model_path = frozen_model_path
         self.__aix_graph_path = aix_graph_path
         self.__kernel_op_path = kernel_op_path
-        self.__first_layer_tensor_name = ir_graph.blocks[0].nodes[0].name
 
 
     # This method is used to build the custom graph
@@ -74,14 +70,16 @@ class AxfcLauncherWriter:
         with tf.Graph().as_default() as graph:
             tf.import_graph_def(graph_def, name='')
 
+        # get input and output tensors
+        input_tensors, output_tensors = self.analyze_inputs_outputs(graph)
+
         last_inout_tensors = {
-            'input':[ir_blocks[0].nodes[-1].name],
-            'output':[graph.get_operations()[-1].name]
+            'input':[ir_blocks[0].nodes[-1].name], # get the name of last tensor that supported by AIX
+            'output':[output_tensors[0].name] # get the name of last tensor of AIXGraph
         }
 
-        first_layer_tensor = graph.get_tensor_by_name('{}:0'.format(self.__first_layer_tensor_name))
-        input_names = [tensor.op.name for tensor in first_layer_tensor.op.inputs]
-
+        # get name of tensors
+        input_names = [tensor.name for tensor in input_tensors]
 
         aix_custom_graph = AxfcCustomGraph(input_tensor_names=input_names,
                                            graph_def=graph_def,
@@ -92,20 +90,44 @@ class AxfcLauncherWriter:
                                            )
         return aix_custom_graph.get_custom_graph()
 
+    # This method is used to analyze the graph to get inputs and outputs tensor
+    # @param self this object
+    # @param graph the tensor graph
+    # @return inputs and outputs tensor operation
+    def analyze_inputs_outputs(self, graph):
+        ops = graph.get_operations()
+        outputs_set = set(ops)
+        inputs = []
+        for op in ops:
+            if len(op.inputs) == 0 and op.type != 'Const':
+                inputs.append(op)
+            else:
+                for input_tensor in op.inputs:
+                    if input_tensor.op in outputs_set:
+                        outputs_set.remove(input_tensor.op)
+        outputs = list(outputs_set)
+        return (inputs, outputs)
+
     # This method is used to evaluate the custom graph
     # @param feed_input the input data (normally it's for import/input layer)
     # @param input_tensor_name the first input tensor name (default: take the first layer name)
     # @param last_tensor_name the last output tensor name (default: take the last layer name)
     # @return result_final the output value as numpy object
-    def evaluate(self, feed_input, input_tensor_name: str = None, last_tensor_name: str = None):
+    def evaluate(self, feed_input):
+
         custom_graph = self.get_custom_graph()
-        input_tensor_name = 'import/input:0' if input_tensor_name is None else input_tensor_name
-        last_tensor_name = '{}:0'.format(
-            custom_graph.get_operations()[-1].name) if last_tensor_name is None else last_tensor_name
+
+        # Get the inputs and outputs of the graph
+        inputs_tensor, outputs_tensor = self.analyze_inputs_outputs(custom_graph)
+
+        # get input and outputs name
+        input_tensor_name = '{}:0'.format(inputs_tensor[0].name)
+        output_tensor_name = '{}:0'.format(outputs_tensor[0].name)
 
         with tf.compat.v1.Session(graph=custom_graph) as sess:
-            result_final = sess.run(custom_graph.get_tensor_by_name(last_tensor_name),
+            result_final = sess.run(custom_graph.get_tensor_by_name(output_tensor_name),
                                     feed_dict={input_tensor_name: feed_input})
+
         return result_final
 
     ## This method is used to emit a launcher for the generated AIXGraph.

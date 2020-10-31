@@ -14,7 +14,7 @@ import os
 import argparse
 
 from AxfcFrontendCompiler import *
-
+import numpy as np
 
 ## This is a main function for SKT-AIX frontend compiler
 ## @param params input parameters for the compilation
@@ -76,10 +76,20 @@ def __main(params):
         return err
 
     #AIX Launcher
-    result = fc.dump_launcher(path=in_path,
+    output = fc.dump_launcher(path=in_path,
                               kernel_op_path='../tst/custom_op_kernel.so',
                               aix_graph_path='../tst/aix_graph.out.00',
                               image_path='../tst/img/dog.jpg')
+
+    # Evaluation and Prediction the model
+    with open('../tst/ImageNetLabels.txt') as f:
+        labels = [l.rstrip() for l in f]
+
+    result = np.array(output)
+    sort_result = result[0].argsort()[-5:][::-1]
+    print('The Prediction: ')
+    for i in sort_result:
+        print(' - ', labels[i], '\t', i , result[0][i])
 
     with open('finalResult.txt', 'a') as fil:
         fil.write(str(result.tolist()))

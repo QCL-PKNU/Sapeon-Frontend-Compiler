@@ -11,6 +11,7 @@
 #######################################################################
 
 from util.AxfcTFGraphUtil import AxfcTFGraphUtil
+from util.AxfcUtil import  *
 import tensorflow as tf
 
 
@@ -104,15 +105,17 @@ class AxfcCustomGraph:
     # @return main_graph the optimized graph
     def __optimize_graph(self, custom_graph):
         nodes = []
-        for node in custom_graph.as_graph_def().node:
-            if not node.name == self.last_subgraph_names['input'][0]:
-                nodes.append(node)
+        # take only tensor that has connection
+        custom_graph_def = custom_graph.as_graph_def()
 
-        optimize_graph = tf.compat.v1.GraphDef()
-        optimize_graph.node.extend(nodes)
+        # take only tensor that has connection
+        for index, op in enumerate(custom_graph.get_operations()):
+            if not op.inputs and not op.outputs[0].consumers():
+                del custom_graph_def.node[index]
+                break
 
         with tf.Graph().as_default() as main_graph:
-            tf.import_graph_def(optimize_graph, name='')
+            tf.import_graph_def(custom_graph_def, name='')
 
         return main_graph
 

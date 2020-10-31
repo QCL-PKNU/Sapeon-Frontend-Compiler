@@ -188,7 +188,7 @@ class AxfcFrontendCompiler:
         # load image
         img_dog = image.load_img(image_path, target_size=(224, 224))
         img_array = image.img_to_array(img_dog)
-        img_array_expanded_dims = np.expand_dims(img_array, axis=0)
+        img_array_expanded_dims = np.expand_dims(img_array/255, axis=0)
 
         # evaluate custom model
         result = aix_launcher.evaluate(feed_input=img_array_expanded_dims)

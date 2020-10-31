@@ -41,8 +41,8 @@ aix_tensor_format_tbl = {
 # Global variable
 #######################################################################
 
-# following the Darknet format
-DEFAULT_TYPE = 'NCHW'
+# following the tensorflow format
+DEFAULT_TYPE = 'NHWC'
 
 #######################################################################
 # AxfcTFIRTranslator class
@@ -122,7 +122,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
     # @param name tensor's name
     # @return tensor TensorProto object
     def __get_tensor_by_name(self, name: str):
-        hello = name
+
         # check the BiasaddClone
         postfix_name = name.split('/')[-1]
         if postfix_name == 'BiasaddClone':
@@ -145,8 +145,12 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         data_format = ([k for k, v in aix_tensor_format_tbl.items()
                         if v == tensor_format])[0].decode()
 
+        # Darknet dims tensor is reverse
+        reverse_values = list(values)
+        reverse_values.reverse()
+
         # map the data format with its value
-        return dict(zip(data_format, values))
+        return dict(zip(data_format, reverse_values))
 
     ## This method is used to emit the AIXTensor to be the input, output, scale, filter, biase, and variance
     #
@@ -163,9 +167,6 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         if "data_format" in tensor.op.node_def.attr:
             data_format = tensor.op.node_def.attr["data_format"].s
-            # set fixed data_format for darknet
-            # TODO: delete this line when darknet's data_format support all
-            data_format = DEFAULT_TYPE.encode()
         elif tensor.shape.ndims == 1:
             data_format = b'VECTOR'
         else:
@@ -180,7 +181,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         if dims is not None:
             for dim in dims.flatten():
-                # aix_tensor.fval.append(dim)
+                # aix_tensor.fval.append(dim + 0.007874016)
                 aix_tensor.fval.append(np.maximum(dim, 0.007874016))
 
         # set dims
@@ -193,7 +194,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
             shape_dict = dict(zip('NHWC', shape))
 
             # reverse appending (following aix compiler structure)
-            for t in reversed(DEFAULT_TYPE):
+            for t in reversed('NHWC'):
                 aix_tensor.dims.append(shape_dict[t])
         else:
             aix_tensor.dims.extend(shape)
@@ -216,7 +217,8 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         tensor.format = AIXLayer.AIX_FORMAT_VECTOR
 
         # set the output channel to tensor dims [2]
-        output_channel = aix_layer.output.dims[2]
+        output_dims_dict = self.__get_aix_tensor_dims(aix_layer.output)
+        output_channel = output_dims_dict['C']
         tensor.dims.append(output_channel)
         tensor.size = output_channel
         tensor.fval.extend([default_value] * output_channel)
@@ -360,7 +362,8 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         tensor = self.__get_tensor_by_name(ir_node.name)
 
         # filter
-        aix_layer.filter.CopyFrom(self._emit_aix_tensor_filter(ir_node, tensor=tensor))
+        filter = self._emit_aix_tensor_filter(ir_node, tensor=tensor)
+        aix_layer.filter.CopyFrom(filter)
 
         # convolution desc
         aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node, tensor=tensor, is_default=True))
@@ -373,6 +376,12 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         # samplingdesc
         sampling_desc = self._emit_aix_sampling_desc(ir_node, tensor=tensor)
+
+        # darknet : set stride to default
+        sampling_desc.stride[:] = []
+        sampling_desc.stride.extend([0, 0, 0, 0])
+        aix_layer.filter.dims[0], aix_layer.filter.dims[1] = 1, 1
+
         aix_layer.samplingdesc.CopyFrom(sampling_desc)
 
         return AxfcError.SUCCESS
@@ -643,7 +652,13 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         for tensor in tensors:
             if 'weights' in tensor.name or 'kernel' in tensor.name:
                 aix_tensor = self.__emit_aix_tensor(tensor)
-                aix_tensor.dims[-1] = ir_node.aix_layer.output.dims[2]
+
+                dims_dict = self.__get_aix_tensor_dims(ir_node.aix_layer.output)
+
+                # Darknet requirement
+                aix_tensor.format = aix_tensor_format_tbl[b'NCHW']
+
+                aix_tensor.dims[-1] = dims_dict['C']
                 break
 
         # set default
@@ -651,11 +666,14 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
             aix_layer = ir_node.aix_layer
             aix_tensor = AIXLayer.AIXTensor()
             aix_tensor.dtype = aix_layer.input.dtype
-            aix_tensor.format = aix_layer.input.format
+            aix_tensor.format = aix_tensor_format_tbl[b'NCHW']
             aix_tensor.dims.append(1)  # width
             aix_tensor.dims.append(1)  # height
-            aix_tensor.dims.append(aix_layer.input.dims[2])  # channel
-            aix_tensor.dims.append(aix_layer.output.dims[2])  # number of filter
+
+            input_dims_dict = self.__get_aix_tensor_dims(aix_layer.input)
+            output_dims_dict = self.__get_aix_tensor_dims(aix_layer.output)
+            aix_tensor.dims.append(input_dims_dict['C'])  # channel
+            aix_tensor.dims.append(output_dims_dict['C'])  # number of filter
 
         return aix_tensor
 
@@ -832,11 +850,14 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
             if tensor.op.get_attr('padding') == b'VALID':
                 convolution_desc.padding.extend([0, 0, 0, 0])
             else:  # SAME
-                input_h = aix_layer.input.dims[1]
+
+                input_dims_dict = self.__get_aix_tensor_dims(aix_layer.input)
+
+                input_h = input_dims_dict['H']
                 stride_h = convolution_desc.stride[0]
                 filter_h = aix_layer.filter.dims[0]
 
-                input_w = aix_layer.input.dims[0]
+                input_w = input_dims_dict['W']
                 stride_w = convolution_desc.stride[1]
                 filter_w = aix_layer.filter.dims[1]
 
@@ -882,11 +903,21 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
                         convolution_desc.padding.extend([pad_top, pad_bottom, pad_left, pad_right])
 
                         # config with width and height of input
-                        aix_layer.input.dims[0] -= (pad_left + pad_right)
-                        aix_layer.input.dims[1] -= (pad_top + pad_bottom)
+
+                        input_format = aix_layer.input.format
+                        data_format = ([k for k, v in aix_tensor_format_tbl.items() if v == input_format])[0].decode()
+                        reverse_format = data_format[::-1]
+
+                        index_width = reverse_format.find('W')
+                        index_height = reverse_format.find('H')
+
+                        # re-set width and height of input dims
+                        aix_layer.input.dims[index_width] -= (pad_left + pad_right)
+                        aix_layer.input.dims[index_height] -= (pad_top + pad_bottom)
 
                         # re-set input size
-                        aix_layer.input.size = aix_layer.input.dims[0] * aix_layer.input.dims[1] * aix_layer.input.dims[2]
+                        input_dims_dict = self.__get_aix_tensor_dims(aix_layer.input)
+                        aix_layer.input.size = input_dims_dict['W'] * input_dims_dict['H'] * input_dims_dict['C']
 
 
         # dilation
@@ -897,7 +928,8 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         # groups
         if AIXLayer.AIX_LAYER_GROUP_CONV in aix_layer.type and not is_default:
-            convolution_desc.groups = aix_layer.input.dims[2]
+            input_dims_dict = self.__get_aix_tensor_dims(aix_layer.input)
+            convolution_desc.groups = input_dims_dict['C']
         else:
             convolution_desc.groups = 1
 
@@ -947,6 +979,10 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         if 'ksize' in tensor.op.node_def.attr:
             stride_dict = dict(zip('AHWB', tensor.op.get_attr('ksize')))
             sampling_desc.window.extend([stride_dict['H'], stride_dict['W'], 0, 0])
+
+            #TODO : check the relationship between window and stride in convc
+            aix_layer.filter.dims[0] = stride_dict['H']
+            aix_layer.filter.dims[1] = stride_dict['W']
         else:
             sampling_desc.window.extend([1, 1, 0, 0])
 
@@ -963,13 +999,16 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
             if tensor.op.get_attr('padding') == b'VALID':
                 sampling_desc.padding.extend([0, 0, 0, 0])
             else:  # SAME
-                input_h = aix_layer.input.dims[1]
-                stride_h = sampling_desc.stride[0]
-                filter_h = aix_layer.filter.dims[0]
 
-                input_w = aix_layer.input.dims[0]
+                input_dims_dict = self.__get_aix_tensor_dims(aix_layer.input)
+
+                input_h = input_dims_dict['H']
+                stride_h = sampling_desc.stride[0]
+                filter_h = sampling_desc.window[0]
+
+                input_w = input_dims_dict['W']
                 stride_w = sampling_desc.stride[1]
-                filter_w = aix_layer.filter.dims[1]
+                filter_w = sampling_desc.window[1]
 
                 if input_h % stride_h == 0:
                     pad_along_height = max((filter_h - stride_h), 0)
