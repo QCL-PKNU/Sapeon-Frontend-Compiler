@@ -91,8 +91,10 @@ class AxfcCustomGraph:
         op_module = tf.load_op_library(self.__path_module)
 
         with inputs_graph.as_default() as aix_graph:
+            input_tensor = inputs_graph.get_operations()[-1].outputs[-1]
+            tensor_transpose = tf.transpose(input_tensors[0], [0, 3, 1, 2])
             aix_tensor = op_module.aix_op(
-                input=input_tensors,
+                input=[tensor_transpose],
                 output_type=self.__output_type,
                 aix_graph_path=self.__aix_graph_path,
             )
@@ -131,9 +133,17 @@ class AxfcCustomGraph:
             tensors_def = self.__axfc_util.extract_sub_graph(self.last_subgraph_names['input'],
                                                              self.last_subgraph_names['output'])
 
+
             with aix_graph.as_default() as custom_graph:
+
+                # Add the new tensor to last in order to alter output data format from NCHW -> NHWC
+                aix_op = aix_graph.get_tensor_by_name('AixOp:0')
+                tf.transpose(aix_op, [0,2,3,1])
+
                 tf.import_graph_def(tensors_def,
-                                    input_map={self.last_subgraph_names['input'][0]: aix_tensor[0]}, name='')
+                                    input_map = {self.last_subgraph_names['input'][0]: aix_graph.get_tensor_by_name('transpose_1:0')},
+                                    name='' )
+                custom_graph.finalize()
 
             aix_graph = self.__optimize_graph(custom_graph)
 

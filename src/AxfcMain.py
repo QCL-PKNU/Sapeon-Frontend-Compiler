@@ -81,15 +81,17 @@ def __main(params):
                               aix_graph_path='../tst/aix_graph.out.00',
                               image_path='../tst/img/dog.jpg')
 
-    # Evaluation and Prediction the model
+    #Evaluation and Prediction the model
     with open('../tst/ImageNetLabels.txt') as f:
         labels = [l.rstrip() for l in f]
 
     result = np.array(output)
-    sort_result = result[0].argsort()[-5:][::-1]
+    sort_result = result[0].argsort()[-10:][::-1]
+
     print('The Prediction: ')
+
     for i in sort_result:
-        print(' - ', labels[i], '\t', i , result[0][i])
+        print(labels[i])
 
     with open('finalResult.txt', 'a') as fil:
         fil.write(str(result.tolist()))

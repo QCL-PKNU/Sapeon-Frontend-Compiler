@@ -73,8 +73,17 @@ class AxfcLauncherWriter:
         # get input and output tensors
         input_tensors, output_tensors = self.analyze_inputs_outputs(graph)
 
+        # FOR TESTING
+        # aix_graph = AIXGraph()
+        # with open(self.__aix_graph_path, 'rb') as file:
+        #     text_format.Parse(file.read(), aix_graph)
+        #
+        # input_name = aix_graph.layer[-1].name
+
+        input_name = ir_blocks[0].nodes[-1].name
+
         last_inout_tensors = {
-            'input':[ir_blocks[0].nodes[-1].name], # get the name of last tensor that supported by AIX
+            'input':[input_name], # get the name of last tensor that supported by AIX
             'output':[output_tensors[0].name] # get the name of last tensor of AIXGraph
         }
 
@@ -124,7 +133,10 @@ class AxfcLauncherWriter:
         input_tensor_name = '{}:0'.format(inputs_tensor[0].name)
         output_tensor_name = '{}:0'.format(outputs_tensor[0].name)
 
-        with tf.compat.v1.Session(graph=custom_graph) as sess:
+        config = tf.compat.v1.ConfigProto()
+        config.gpu_options.allow_growth = True
+
+        with tf.compat.v1.Session(graph=custom_graph, config=config) as sess:
             result_final = sess.run(custom_graph.get_tensor_by_name(output_tensor_name),
                                     feed_dict={input_tensor_name: feed_input})
 

@@ -42,7 +42,7 @@ aix_tensor_format_tbl = {
 #######################################################################
 
 # following the tensorflow format
-DEFAULT_TYPE = 'NHWC'
+DEFAULT_TYPE = 'NCHW'
 
 #######################################################################
 # AxfcTFIRTranslator class
@@ -158,7 +158,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
     # @param attr_tensor AIXTensor object
     # @param isInoutTensor if it is Input or output tensor it must be true
     # @return aix_tensor AIXTensor object
-    def __emit_aix_tensor(self, tensor, is_inout_tensor= False) -> AIXLayer.AIXTensor:
+    def __emit_aix_tensor(self, tensor, is_inout_tensor= False, **kwargs) -> AIXLayer.AIXTensor:
 
         aix_tensor = AIXLayer.AIXTensor()
 
@@ -167,6 +167,8 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         if "data_format" in tensor.op.node_def.attr:
             data_format = tensor.op.node_def.attr["data_format"].s
+
+            data_format = DEFAULT_TYPE.encode()
         elif tensor.shape.ndims == 1:
             data_format = b'VECTOR'
         else:
@@ -180,9 +182,30 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         dims = print_tensor_content(tensor.op)
 
         if dims is not None:
-            for dim in dims.flatten():
+            # convert NHWC -> NCHW, if the TEST is 1
+
+            TEST = 0
+
+            if TEST:
+                if data_format != b'VECTOR':
+                    new_dims = np.einsum('HWCN->NCHW', dims)
+                    tensor_values = new_dims.flatten()
+                else:
+                    tensor_values = dims.flatten()
+            else:
+                tensor_values = dims.flatten()
+
+            for dim in tensor_values:
+                # aix_tensor.fval.append(dim)
+                #
+                if 'optimize' in kwargs:
+                    aix_tensor.fval.append(np.maximum(dim, 0.007874016))
+                    # aix_tensor.fval.append(dim + 0.007874016)
+                else:
+                    aix_tensor.fval.append(dim)
+
                 # aix_tensor.fval.append(dim + 0.007874016)
-                aix_tensor.fval.append(np.maximum(dim, 0.007874016))
+                # aix_tensor.fval.append(np.maximum(dim, 0.007874016))
 
         # set dims
         shape = list(map(lambda x: 1 if not x else x, tensor.shape))
@@ -194,7 +217,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
             shape_dict = dict(zip('NHWC', shape))
 
             # reverse appending (following aix compiler structure)
-            for t in reversed('NHWC'):
+            for t in reversed('NCHW'):
                 aix_tensor.dims.append(shape_dict[t])
         else:
             aix_tensor.dims.extend(shape)
@@ -697,7 +720,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         for tensor in tensors:
             if 'biases' in tensor.name or 'beta' in tensor.name:
-                aix_tensor = self.__emit_aix_tensor(tensor, )
+                aix_tensor = self.__emit_aix_tensor(tensor)
                 break
 
         # set default
@@ -726,7 +749,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         for tensor in tensors:
             if 'gamma' in tensor.name:
-                aix_tensor = self.__emit_aix_tensor(tensor, )
+                aix_tensor = self.__emit_aix_tensor(tensor)
                 break
 
         # set default
@@ -755,7 +778,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         for tensor in tensors:
             if 'moving_mean' in tensor.name:
-                aix_tensor = self.__emit_aix_tensor(tensor, )
+                aix_tensor = self.__emit_aix_tensor(tensor)
                 break
 
         # set default
@@ -784,7 +807,7 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         for tensor in tensors:
             if 'moving_variance' in tensor.name:
-                aix_tensor = self.__emit_aix_tensor(tensor, )
+                aix_tensor = self.__emit_aix_tensor(tensor, optimize=True)
                 break
 
         # set default
