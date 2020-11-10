@@ -91,7 +91,7 @@ def __main(params):
     print('The Prediction: ')
 
     for i in sort_result:
-        print(labels[i])
+        print('{0:0.3f}%'.format(result[0][i] * 100), ' : ',labels[i])
 
     with open('finalResult.txt', 'a') as fil:
         fil.write(str(result.tolist()))

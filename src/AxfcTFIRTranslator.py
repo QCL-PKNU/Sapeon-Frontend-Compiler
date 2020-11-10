@@ -184,11 +184,15 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         if dims is not None:
             # convert NHWC -> NCHW, if the TEST is 1
 
-            TEST = 0
+            TEST = 1
 
             if TEST:
                 if data_format != b'VECTOR':
-                    new_dims = np.einsum('HWCN->NCHW', dims)
+                    # in NCHW format, the filter shape is (out_channel, in_channel, filter_height, filter_weight)
+                    # in NHWC format, the filter shape is (filter_height, filter_weight, in_channel, out_channel)
+
+                    # change filter shape from NHWC to NCHW
+                    new_dims = np.einsum('HWIO->OIHW', dims)
                     tensor_values = new_dims.flatten()
                 else:
                     tensor_values = dims.flatten()

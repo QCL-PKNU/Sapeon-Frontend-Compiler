@@ -80,6 +80,10 @@ class AxfcLauncherWriter:
         #
         # input_name = aix_graph.layer[-1].name
 
+        if len(ir_blocks) < 1:
+            logging.error('Error] There is no block supported, Change decrease AIX_PROFIT_THRESHOLD in md file.')
+            return graph
+
         input_name = ir_blocks[0].nodes[-1].name
 
         last_inout_tensors = {
