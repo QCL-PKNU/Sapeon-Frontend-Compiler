@@ -41,7 +41,7 @@ aix_tensor_format_tbl = {
 # Global variable
 #######################################################################
 
-# following the tensorflow format
+# following the darknet format
 DEFAULT_TYPE = 'NCHW'
 
 #######################################################################
@@ -166,8 +166,9 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         aix_tensor.dtype = aix_data_type_tbl[tensor.dtype]
 
         if "data_format" in tensor.op.node_def.attr:
-            data_format = tensor.op.node_def.attr["data_format"].s
+            # data_format = tensor.op.node_def.attr["data_format"].s
 
+            # following the darknet format
             data_format = DEFAULT_TYPE.encode()
         elif tensor.shape.ndims == 1:
             data_format = b'VECTOR'
@@ -182,34 +183,29 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         dims = print_tensor_content(tensor.op)
 
         if dims is not None:
-            # convert NHWC -> NCHW, if the TEST is 1
 
-            TEST = 1
+            if data_format != b'VECTOR':
+                # in NCHW format, the filter shape is (out_channel, in_channel, filter_height, filter_weight)
+                # in NHWC format, the filter shape is (filter_height, filter_weight, in_channel, out_channel)
+                # ref : https://github.com/tensorflow/tensorflow/blob/0be81439c91e297b078152dd0c266471b24bde7f/tensorflow/core/kernels/conv_ops.cc#L603-L608
 
-            if TEST:
-                if data_format != b'VECTOR':
-                    # in NCHW format, the filter shape is (out_channel, in_channel, filter_height, filter_weight)
-                    # in NHWC format, the filter shape is (filter_height, filter_weight, in_channel, out_channel)
-
-                    # change filter shape from NHWC to NCHW
-                    new_dims = np.einsum('HWIO->OIHW', dims)
-                    tensor_values = new_dims.flatten()
-                else:
-                    tensor_values = dims.flatten()
+                # change filter shape from NHWC to NCHW
+                new_dims = np.einsum('HWIO->OIHW', dims)
+                tensor_values = new_dims.flatten()
             else:
                 tensor_values = dims.flatten()
 
+
             for dim in tensor_values:
+
                 # aix_tensor.fval.append(dim)
-                #
+
                 if 'optimize' in kwargs:
                     aix_tensor.fval.append(np.maximum(dim, 0.007874016))
                     # aix_tensor.fval.append(dim + 0.007874016)
                 else:
                     aix_tensor.fval.append(dim)
 
-                # aix_tensor.fval.append(dim + 0.007874016)
-                # aix_tensor.fval.append(np.maximum(dim, 0.007874016))
 
         # set dims
         shape = list(map(lambda x: 1 if not x else x, tensor.shape))

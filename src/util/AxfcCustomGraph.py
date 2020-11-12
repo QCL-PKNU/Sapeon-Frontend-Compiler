@@ -143,7 +143,6 @@ class AxfcCustomGraph:
                 tf.import_graph_def(tensors_def,
                                     input_map = {self.last_subgraph_names['input'][0]: aix_graph.get_tensor_by_name('transpose_1:0')},
                                     name='' )
-                custom_graph.finalize()
 
             aix_graph = self.__optimize_graph(custom_graph)
 
