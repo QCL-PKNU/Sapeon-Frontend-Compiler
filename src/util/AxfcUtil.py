@@ -10,11 +10,7 @@
 #   High Performance Computing Laboratory (hpcl.pknu.ac.kr)
 #######################################################################
 
-import os
-from contextlib import contextmanager
-from tensorflow.keras.models import load_model
 import tensorflow as tf
-from google.protobuf import text_format
 
 
 #######################################################################

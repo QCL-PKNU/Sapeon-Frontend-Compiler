@@ -15,6 +15,7 @@ import argparse
 
 from AxfcFrontendCompiler import *
 import numpy as np
+from util.AxfcAIXLayerView import aix_layer_to_img, tf_model_layer_to_img
 
 ## This is a main function for SKT-AIX frontend compiler
 ## @param params input parameters for the compilation
@@ -25,6 +26,7 @@ def __main(params):
     log_path = params.log_path
     out_path = params.out_path
     cal_path = params.calib_path
+    kernel_path = params.kernel
 
     # for logging
     if log_path is not None and os.path.isfile(log_path):
@@ -75,26 +77,17 @@ def __main(params):
         logging.error("Error] Dump out AIXGraphs: %s", err)
         return err
 
-    #AIX Launcher
-    output = fc.dump_launcher(path=in_path,
-                              kernel_op_path='../tst/custom_op_kernel.so',
-                              aix_graph_path='../tst/aix_graph.out.00',
-                              image_path='../tst/img/dog.jpg')
+    # AIX Launcher
+    if kernel_path is not None:
 
-    #Evaluation and Prediction the model
-    with open('../tst/ImageNetLabels.txt') as f:
-        labels = [l.rstrip() for l in f]
+        image_path = input("Enter image path: ")
 
-    result = np.array(output)
-    sort_result = result[0].argsort()[-10:][::-1]
-
-    print('The Prediction: ')
-
-    for i in sort_result:
-        print('{0:0.3f}%'.format(result[0][i] * 100), ' : ',labels[i])
-
-    with open('finalResult.txt', 'a') as fil:
-        fil.write(str(result.tolist()))
+        output = fc.dump_launcher(path=in_path,
+                                  kernel_op_path=kernel_path,
+                                  aix_graph_path='../tst/aix_graph.out.00',
+                                  image_path=image_path)
+        print('Prediction:')
+        print(output)
 
     # for AIXIR graph viewer
     if gv_path is not None:
@@ -120,6 +113,8 @@ if __name__ == "__main__":
                         help='path to a machine description file')
     parser.add_argument('-i', '--in-path', metavar='', type=str, required=True,
                         help='path to the protocol buffer of a frozen model')
+    parser.add_argument('-k', '--kernel', metavar='', type=str, required=False,
+                        help='path to the kernel (custom operation kernel *.so) file')
     parser.add_argument('-c', '--calib-path', metavar='', type=str, required=False,
                         help='path to the calibration data of a frozen model')
     parser.add_argument('-o', '--out-path', metavar='', type=str, required=False,

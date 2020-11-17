@@ -197,14 +197,6 @@ class AxfcIRTranslator:
             logging.warning("AxfcIRTranslator:__emit_aixh_node - %s", err)
             return err, None
 
-        # layer input and output
-        if ir_node.is_input:
-            aix_layer.type.append(AIXLayer.AIXLayerType.AIX_LAYER_INPUT)
-            aix_layer.input_threshold = 1
-
-        if ir_node.is_output:
-            aix_layer.type.append(AIXLayer.AIXLayerType.AIX_LAYER_OUTPUT)
-
         # predecessors & successors
         for pred in ir_node.preds:
             if pred.is_aixh_support:
@@ -225,9 +217,14 @@ class AxfcIRTranslator:
             postfix_name = ir_node.name.split('/')[-1]
             name = ir_node.name
             if postfix_name == 'BiasaddClone':
-                name = ir_node.name.replace('/BiasaddClone','')
+                name = ir_node.name.replace('/BiasaddClone', '')
             calib_data = self._calib_data[name]
             aix_layer.output_threshold = calib_data["output"]
+            aix_layer.input_threshold = calib_data["input"]
+
+            if ir_node.is_input:
+                aix_layer.input_threshold = self._calib_data[list(self._calib_data)[0]]["input"]
+
         else:
             aix_layer.output_threshold = 0
 

@@ -68,7 +68,7 @@
 		},
 		"Relu6": {
 			"layer": "AIX_LAYER_ACTIVATION",
-			"activation": "AIX_ACTIVATION_LEAKY_RELU",
+			"activation": "AIX_ACTIVATION_RELU",
 			"is_group": false,
 			"is_conv": false,
 			"profit": 100

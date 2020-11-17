@@ -14,7 +14,7 @@
 			"layer": "AIX_LAYER_GROUP_CONV",
 			"activation": "AIX_ACTIVATION_IDENTITY",
 			"is_group": true,
-			"is_conv": true,
+			"is_conv": false,
 			"profit": 100
 		},
 		"FusedBatchNorm": {
@@ -68,7 +68,7 @@
 		},
 		"Relu6": {
 			"layer": "AIX_LAYER_ACTIVATION",
-			"activation": "AIX_ACTIVATION_LEAKY_RELU",
+			"activation": "AIX_ACTIVATION_RELU",
 			"is_group": false,
 			"is_conv": false,
 			"profit": 100

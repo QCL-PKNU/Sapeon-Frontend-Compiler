@@ -125,7 +125,7 @@ class AxfcFrontendCompiler:
             self.__ir_translator = AxfcTFIRTranslator(self.__md, path)
         else:
             # currently, we support only Tensorflow as an input type for the compilation
-            logging.warning("Not supported input type: %d", in_type)
+            logging.warning("Not supported input type: %d", model_type)
             return AxfcError.INVALID_INPUT_TYPE, None
 
         # build AIXIR with the input graph
@@ -187,19 +187,42 @@ class AxfcFrontendCompiler:
 
         # load image
         img_dog = image.load_img(image_path, target_size=(224, 224))
-        img_array = image.img_to_array(img_dog)
+        img_array = np.array([image.img_to_array(img_dog)])
+
+        # load multi image
+        # images = []
+        # for f in glob.iglob("../tst/img/*"):
+        #     img = image.load_img(f, target_size=(224, 224))
+        #     img_array = image.img_to_array(img)
+        #     images.append(img_array)
+        #
+        # images = np.array(images)
 
         # for mobilenet
-        img_array_expanded_dims = np.expand_dims(img_array/255., axis=0)
+        # img_array_expanded_dims = tf.keras.applications.mobilenet.preprocess_input(np.expand_dims(img_array, axis=0))
 
         # for resnet model
-        # img_array_expanded_dims = tf.keras.applications.resnet50.preprocess_input(np.expand_dims(img_array, axis=0))
+        img_array_expanded_dims = tf.keras.applications.resnet50.preprocess_input(img_array)
 
         # evaluate custom model
         result = aix_launcher.evaluate(feed_input=img_array_expanded_dims)
 
-        print('Shape',result.shape)
-        return result
+        # Evaluation and Prediction the model
+        with open('../tst/ImageNetLabels.txt') as f:
+            labels = [l.rstrip() for l in f]
+
+        np_result = np.array(result)
+
+        str_result = ''
+
+        for res in np_result:
+            sort_result = res.argsort()[-3:][::-1]
+            for i in sort_result:
+                print()
+                str_result += '{0:0.3f}%'.format(res[i] * 100) + ' : ' +  str(labels[i]) + '\n'
+            str_result += '\n'
+
+        return str_result
 
     ## For debugging
     def __str__(self):
