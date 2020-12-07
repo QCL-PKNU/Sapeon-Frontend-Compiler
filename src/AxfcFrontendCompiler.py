@@ -14,6 +14,7 @@ import os
 from AxfcTFIRBuilder import *
 from AxfcTFIRTranslator import *
 from AxfcLauncherWriter import *
+import glob
 
 from tensorflow.keras.preprocessing import image
 
@@ -186,23 +187,26 @@ class AxfcFrontendCompiler:
                                           ir_graph=self.get_ir_graph())
 
         # load image
-        img_dog = image.load_img(image_path, target_size=(224, 224))
-        img_array = np.array([image.img_to_array(img_dog)])
+        # img_dog = image.load_img(image_path, target_size=(224, 224))
+        # img_array = np.array([image.img_to_array(img_dog)])
 
         # load multi image
-        # images = []
-        # for f in glob.iglob("../tst/img/*"):
-        #     img = image.load_img(f, target_size=(224, 224))
-        #     img_array = image.img_to_array(img)
-        #     images.append(img_array)
+        images = []
+        path = '/home/sengthai/Desktop/Evaluation/ref/test_img1000/*'
+        # path = '../tst/img/*'
+
+        for f in glob.iglob(path):
+            img = image.load_img(f, target_size=(224, 224))
+            img_array = image.img_to_array(img)
+            images.append(img_array)
         #
-        # images = np.array(images)
+        images = np.array(images)
 
         # for mobilenet
         # img_array_expanded_dims = tf.keras.applications.mobilenet.preprocess_input(np.expand_dims(img_array, axis=0))
 
         # for resnet model
-        img_array_expanded_dims = tf.keras.applications.resnet50.preprocess_input(img_array)
+        img_array_expanded_dims = tf.keras.applications.resnet50.preprocess_input(images)
 
         # evaluate custom model
         result = aix_launcher.evaluate(feed_input=img_array_expanded_dims)
@@ -218,7 +222,6 @@ class AxfcFrontendCompiler:
         for res in np_result:
             sort_result = res.argsort()[-3:][::-1]
             for i in sort_result:
-                print()
                 str_result += '{0:0.3f}%'.format(res[i] * 100) + ' : ' +  str(labels[i]) + '\n'
             str_result += '\n'
 

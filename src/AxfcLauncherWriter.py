@@ -128,6 +128,8 @@ class AxfcLauncherWriter:
     # @return result_final the output value as numpy object
     def evaluate(self, feed_input):
 
+        tf.keras.backend.clear_session()
+
         custom_graph = self.get_custom_graph()
 
         # Get the inputs and outputs of the graph
@@ -138,7 +140,8 @@ class AxfcLauncherWriter:
         output_tensor_name = '{}:0'.format(outputs_tensor[0].name)
 
         config = tf.compat.v1.ConfigProto()
-        config.gpu_options.allow_growth = True
+        # config.gpu_options.allow_growth = True
+        config.gpu_options.per_process_gpu_memory_fraction = 0.75
 
         with tf.compat.v1.Session(graph=custom_graph, config=config) as sess:
             result_final = sess.run(custom_graph.get_tensor_by_name(output_tensor_name),

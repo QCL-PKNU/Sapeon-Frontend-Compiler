@@ -80,8 +80,8 @@ def __main(params):
     # AIX Launcher
     if kernel_path is not None:
 
-        image_path = input("Enter image path: ")
-
+        # image_path = input("Enter image path: ")
+        image_path = ""
         output = fc.dump_launcher(path=in_path,
                                   kernel_op_path=kernel_path,
                                   aix_graph_path='../tst/aix_graph.out.00',
