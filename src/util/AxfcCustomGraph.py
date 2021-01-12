@@ -11,7 +11,6 @@
 #######################################################################
 
 from util.AxfcTFGraphUtil import AxfcTFGraphUtil
-from util.AxfcUtil import  *
 import tensorflow as tf
 
 

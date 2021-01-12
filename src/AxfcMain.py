@@ -10,12 +10,10 @@
 #   High Performance Computing Laboratory (hpcl.pknu.ac.kr)
 #######################################################################
 
-import os
 import argparse
 
 from AxfcFrontendCompiler import *
-import numpy as np
-from util.AxfcAIXLayerView import aix_layer_to_img, tf_model_layer_to_img
+
 
 ## This is a main function for SKT-AIX frontend compiler
 ## @param params input parameters for the compilation

@@ -18,8 +18,6 @@ from time import gmtime, strftime
 from util import *
 import tensorflow as tf
 import math
-import os
-from PIL import Image
 
 #######################################################################
 # AxfcAIXLayerView methods

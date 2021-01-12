@@ -13,8 +13,6 @@
 from AxfcIRGraph import *
 from AxfcMachineDesc import *
 from util import *
-from aixh_pb2 import *
-from google.protobuf.text_format import *
 
 #######################################################################
 # AxfcLauncherWriter class
