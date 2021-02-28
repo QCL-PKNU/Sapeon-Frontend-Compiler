@@ -69,7 +69,7 @@ class AxfcLauncherWriter:
             tf.import_graph_def(graph_def, name='')
 
         # get input and output tensors
-        input_tensors, output_tensors = self.analyze_inputs_outputs(graph)
+        input_tensors, output_tensors = analyze_inputs_outputs(graph)
 
         # FOR TESTING
         # aix_graph = AIXGraph()
@@ -100,49 +100,6 @@ class AxfcLauncherWriter:
                                            aix_graph_path=self.__aix_graph_path,
                                            )
         return aix_custom_graph.get_custom_graph()
-
-    # This method is used to analyze the graph to get inputs and outputs tensor
-    # @param self this object
-    # @param graph the tensor graph
-    # @return inputs and outputs tensor operation
-    def analyze_inputs_outputs(self, graph):
-        ops = graph.get_operations()
-        outputs_set = set(ops)
-        inputs = []
-        for op in ops:
-            if len(op.inputs) == 0 and op.type != 'Const':
-                inputs.append(op)
-            else:
-                for input_tensor in op.inputs:
-                    if input_tensor.op in outputs_set:
-                        outputs_set.remove(input_tensor.op)
-        outputs = list(outputs_set)
-        return (inputs, outputs)
-
-    # This method is used to evaluate the custom graph
-    # @param feed_input the input data (normally it's for import/input layer)
-    # @param input_tensor_name the first input tensor name (default: take the first layer name)
-    # @param last_tensor_name the last output tensor name (default: take the last layer name)
-    # @return result_final the output value as numpy object
-    def evaluate(self, feed_input):
-
-        custom_graph = self.get_custom_graph()
-
-        # Get the inputs and outputs of the graph
-        inputs_tensor, outputs_tensor = self.analyze_inputs_outputs(custom_graph)
-
-        # get input and outputs name
-        input_tensor_name = '{}:0'.format(inputs_tensor[0].name)
-        output_tensor_name = '{}:0'.format(outputs_tensor[0].name)
-
-        config = tf.compat.v1.ConfigProto()
-        config.gpu_options.allow_growth = True
-
-        with tf.compat.v1.Session(graph=custom_graph, config=config) as sess:
-            result_final = sess.run(custom_graph.get_tensor_by_name(output_tensor_name),
-                                    feed_dict={input_tensor_name: feed_input})
-
-        return result_final
 
     ## This method is used to emit a launcher for the generated AIXGraph.
     # @param self this object
