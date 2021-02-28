@@ -15,15 +15,15 @@ from AxfcTFIRBuilder import *
 from AxfcTFIRTranslator import *
 from AxfcLauncherWriter import *
 import glob
-
+from util.AxfcUtil import *
 from tensorflow.keras.preprocessing import image
+from AxfcLauncher import *
 
 #######################################################################
 # AxfcFrontendCompiler
 #######################################################################
 
 class AxfcFrontendCompiler:
-
     NUM_CALIBRATION_DATA_ITEMS = 5
 
     ## @var __md
@@ -160,7 +160,8 @@ class AxfcFrontendCompiler:
         for i, aix_graph in enumerate(aix_graphs):
             # rename the output path using the graph index
             tmp_path = out_path + ".%02d" % i
-
+            aix_graph.input_layers.append(aix_graph.layer[0].id)
+            aix_graph.output_layers.append(aix_graph.layer[-1].id)
             # dump out each graph
             fd = open(tmp_path, mode="wt")
             fd.seek(0)
@@ -168,8 +169,7 @@ class AxfcFrontendCompiler:
             fd.close()
 
         return AxfcError.SUCCESS
-
-
+# aix_graph.input_layers.append(aix_graph.layer[0].id)
     ## This method is used to dump out result of launcher
     #
     # @param self this object
@@ -178,28 +178,18 @@ class AxfcFrontendCompiler:
     # @param aix_graph_path a file path of aix_graph
     # @param image_path a file path of an image for testing
     # @return result the value by evaluation model
-    def dump_launcher(self, path: str, kernel_op_path: str, aix_graph_path: str, image_path = str) -> AxfcError:
-
-        # AIX Launcher
-        aix_launcher = AxfcLauncherWriter(frozen_model_path=path,
-                                          aix_graph_path= aix_graph_path,
-                                          kernel_op_path=kernel_op_path,
-                                          ir_graph=self.get_ir_graph())
-
-        # load image
-        # img_dog = image.load_img(image_path, target_size=(224, 224))
-        # img_array = np.array([image.img_to_array(img_dog)])
+    def dump_launcher(self, custom_model_path: str, kernel_op_path: str) -> AxfcError:
 
         # load multi image
         images = []
-        path = '/home/sengthai/Desktop/Evaluation/ref/test_img1000/*'
-        # path = '../tst/img/*'
+
+        path = '../tst/img/*'
 
         for f in glob.iglob(path):
             img = image.load_img(f, target_size=(224, 224))
             img_array = image.img_to_array(img)
             images.append(img_array)
-        #
+
         images = np.array(images)
 
         # for mobilenet
@@ -209,7 +199,8 @@ class AxfcFrontendCompiler:
         img_array_expanded_dims = tf.keras.applications.resnet50.preprocess_input(images)
 
         # evaluate custom model
-        result = aix_launcher.evaluate(feed_input=img_array_expanded_dims)
+        launcher = AxfcLauncher(custom_model_path, kernel_op_path)
+        result = launcher.evaluate(feed_input=img_array_expanded_dims)
 
         # Evaluation and Prediction the model
         with open('../tst/ImageNetLabels.txt') as f:
@@ -226,6 +217,34 @@ class AxfcFrontendCompiler:
             str_result += '\n'
 
         return str_result
+
+    ## This method is used to dump out result of custom model
+    #
+    # @param self this object
+    # @param path a file path of AI model
+    # @param kernel_path a file path of custom operation kernel
+    # @param aix_graph_path a file path of aix_graph
+    # @param save_path a file path of storing file
+    # @param file_name a file name of model
+    # @return AxfcError
+    def dump_custom_model(self, path: str, kernel_path: str, aix_graph_path: str, save_path: str):
+
+        # AIX Launcher
+        aix_launcher = AxfcLauncherWriter(frozen_model_path=path,
+                                          aix_graph_path=aix_graph_path,
+                                          kernel_op_path=kernel_path,
+                                          ir_graph=self.get_ir_graph())
+        # get custom graph model
+        custom_graph_model = aix_launcher.get_custom_graph()
+
+        # write to file
+        file_name = "custom_model"
+        path = write2pb(custom_graph_model, des_path=save_path, name_file=file_name)
+
+        if path is not save_path+file_name:
+            return AxfcError.INVALID_AIX_GRAPH, path
+
+        return AxfcError.SUCCESS, path
 
     ## For debugging
     def __str__(self):
