@@ -2,12 +2,12 @@
 
 This README describes the organization and usage of the SKT AIX Frontend Compiler.
 
-### 1. Source Organization ###
+## 1. Source Organization ##
 
-#### Common
- 
+### Common ###
+
 * AxfcFrontendCompiler
-* AxfcIRBuilder    
+* AxfcIRBuilder
 * AxfcIRTranslator
 * AxfcMachineDesc
 * AxfcGraphWriter
@@ -19,16 +19,23 @@ This README describes the organization and usage of the SKT AIX Frontend Compile
 * AxfcError
 * AxfcMain
 
-#### Tensorflow
+### Util ###
+
+* AxfcAIXLayerView
+* AxfcCustomGraph
+* AxfcTFGraphUtil
+* AxfcUtil
+
+### Tensorflow ###
 
 * AxfcTFIRBuilder
 * AxfcTFIRTranslator
 
-#### SKT-AIX
+### SKT-AIX ###
 
 * aixh_pb2
 
-### 2. Usage ###
+## 2. Usage ##
 
     $$ python3 AxfcMain.py [-m] [-i] [-c] [-o] [-l] [-g]
     
@@ -38,9 +45,13 @@ This README describes the organization and usage of the SKT AIX Frontend Compile
     -o: Path to output the generated AIXGraph (optional)
     -l: Path to log out (optional)
     -g: Path to dump out an IR graph (optional)
+    -k: Path to path to the kernel (custom operation kernel *.so) file
 
-### 3. Contact ###
+## 3. Contact ##
 
 * Youngsun Han (youngsun@pknu.ac.kr)
-* Associate Professor
-* Department of Computer Engineering, Pukyong National University
+  * Associate Professor
+  * Department of Computer Engineering, Pukyong National University
+* Sengthai Heng (sengthai37@gmail.com)
+  * Graduated Student
+  * Department of AI Convergence, Pukong National University

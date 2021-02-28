@@ -13,11 +13,6 @@
 from aixh_pb2 import *
 from AxfcIRGraph import *
 from AxfcMachineDesc import *
-import tensorflow as tf
-from util import *
-import json
-import numpy as np
-from math import ceil
 
 
 

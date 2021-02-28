@@ -10,10 +10,11 @@
 #   High Performance Computing Laboratory (hpcl.pknu.ac.kr)
 #######################################################################
 
-import math
 import tensorflow as tf
+import numpy as np
 
 from AxfcIRTranslator import *
+from util import loadFrozenModel, print_tensor_content
 
 #######################################################################
 # Global tables for AIXDataType and AIXTensorFormat
