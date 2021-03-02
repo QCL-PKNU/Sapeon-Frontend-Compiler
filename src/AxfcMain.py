@@ -88,22 +88,22 @@ def __main(params):
     if err is not AxfcError.SUCCESS:
         logging.error("Error] Dump out AIX custom model: %s", err)
 
-    # AIX Launcher
-    if kernel_path is not None:
-
-        custom_model_path = '../tst/custom_model.pb'
-        output = fc.dump_launcher(custom_model_path=custom_model_path,
-                                  kernel_op_path=kernel_path)
-        print('Prediction:')
-        print(output)
+    # AIX Launcher: TESTING
+    # if kernel_path is not None:
+    #
+    #     custom_model_path = '../tst/custom_model.pb'
+    #     output = fc.dump_launcher(custom_model_path=custom_model_path,
+    #                               kernel_op_path=kernel_path)
+    #     print('Prediction:')
+    #     print(output)
 
     # for AIXIR graph viewer
-    if gv_path is not None:
-        aix_ir_graph = fc.get_ir_graph()
-        err = aix_ir_graph.dump_to_file(gv_path, ["Const", "Pad"])
-        if err is not AxfcError.SUCCESS:
-            logging.error("Error] Dump out AIXIR graph: %s", err)
-            return err
+    # if gv_path is not None:
+    #     aix_ir_graph = fc.get_ir_graph()
+    #     err = aix_ir_graph.dump_to_file(gv_path, ["Const", "Pad"])
+    #     if err is not AxfcError.SUCCESS:
+    #         logging.error("Error] Dump out AIXIR graph: %s", err)
+    #         return err
 
     logging.info("##########################")
     logging.info("# Finish to compile")
