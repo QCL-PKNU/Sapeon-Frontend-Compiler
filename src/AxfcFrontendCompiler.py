@@ -10,6 +10,7 @@
 #   High Performance Computing Laboratory (hpcl.pknu.ac.kr)
 #######################################################################
 import os
+from pathlib import Path
 
 from AxfcTFIRBuilder import *
 from AxfcTFIRTranslator import *
@@ -241,7 +242,7 @@ class AxfcFrontendCompiler:
         file_name = "custom_model"
         path = write2pb(custom_graph_model, des_path=save_path, name_file=file_name)
 
-        if path is not save_path+file_name:
+        if not Path(path).is_file():
             return AxfcError.INVALID_AIX_GRAPH, path
 
         return AxfcError.SUCCESS, path
