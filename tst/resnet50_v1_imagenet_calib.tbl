@@ -1,185 +1,185 @@
-  0 input_tensor     output              0.0         1.000000
-  1 resnet_model/Pad     output              0.0         0.999500
-  2 resnet_model/conv2d/Conv2D     output              0.0         5.426409
-  3 resnet_model/batch_normalization/FusedBatchNorm     output              0.0         4.968200
-  4 resnet_model/Relu     output              0.0         4.968200
-  5 resnet_model/max_pooling2d/MaxPool     output              0.0         4.962404
-  6 resnet_model/conv2d_1/Conv2D     output              0.0         2.994462
-  7 resnet_model/batch_normalization_1/FusedBatchNorm     output              0.0         3.252405
-  8 resnet_model/conv2d_2/Conv2D     output              0.0         0.207040
-  9 resnet_model/batch_normalization_2/FusedBatchNorm     output              0.0         4.590174
- 10 resnet_model/Relu_1     output              0.0         5.399211
- 11 resnet_model/conv2d_3/Conv2D     output              0.0         7.074333
- 12 resnet_model/batch_normalization_3/FusedBatchNorm     output              0.0         5.246035
- 13 resnet_model/Relu_2     output              0.0         4.624127
- 14 resnet_model/conv2d_4/Conv2D     output              0.0         1.741807
- 15 resnet_model/batch_normalization_4/FusedBatchNorm     output              0.0         2.007115
- 16 resnet_model/add     output              0.0         5.260589
- 17 resnet_model/Relu_3     output              0.0         2.581805
- 18 resnet_model/conv2d_5/Conv2D     output              0.0         2.273580
- 19 resnet_model/batch_normalization_5/FusedBatchNorm     output              0.0         3.404885
- 20 resnet_model/Relu_4     output              0.0         3.564441
- 21 resnet_model/conv2d_6/Conv2D     output              0.0         2.676989
- 22 resnet_model/batch_normalization_6/FusedBatchNorm     output              0.0         3.197676
- 23 resnet_model/Relu_5     output              0.0         3.194110
- 24 resnet_model/conv2d_7/Conv2D     output              0.0         1.343268
- 25 resnet_model/batch_normalization_7/FusedBatchNorm     output              0.0         2.085437
- 26 resnet_model/add_1     output              0.0         4.142339
- 27 resnet_model/Relu_6     output              0.0         4.441221
- 28 resnet_model/conv2d_8/Conv2D     output              0.0         2.178269
- 29 resnet_model/batch_normalization_8/FusedBatchNorm     output              0.0         3.016954
- 30 resnet_model/Relu_7     output              0.0         2.747511
- 31 resnet_model/conv2d_9/Conv2D     output              0.0         1.607390
- 32 resnet_model/batch_normalization_9/FusedBatchNorm     output              0.0         3.313474
- 33 resnet_model/Relu_8     output              0.0         2.414825
- 34 resnet_model/conv2d_10/Conv2D     output              0.0         0.976085
- 35 resnet_model/batch_normalization_10/FusedBatchNorm     output              0.0         2.536924
- 36 resnet_model/add_2     output              0.0         4.495079
- 37 resnet_model/Relu_9     output              0.0         4.936747
- 38 resnet_model/Pad_1     output              0.0         4.936747
- 39 resnet_model/conv2d_11/Conv2D     output              0.0         4.741958
- 40 resnet_model/batch_normalization_11/FusedBatchNorm     output              0.0         4.024300
- 41 resnet_model/conv2d_12/Conv2D     output              0.0         3.919469
- 42 resnet_model/batch_normalization_12/FusedBatchNorm     output              0.0         5.443709
- 43 resnet_model/Relu_10     output              0.0         2.987040
- 44 resnet_model/Pad_2     output              0.0         2.987040
- 45 resnet_model/conv2d_13/Conv2D     output              0.0         2.769990
- 46 resnet_model/batch_normalization_13/FusedBatchNorm     output              0.0         3.578227
- 47 resnet_model/Relu_11     output              0.0         3.287525
- 48 resnet_model/conv2d_14/Conv2D     output              0.0         3.054223
- 49 resnet_model/batch_normalization_14/FusedBatchNorm     output              0.0         6.081556
- 50 resnet_model/add_3     output              0.0         6.903308
- 51 resnet_model/Relu_12     output              0.0         6.592245
- 52 resnet_model/conv2d_15/Conv2D     output              0.0         7.813424
- 53 resnet_model/batch_normalization_15/FusedBatchNorm     output              0.0         3.638734
- 54 resnet_model/Relu_13     output              0.0         3.663596
- 55 resnet_model/conv2d_16/Conv2D     output              0.0         8.218878
- 56 resnet_model/batch_normalization_16/FusedBatchNorm     output              0.0         7.779036
- 57 resnet_model/Relu_14     output              0.0         3.411004
- 58 resnet_model/conv2d_17/Conv2D     output              0.0         1.260689
- 59 resnet_model/batch_normalization_17/FusedBatchNorm     output              0.0         8.216047
- 60 resnet_model/add_4     output              0.0         8.277552
- 61 resnet_model/Relu_15     output              0.0         8.266068
- 62 resnet_model/conv2d_18/Conv2D     output              0.0         3.035686
- 63 resnet_model/batch_normalization_18/FusedBatchNorm     output              0.0         4.880543
- 64 resnet_model/Relu_16     output              0.0         2.491962
- 65 resnet_model/conv2d_19/Conv2D     output              0.0         4.039249
- 66 resnet_model/batch_normalization_19/FusedBatchNorm     output              0.0         3.833764
- 67 resnet_model/Relu_17     output              0.0         2.675744
- 68 resnet_model/conv2d_20/Conv2D     output              0.0         0.881483
- 69 resnet_model/batch_normalization_20/FusedBatchNorm     output              0.0         3.370811
- 70 resnet_model/add_5     output              0.0         5.250344
- 71 resnet_model/Relu_18     output              0.0         7.589184
- 72 resnet_model/conv2d_21/Conv2D     output              0.0         3.693120
- 73 resnet_model/batch_normalization_21/FusedBatchNorm     output              0.0         4.100753
- 74 resnet_model/Relu_19     output              0.0         2.442731
- 75 resnet_model/conv2d_22/Conv2D     output              0.0         3.218956
- 76 resnet_model/batch_normalization_22/FusedBatchNorm     output              0.0         4.487575
- 77 resnet_model/Relu_20     output              0.0         3.084270
- 78 resnet_model/conv2d_23/Conv2D     output              0.0         0.600491
- 79 resnet_model/batch_normalization_23/FusedBatchNorm     output              0.0         2.752808
- 80 resnet_model/add_6     output              0.0         5.845364
- 81 resnet_model/Relu_21     output              0.0         5.101025
- 82 resnet_model/Pad_3     output              0.0         5.101025
- 83 resnet_model/conv2d_24/Conv2D     output              0.0         4.383610
- 84 resnet_model/batch_normalization_24/FusedBatchNorm     output              0.0         5.569214
- 85 resnet_model/conv2d_25/Conv2D     output              0.0         5.884403
- 86 resnet_model/batch_normalization_25/FusedBatchNorm     output              0.0         6.350342
- 87 resnet_model/Relu_22     output              0.0         3.854958
- 88 resnet_model/Pad_4     output              0.0         3.854958
- 89 resnet_model/conv2d_26/Conv2D     output              0.0         1.987977
- 90 resnet_model/batch_normalization_26/FusedBatchNorm     output              0.0         5.138402
- 91 resnet_model/Relu_23     output              0.0         6.148439
- 92 resnet_model/conv2d_27/Conv2D     output              0.0         3.166113
- 93 resnet_model/batch_normalization_27/FusedBatchNorm     output              0.0         7.120774
- 94 resnet_model/add_7     output              0.0         9.589542
- 95 resnet_model/Relu_24     output              0.0        10.316798
- 96 resnet_model/conv2d_28/Conv2D     output              0.0        13.423292
- 97 resnet_model/batch_normalization_28/FusedBatchNorm     output              0.0         7.521320
- 98 resnet_model/Relu_25     output              0.0         9.179432
- 99 resnet_model/conv2d_29/Conv2D     output              0.0         8.758555
-100 resnet_model/batch_normalization_29/FusedBatchNorm     output              0.0         7.654204
-101 resnet_model/Relu_26     output              0.0         5.352297
-102 resnet_model/conv2d_30/Conv2D     output              0.0         2.350724
-103 resnet_model/batch_normalization_30/FusedBatchNorm     output              0.0         9.311460
-104 resnet_model/add_8     output              0.0         9.452386
-105 resnet_model/Relu_27     output              0.0        16.444789
-106 resnet_model/conv2d_31/Conv2D     output              0.0         4.425178
-107 resnet_model/batch_normalization_31/FusedBatchNorm     output              0.0         5.687536
-108 resnet_model/Relu_28     output              0.0        12.638083
-109 resnet_model/conv2d_32/Conv2D     output              0.0         4.889936
-110 resnet_model/batch_normalization_32/FusedBatchNorm     output              0.0        17.571854
-111 resnet_model/Relu_29     output              0.0        17.643004
-112 resnet_model/conv2d_33/Conv2D     output              0.0         2.136209
-113 resnet_model/batch_normalization_33/FusedBatchNorm     output              0.0        10.331990
-114 resnet_model/add_9     output              0.0         8.964636
-115 resnet_model/Relu_30     output              0.0         8.969711
-116 resnet_model/conv2d_34/Conv2D     output              0.0         8.940857
-117 resnet_model/batch_normalization_34/FusedBatchNorm     output              0.0         5.880527
-118 resnet_model/Relu_31     output              0.0         2.353983
-119 resnet_model/conv2d_35/Conv2D     output              0.0         4.483356
-120 resnet_model/batch_normalization_35/FusedBatchNorm     output              0.0         4.654203
-121 resnet_model/Relu_32     output              0.0        11.145780
-122 resnet_model/conv2d_36/Conv2D     output              0.0         5.149012
-123 resnet_model/batch_normalization_36/FusedBatchNorm     output              0.0        19.216151
-124 resnet_model/add_10     output              0.0        19.516016
-125 resnet_model/Relu_33     output              0.0        19.412274
-126 resnet_model/conv2d_37/Conv2D     output              0.0        18.279657
-127 resnet_model/batch_normalization_37/FusedBatchNorm     output              0.0        19.888486
-128 resnet_model/Relu_34     output              0.0        19.998519
-129 resnet_model/conv2d_38/Conv2D     output              0.0         7.995769
-130 resnet_model/batch_normalization_38/FusedBatchNorm     output              0.0        20.322869
-131 resnet_model/Relu_35     output              0.0        29.572420
-132 resnet_model/conv2d_39/Conv2D     output              0.0         6.023829
-133 resnet_model/batch_normalization_39/FusedBatchNorm     output              0.0        27.180146
-134 resnet_model/add_11     output              0.0        27.188684
-135 resnet_model/Relu_36     output              0.0        16.870839
-136 resnet_model/conv2d_40/Conv2D     output              0.0        14.553725
-137 resnet_model/batch_normalization_40/FusedBatchNorm     output              0.0        12.131576
-138 resnet_model/Relu_37     output              0.0        12.119358
-139 resnet_model/conv2d_41/Conv2D     output              0.0         6.857391
-140 resnet_model/batch_normalization_41/FusedBatchNorm     output              0.0        20.797311
-141 resnet_model/Relu_38     output              0.0        21.173278
-142 resnet_model/conv2d_42/Conv2D     output              0.0         4.366426
-143 resnet_model/batch_normalization_42/FusedBatchNorm     output              0.0        17.179195
-144 resnet_model/add_12     output              0.0        19.261522
-145 resnet_model/Relu_39     output              0.0        11.111500
-146 resnet_model/Pad_5     output              0.0        11.111500
-147 resnet_model/conv2d_43/Conv2D     output              0.0         2.811575
-148 resnet_model/batch_normalization_43/FusedBatchNorm     output              0.0        12.177916
-149 resnet_model/conv2d_44/Conv2D     output              0.0         4.948529
-150 resnet_model/batch_normalization_44/FusedBatchNorm     output              0.0         6.774892
-151 resnet_model/Relu_40     output              0.0         2.531570
-152 resnet_model/Pad_6     output              0.0         2.531570
-153 resnet_model/conv2d_45/Conv2D     output              0.0         2.261163
-154 resnet_model/batch_normalization_45/FusedBatchNorm     output              0.0         2.464389
-155 resnet_model/Relu_41     output              0.0         2.114648
-156 resnet_model/conv2d_46/Conv2D     output              0.0         4.152099
-157 resnet_model/batch_normalization_46/FusedBatchNorm     output              0.0         7.436789
-158 resnet_model/add_13     output              0.0        13.574963
-159 resnet_model/Relu_42     output              0.0        13.743173
-160 resnet_model/conv2d_47/Conv2D     output              0.0        13.418828
-161 resnet_model/batch_normalization_47/FusedBatchNorm     output              0.0         2.529972
-162 resnet_model/Relu_43     output              0.0         2.388782
-163 resnet_model/conv2d_48/Conv2D     output              0.0         3.597455
-164 resnet_model/batch_normalization_48/FusedBatchNorm     output              0.0         5.733093
-165 resnet_model/Relu_44     output              0.0         2.581646
-166 resnet_model/conv2d_49/Conv2D     output              0.0         0.788240
-167 resnet_model/batch_normalization_49/FusedBatchNorm     output              0.0         8.339702
-168 resnet_model/add_14     output              0.0        15.640527
-169 resnet_model/Relu_45     output              0.0        16.535241
-170 resnet_model/conv2d_50/Conv2D     output              0.0        15.342762
-171 resnet_model/batch_normalization_50/FusedBatchNorm     output              0.0         3.549045
-172 resnet_model/Relu_46     output              0.0         2.525096
-173 resnet_model/conv2d_51/Conv2D     output              0.0         3.487802
-174 resnet_model/batch_normalization_51/FusedBatchNorm     output              0.0         5.141939
-175 resnet_model/Relu_47     output              0.0         4.371855
-176 resnet_model/conv2d_52/Conv2D     output              0.0         0.624052
-177 resnet_model/batch_normalization_52/FusedBatchNorm     output              0.0         7.474907
-178 resnet_model/add_15     output              0.0        15.803766
-179 resnet_model/Relu_48     output              0.0        17.189788
-180 resnet_model/Mean     output              0.0         9.352700
-181 resnet_model/Squeeze     output              0.0         9.352700
-182 resnet_model/dense/MatMul     output              0.0         5.073709
-183 resnet_model/dense/BiasAdd     output              0.0         5.030134
-184               ArgMax     output              0.0        25.943007
+0	input_tensor	output	151.061     151.061
+1	resnet_model/batch_normalization_25/FusedBatchNorm	output	0	12.646552
+2	resnet_model/conv2d_39/Conv2D	output	0	6.8407474
+3	resnet_model/batch_normalization_27/FusedBatchNorm	output	0	18.525858
+4	resnet_model/conv2d_6/Conv2D	output	0	9.1766205
+5	resnet_model/add_4	output	0	17.957554
+6	resnet_model/conv2d_22/Conv2D	output	0	5.2187967
+7	resnet_model/batch_normalization_7/FusedBatchNorm	output	0	11.833694
+8	resnet_model/batch_normalization_3/FusedBatchNorm	output	0	9.500516
+9	resnet_model/batch_normalization_11/FusedBatchNorm	output	0	14.504744
+10	resnet_model/add_13	output	0	29.063019
+11	resnet_model/batch_normalization_40/FusedBatchNorm	output	0	16.418232
+12	resnet_model/max_pooling2d/MaxPool	output	0	18.798717
+13	resnet_model/conv2d_17/Conv2D	output	0	2.7885911
+14	resnet_model/Relu_33	output	0	25.07838
+15	resnet_model/batch_normalization_14/FusedBatchNorm	output	0	18.778517
+16	resnet_model/Relu_19	output	0	7.8585477
+17	resnet_model/Relu_41	output	0	7.606083
+18	resnet_model/batch_normalization_46/FusedBatchNorm	output	0	24.102669
+19	resnet_model/batch_normalization_36/FusedBatchNorm	output	0	25.07838
+20	resnet_model/Relu_44	output	0	6.187578
+21	resnet_model/batch_normalization_2/FusedBatchNorm	output	0	10.752634
+22	resnet_model/conv2d_46/Conv2D	output	0	4.712508
+23	resnet_model/add_9	output	0	30.375067
+24	resnet_model/add_2	output	0	12.22102
+25	resnet_model/conv2d_35/Conv2D	output	0	14.412901
+26	resnet_model/batch_normalization/FusedBatchNorm	output	0	18.798717
+27	resnet_model/batch_normalization_12/FusedBatchNorm	output	0	10.181625
+28	resnet_model/Relu_15	output	0	17.957554
+29	resnet_model/Relu_26	output	0	9.403971
+30	resnet_model/conv2d_24/Conv2D	output	0	6.9831767
+31	resnet_model/conv2d_9/Conv2D	output	0	5.529585
+32	resnet_model/add_10	output	0	25.07838
+33	resnet_model/conv2d_14/Conv2D	output	0	3.970576
+34	resnet_model/Pad	output	0	151.061
+35	resnet_model/batch_normalization_35/FusedBatchNorm	output	0	77.60103
+36	resnet_model/conv2d_26/Conv2D	output	0	5.8630123
+37	resnet_model/conv2d_47/Conv2D	output	0	30.598646
+38	resnet_model/Relu_31	output	0	35.62034
+39	resnet_model/Relu_24	output	0	20.02697
+40	resnet_model/batch_normalization_39/FusedBatchNorm	output	0	24.271526
+41	resnet_model/add_3	output	0	18.680698
+42	resnet_model/batch_normalization_34/FusedBatchNorm	output	0	35.62034
+43	resnet_model/conv2d_30/Conv2D	output	0	2.6829083
+44	resnet_model/batch_normalization_49/FusedBatchNorm	output	0	17.918203
+45	resnet_model/Relu_29	output	0	23.652754
+46	resnet_model/Relu	output	0	18.798717
+47	resnet_model/Relu_8	output	0	7.741421
+48	resnet_model/Relu_25	output	0	18.470657
+49	resnet_model/Relu_46	output	0	7.8526187
+50	resnet_model/batch_normalization_6/FusedBatchNorm	output	0	11.369574
+51	resnet_model/conv2d_15/Conv2D	output	0	16.25186
+52	resnet_model/add	output	0	11.13686
+53	resnet_model/conv2d_16/Conv2D	output	0	9.81961
+54	resnet_model/Relu_13	output	0	7.81207
+55	resnet_model/batch_normalization_4/FusedBatchNorm	output	0	9.368586
+56	resnet_model/conv2d_7/Conv2D	output	0	3.1188924
+57	resnet_model/batch_normalization_28/FusedBatchNorm	output	0	18.470657
+58	resnet_model/dense/BiasAdd	output	0	14.779217
+59	resnet_model/conv2d_23/Conv2D	output	0	2.2067084
+60	resnet_model/add_1	output	0	11.833694
+61	resnet_model/conv2d_4/Conv2D	output	0	5.1207952
+62	resnet_model/batch_normalization_18/FusedBatchNorm	output	0	7.3283477
+63	resnet_model/conv2d_40/Conv2D	output	0	19.304684
+64	resnet_model/batch_normalization_47/FusedBatchNorm	output	0	6.212992
+65	resnet_model/batch_normalization_13/FusedBatchNorm	output	0	9.972609
+66	resnet_model/batch_normalization_51/FusedBatchNorm	output	0	8.560227
+67	resnet_model/conv2d_20/Conv2D	output	0	2.369526
+68	resnet_model/conv2d_19/Conv2D	output	0	7.0219784
+69	resnet_model/batch_normalization_29/FusedBatchNorm	output	0	9.403971
+70	resnet_model/Relu_23	output	0	9.2278595
+71	resnet_model/conv2d_11/Conv2D	output	0	7.3038096
+72	resnet_model/batch_normalization_37/FusedBatchNorm	output	0	27.604433
+73	resnet_model/batch_normalization_5/FusedBatchNorm	output	0	10.220794
+74	resnet_model/Relu_35	output	0	64.94719
+75	resnet_model/conv2d_1/Conv2D	output	0	37.63547
+76	resnet_model/Relu_14	output	0	9.066385
+77	resnet_model/Relu_7	output	0	8.491851
+78	resnet_model/Relu_17	output	0	7.8896174
+79	resnet_model/batch_normalization_33/FusedBatchNorm	output	0	26.243391
+80	resnet_model/batch_normalization_50/FusedBatchNorm	output	0	7.8526187
+81	resnet_model/conv2d_31/Conv2D	output	0	7.897875
+82	resnet_model/Pad_5	output	0	18.700665
+83	resnet_model/Relu_2	output	0	9.500516
+84	resnet_model/batch_normalization_42/FusedBatchNorm	output	0	12.375269
+85	resnet_model/Relu_27	output	0	25.331066
+86	resnet_model/Relu_21	output	0	19.326649
+87	resnet_model/conv2d_10/Conv2D	output	0	2.41689
+88	resnet_model/Pad_1	output	0	12.22102
+89	resnet_model/Relu_6	output	0	11.833694
+90	resnet_model/conv2d_25/Conv2D	output	0	9.25012
+91	resnet_model/conv2d_51/Conv2D	output	0	3.1404073
+92	resnet_model/Relu_37	output	0	16.418232
+93	resnet_model/Relu_32	output	0	77.60103
+94	resnet_model/Pad_6	output	0	10.846369
+95	resnet_model/Pad_4	output	0	12.646552
+96	resnet_model/conv2d_48/Conv2D	output	0	3.7611637
+97	resnet_model/batch_normalization_30/FusedBatchNorm	output	0	25.331066
+98	resnet_model/add_11	output	0	24.271526
+99	resnet_model/Relu_48	output	0	56.94877
+100	resnet_model/dense/MatMul	output	0	14.789358
+101	resnet_model/add_5	output	0	21.54778
+102	resnet_model/batch_normalization_1/FusedBatchNorm	output	0	12.222201
+103	resnet_model/conv2d_5/Conv2D	output	0	7.3524566
+104	resnet_model/conv2d_29/Conv2D	output	0	9.432265
+105	resnet_model/conv2d_49/Conv2D	output	0	1.8486965
+106	resnet_model/conv2d_45/Conv2D	output	0	3.8676624
+107	resnet_model/Pad_2	output	0	10.181625
+108	resnet_model/batch_normalization_22/FusedBatchNorm	output	0	8.16035
+109	resnet_model/Relu_10	output	0	10.181625
+110	resnet_model/batch_normalization_15/FusedBatchNorm	output	0	7.81207
+111	resnet_model/add_7	output	0	20.02697
+112	resnet_model/conv2d_8/Conv2D	output	0	5.4525805
+113	resnet_model/conv2d_3/Conv2D	output	0	19.08705
+114	resnet_model/batch_normalization_23/FusedBatchNorm	output	0	11.620296
+115	resnet_model/conv2d_44/Conv2D	output	0	7.2802577
+116	resnet_model/Relu_28	output	0	19.663708
+117	resnet_model/conv2d_12/Conv2D	output	0	9.297413
+118	resnet_model/batch_normalization_16/FusedBatchNorm	output	0	9.066385
+119	resnet_model/Relu_36	output	0	24.271526
+120	resnet_model/Relu_38	output	0	28.230762
+121	resnet_model/add_8	output	0	25.331066
+122	resnet_model/Relu_5	output	0	11.369574
+123	resnet_model/conv2d_28/Conv2D	output	0	9.4201145
+124	resnet_model/batch_normalization_9/FusedBatchNorm	output	0	7.741421
+125	resnet_model/add_6	output	0	19.326649
+126	resnet_model/Relu_30	output	0	30.375067
+127	resnet_model/conv2d_33/Conv2D	output	0	4.6518965
+128	resnet_model/conv2d_42/Conv2D	output	0	4.2170086
+129	resnet_model/add_12	output	0	18.700665
+130	resnet_model/add_15	output	0	56.94877
+131	resnet_model/Pad_3	output	0	19.326649
+132	resnet_model/batch_normalization_31/FusedBatchNorm	output	0	19.663708
+133	resnet_model/batch_normalization_17/FusedBatchNorm	output	0	14.776367
+134	resnet_model/Relu_39	output	0	18.700665
+135	resnet_model/batch_normalization_32/FusedBatchNorm	output	0	23.652754
+136	resnet_model/conv2d_32/Conv2D	output	0	4.8795643
+137	resnet_model/batch_normalization_38/FusedBatchNorm	output	0	64.94719
+138	resnet_model/conv2d_52/Conv2D	output	0	3.1295989
+139	resnet_model/conv2d_13/Conv2D	output	0	6.7497616
+140	resnet_model/conv2d_27/Conv2D	output	0	4.5543365
+141	resnet_model/batch_normalization_20/FusedBatchNorm	output	0	10.686912
+142	resnet_model/Squeeze	output	0	11.080691
+143	resnet_model/Relu_9	output	0	12.22102
+144	resnet_model/batch_normalization_8/FusedBatchNorm	output	0	8.491851
+145	resnet_model/batch_normalization_44/FusedBatchNorm	output	0	10.846369
+146	resnet_model/batch_normalization_19/FusedBatchNorm	output	0	7.8896174
+147	resnet_model/conv2d_38/Conv2D	output	0	18.849882
+148	resnet_model/conv2d/Conv2D	output	0	1221.2432
+149	resnet_model/Relu_4	output	0	10.220794
+150	resnet_model/Relu_47	output	0	8.560227
+151	resnet_model/Relu_11	output	0	9.972609
+152	resnet_model/batch_normalization_45/FusedBatchNorm	output	0	7.606083
+153	resnet_model/batch_normalization_10/FusedBatchNorm	output	0	9.444941
+154	resnet_model/batch_normalization_48/FusedBatchNorm	output	0	6.187578
+155	resnet_model/Relu_40	output	0	10.846369
+156	resnet_model/batch_normalization_41/FusedBatchNorm	output	0	28.230762
+157	resnet_model/Relu_45	output	0	34.765312
+158	resnet_model/Relu_22	output	0	12.646552
+159	resnet_model/conv2d_36/Conv2D	output	0	7.078266
+160	resnet_model/conv2d_18/Conv2D	output	0	9.75744
+161	resnet_model/Relu_16	output	0	7.3283477
+162	resnet_model/conv2d_50/Conv2D	output	0	22.865387
+163	resnet_model/batch_normalization_21/FusedBatchNorm	output	0	7.8585477
+164	resnet_model/conv2d_37/Conv2D	output	0	24.60749
+165	resnet_model/batch_normalization_52/FusedBatchNorm	output	0	40.19684
+166	resnet_model/Relu_1	output	0	10.752634
+167	resnet_model/add_14	output	0	34.765312
+168	resnet_model/Relu_42	output	0	29.063019
+169	resnet_model/batch_normalization_24/FusedBatchNorm	output	0	10.219861
+170	resnet_model/Relu_43	output	0	6.212992
+171	resnet_model/conv2d_43/Conv2D	output	0	3.614015
+172	resnet_model/Relu_12	output	0	18.680698
+173	resnet_model/batch_normalization_43/FusedBatchNorm	output	0	18.81716
+174	resnet_model/conv2d_41/Conv2D	output	0	9.13895
+175	resnet_model/batch_normalization_26/FusedBatchNorm	output	0	9.2278595
+176	resnet_model/conv2d_21/Conv2D	output	0	9.476536
+177	resnet_model/Relu_20	output	0	8.16035
+178	resnet_model/conv2d_34/Conv2D	output	0	13.284646
+179	resnet_model/conv2d_2/Conv2D	output	0	22.783255
+180	softmax_tensor	output	0	0.67978126
+181	resnet_model/Mean	output	0	11.080691
+182	resnet_model/Relu_18	output	0	21.54778
+183	resnet_model/Relu_34	output	0	27.604433
+184	resnet_model/Relu_3	output	0	11.13686
