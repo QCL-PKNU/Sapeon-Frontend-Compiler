@@ -86,11 +86,14 @@ class AxfcLauncherWriter:
 
         last_inout_tensors = {
             'input':[input_name], # get the name of last tensor that supported by AIX
-            'output':[output_tensors[0].name] # get the name of last tensor of AIXGraph
+            'output':[i.name for i in output_tensors] # get the name of last tensors of AIXGraph
         }
 
         # get name of tensors
-        input_names = [tensor.name for tensor in input_tensors]
+        # input_names = [tensor.name for tensor in input_tensors]
+
+        #get the name of the input tensors connecting to AixOp graph
+        input_names = ir_blocks[0].nodes[0].node_def.input
 
         aix_custom_graph = AxfcCustomGraph(input_tensor_names=input_names,
                                            graph_def=graph_def,

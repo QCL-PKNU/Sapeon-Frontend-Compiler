@@ -65,6 +65,10 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
 
         if tf_graph_def is None:
             return AxfcError.INVALID_TF_GRAPH
+        
+        #Add all graph def node into the _sym_ir
+        for tf_node_def in tf_graph_def.node:
+            err = self.__append_node_sym_ir(tf_node_def)
 
         # build AIX IR graph using the nodes of the Tensorflow graph
         for tf_node_def in tf_graph_def.node:
@@ -77,12 +81,14 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
 
                 pred_node = self._ir_symtab[pred_name]
                 if pred_node is not None:
-                    if pred_node.op == 'FusedBatchNorm':
+                    # if pred_node.op == 'FusedBatchNorm':
+                    if pred_node.op is not None and "FusedBatchNorm" in pred_node.op: #to support different version of FusedBatchNorm
                         tf_node_def.input[index] += '/BiasaddClone'
 
             err = self.__append_node_def(tf_node_def)
 
-            if tf_node_def.op == 'FusedBatchNorm':
+            # if tf_node_def.op == 'FusedBatchNorm':
+            if tf_node_def.op is not None and "FusedBatchNorm" in tf_node_def.op: #to support different version of FusedBatchNorm
                 tf_node_clone_def = tf.compat.v1.NodeDef()
                 tf_node_clone_def.CopyFrom(tf_node_def)
 
@@ -93,17 +99,37 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
                 tf_node_clone_def.name += '/BiasaddClone'
                 tf_node_clone_def.op = 'BiasAdd'
 
+                err = self.__append_node_sym_ir(tf_node_clone_def)
                 err = self.__append_node_def(tf_node_clone_def)
-            # end process separate
-
-            # end process separate
-
 
             if err != AxfcError.SUCCESS:
                 return err
+        
+        #Check aix supprt layer by checking the complexity of its sucessor
+        for node in sorted(self._ir_symtab.values(), key=lambda node: node.is_aixh_support, reverse=True):
+            
+            #Stop when meet not supported node
+            if not node.is_aixh_support:
+                break
+
+            self.check_unsupported_pred_succ(node)
 
         # remove unnecessary IR nodes
         return self.__prune_ir_nodes()
+
+    def check_unsupported_pred_succ(self, node:AxfcIRNode):
+
+        if node.name == "FusedBatchNormV3":
+            return
+        
+        for succ_node in node.succs:
+            #Ignore pad as pad will be removed 
+            if succ_node.op == "Pad":
+                return
+
+            if not succ_node.is_aixh_support:
+                self._ir_symtab.get(node.name).is_aixh_support = False
+                break
 
     ## This method is used to prune unnecessary nodes from the IR graph.
     #  Currently, we will remove "identity" and "pad" nodes for the IR translation.
@@ -161,6 +187,13 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
 
         return AxfcError.SUCCESS
 
+
+    def __append_node_sym_ir(self, tf_node_def: tf.compat.v1.NodeDef) -> AxfcError:
+        ir_node = AxfcIRNode(tf_node_def)
+        self._ir_symtab[tf_node_def.name] = ir_node
+
+        return AxfcError.SUCCESS
+
     ## @internal
     #  This method is used to create a new IR node from tf.NodeDef and append it to the IR graph.
     #  The successors and predecessors of the IR node is found using the symbol table.
@@ -172,10 +205,13 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
         # logging.info("AxfcTFIRBuilder:append_node_def - tf_node_def: %s", tf_node_def.name)
 
         # create a new IR node
-        ir_node = AxfcIRNode(tf_node_def)
+        # ir_node = AxfcIRNode(tf_node_def)
 
         # register the IR node to the symbol table with the name of node_def
-        self._ir_symtab[tf_node_def.name] = ir_node
+        # self._ir_symtab[tf_node_def.name] = ir_node
+
+        #Get ir_node from _ir_symtab
+        ir_node = self._ir_symtab.get(tf_node_def.name)
 
         # set the operation of this node
         ir_node.op = tf_node_def.op
@@ -203,6 +239,13 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
 
         # connect predecessors and successor
         for pred_name in tf_node_def.input:
+            
+            #replacing ':' for multiple value outputs from a layer
+            if ":" in pred_name:
+                pred_name = pred_name.split(":")[0]
+            
+            if "^" in pred_name:
+                pred_name = pred_name.replace("^", "")
 
             # find the predecessor using the symbol table
             pred_node = self._ir_symtab[pred_name]

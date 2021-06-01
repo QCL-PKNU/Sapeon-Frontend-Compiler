@@ -170,4 +170,9 @@ class AxfcTFGraphUtil:
             seq += 1
         return name_to_input_name, name_to_node, name_to_seq_num
     
- 
+    def _get_colocated_node_name(self, colocated_node_name):
+        """Decodes colocated node name and returns it without loc:@ prepended."""
+        colocated_node_decoded = colocated_node_name.decode("utf-8")
+        if colocated_node_decoded.startswith("loc:@"):
+            return colocated_node_decoded[5:]
+        return colocated_node_decoded

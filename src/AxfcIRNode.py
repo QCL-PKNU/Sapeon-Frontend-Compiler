@@ -76,6 +76,7 @@ class AxfcIRNode:
         self.is_output = False
 
         self.aix_layer = None
+        self.op        = None
 
     ## This method is used to calculate and return the profit that we can get
     #  by accelerating the operation of this node in hardware-manner.

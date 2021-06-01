@@ -213,9 +213,14 @@ class AxfcIRTranslator:
             name = ir_node.name
             if postfix_name == 'BiasaddClone':
                 name = ir_node.name.replace('/BiasaddClone', '')
-            calib_data = self._calib_data[name]
-            aix_layer.output_threshold = calib_data["output"]
-            aix_layer.input_threshold = calib_data["input"]
+            
+            calib_data = self._calib_data.get(name)
+
+            if calib_data:
+                aix_layer.output_threshold = calib_data["output"]
+                aix_layer.input_threshold = calib_data["input"]
+            else:
+                logging.warning("AxfcIRTranslator: {} - {}".format(name, "No the calibration data"))
 
             if ir_node.is_input:
                 aix_layer.input_threshold = self._calib_data[list(self._calib_data)[0]]["input"]

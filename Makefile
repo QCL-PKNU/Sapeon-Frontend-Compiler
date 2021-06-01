@@ -1,7 +1,13 @@
 ######## PATH CONFIG ########
 
+#retinanet model
+# MODEL= ./tst/retinanet.pb
+# MD= ./tst/retinanet_v1_aix_tf.md
+
+#Resnet model
 MODEL= ./tst/resnet50_v1.pb
 MD= ./tst/resnet50_v1_aix_tf.md
+
 AXFC= ./tst/axfc_data.json
 LOGGING= ./tst/logging.log
 CALIB= ./tst/resnet50_v1_imagenet_calib.tbl

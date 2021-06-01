@@ -113,9 +113,28 @@ class AxfcCustomGraph:
 
         # take only tensor that has connection
         for index, op in enumerate(custom_graph.get_operations()):
-            if not op.inputs and not op.outputs[0].consumers():
+            if not op.inputs and not op.outputs[0].consumers() and custom_graph_def.node[index].name != "resnet_model/Relu_48":
                 del custom_graph_def.node[index]
-                break
+                # break
+       
+       #statically override the node with predecessor to first node
+        for index, node in enumerate(custom_graph_def.node):
+            if "input_1_1" in node.input:
+                custom_graph_def.node[index].input[0] = "input_1"
+            
+            # Testing
+            # if "res3d/add" in node.input:
+            #     custom_graph_def.node[index].input[0] = "Transpose_to_NHWC"
+
+        # Test statically remove invalid placeholder
+        for index, node in enumerate(custom_graph_def.node):
+
+            if node.name == "res3d/add":
+                del custom_graph_def.node[index]
+
+            if node.name == "resnet_model/add_15":
+                del custom_graph_def.node[index]
+            
 
         with tf.Graph().as_default() as main_graph:
             tf.import_graph_def(custom_graph_def, name='')
