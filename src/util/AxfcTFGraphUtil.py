@@ -39,21 +39,22 @@ class AxfcTFGraphUtil:
     # @param orig_nodes the list of input node name
     # @param dest_nodes the list of output node name
     # @return graph_pb2.GraphDef the GraphDef proto object
-    def extract_sub_graph(self, orig_nodes: list, dest_nodes: list)->graph_pb2.GraphDef:        
+    def extract_sub_graph(self, orig_nodes: list, dest_nodes: list, node_to_skip_list:list=[])->graph_pb2.GraphDef:        
         
         # emit the nodes from begin
-        sub_graph = self.extract_sub_graph_from_begin(self.graph_def, dest_nodes )
+        sub_graph = self.extract_sub_graph_from_begin(self.graph_def, dest_nodes)
         
         # get the input tensor 
         tensor = self.get_tensor_by_name(orig_nodes[0])
         
+        print("before create the sub-graph on sub-graph")
         # create the sub-graph on sub_graph
         with tf.Graph().as_default() as graph:
             tensor = tf.compat.v1.placeholder(dtype=tensor.dtype, shape=tensor.shape,name=self.node_name(tensor.name))
             tf.import_graph_def(sub_graph, input_map={self.node_name(tensor.name): tensor}, name='')
-        
+        print("after create the sub-graph on sub-graph")
         # take only the sub-graph from orig_nodes to dest_nodes
-        sub_graph = self.extract_sub_graph_from_begin(graph.as_graph_def(), dest_nodes )
+        sub_graph = self.extract_sub_graph_from_begin(graph.as_graph_def(), dest_nodes , node_to_skip_list)
 
         return sub_graph
     
@@ -76,7 +77,7 @@ class AxfcTFGraphUtil:
     # @param graph_def A graph_pb2.GraphDef proto
     # @param dest_nodes A list of strings specifying the destination node names.
     # @return The GraphDef of the sub-graph.
-    def extract_sub_graph_from_begin(self, graph_def, dest_nodes:list):
+    def extract_sub_graph_from_begin(self, graph_def, dest_nodes:list, node_to_skip_list:list = []):
 
         name_to_input_name, name_to_node, name_to_seq_num = self._extract_graph_summary(graph_def)
         
@@ -84,18 +85,20 @@ class AxfcTFGraphUtil:
         self._assert_nodes_are_present(name_to_node, dest_nodes)
         
         # emit the reachable nodes
-        nodes_to_keep = self._bfs_for_reachable_nodes(dest_nodes, name_to_input_name)
+        nodes_to_keep = self._bfs_for_reachable_nodes(dest_nodes, name_to_input_name, node_to_skip_list)
     
         nodes_to_keep_list = sorted(
             list(nodes_to_keep), key=lambda n: name_to_seq_num[n])
-        
+
         # Now construct the output GraphDef
+
         out = graph_pb2.GraphDef()
+
         for n in nodes_to_keep_list:
             out.node.extend([copy.deepcopy(name_to_node[n])])
         out.library.CopyFrom(graph_def.library)
         out.versions.CopyFrom(graph_def.versions)
-    
+
         return out
 
     ## this method is used to search for reachable nodes from target nodes
@@ -104,7 +107,7 @@ class AxfcTFGraphUtil:
     # @param target_nodes the list of destination node names
     # @param name_to_input_name the dictionary of name with input name
     # @return the nodes that are reachable
-    def _bfs_for_reachable_nodes(self, target_nodes, name_to_input_name):
+    def _bfs_for_reachable_nodes(self, target_nodes, name_to_input_name, node_to_skip_list:list = []):
 
         nodes_to_keep = set()
         
@@ -113,7 +116,7 @@ class AxfcTFGraphUtil:
         while next_to_visit:
             node = next_to_visit[0]
             del next_to_visit[0]
-            if node in nodes_to_keep:
+            if node in nodes_to_keep or node in node_to_skip_list:
                 # Already visited this node.
                 continue
             nodes_to_keep.add(node)
