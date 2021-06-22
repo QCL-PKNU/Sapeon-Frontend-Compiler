@@ -104,6 +104,28 @@ class AxfcLauncherWriter:
                                            )
         return aix_custom_graph.get_custom_graph()
 
+    def get_custom_graph_v2(self):
+        
+        ir_blocks = [block for block in self.__ir_graph.blocks if block.is_aixh_support]
+
+        graph_def = loadFrozenModel(self.__frozen_model_path)
+
+        with tf.Graph().as_default() as graph:
+            tf.import_graph_def(graph_def, name="")
+        
+        # get input and output tensors
+        input_tensors, output_tensors = analyze_inputs_outputs(graph)
+
+        aix_custom_graph = AxfcCustomGraphV2(ir_blocks = ir_blocks,
+                                            graph_def = graph_def,
+                                            path_module = self.__kernel_op_path,
+                                            output_type=tf.float32,
+                                            aix_graph_path=self.__aix_graph_path,
+                                            input_tensors = input_tensors,
+                                            output_tensors = output_tensors)
+        
+        return aix_custom_graph.get_custom_graph()
+        
     ## This method is used to emit a launcher for the generated AIXGraph.
     # @param self this object
     def emit_aixh_launcher(self):

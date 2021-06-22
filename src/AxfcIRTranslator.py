@@ -93,11 +93,20 @@ class AxfcIRTranslator:
         # create a new list of AIX graphs to output
         self.aix_graphs = list()
 
+        #Test aix_grpah limit to only 3
+        support_count = 0
+        
         # translate all the blocks into AIX graphs
         for ir_block in ir_graph.blocks:
             # ignore blocks not supported by hardware
             if not ir_block.is_aixh_support:
                 continue
+            
+            #Test Aix_graph limit to only 3
+            support_count += 1
+            if support_count > 3:
+                print ("Test aix graph limit to only 3")
+                break
 
             err, aix_graph = self.__emit_aixh_block(ir_block)
             if err is AxfcError.SUCCESS:

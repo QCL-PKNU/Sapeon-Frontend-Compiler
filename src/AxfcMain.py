@@ -78,7 +78,7 @@ def __main(params):
     # AIX custom model
     dir = os.path.dirname(os.path.realpath('__file__'))
     tst_path = dir + '/tst'
-    aix_graph_path = tst_path + '/aix_graph.out.00'
+    aix_graph_path = tst_path + '/aix_graph.out.'
     print(aix_graph_path)
     err, custom_model_path = fc.dump_custom_model(path=in_path,
                                kernel_path=kernel_path,

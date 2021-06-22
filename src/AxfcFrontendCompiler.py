@@ -160,7 +160,7 @@ class AxfcFrontendCompiler:
         # print out the generated AIX graphs
         for i, aix_graph in enumerate(aix_graphs):
             # rename the output path using the graph index
-            tmp_path = out_path + ".%02d" % i
+            tmp_path = out_path + ".%s" % i
             aix_graph.input_layers.append(aix_graph.layer[0].id)
             aix_graph.output_layers.append(aix_graph.layer[-1].id)
             # dump out each graph
@@ -236,7 +236,10 @@ class AxfcFrontendCompiler:
                                           kernel_op_path=kernel_path,
                                           ir_graph=self.get_ir_graph())
         # get custom graph model
-        custom_graph_model = aix_launcher.get_custom_graph()
+        # custom_graph_model = aix_launcher.get_custom_graph()
+
+        # get custom graph model
+        custom_graph_model = aix_launcher.get_custom_graph_v2()
 
         # write to file
         file_name = "custom_model"

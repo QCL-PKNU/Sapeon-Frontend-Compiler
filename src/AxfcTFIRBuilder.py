@@ -122,6 +122,10 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
         if node.name == "FusedBatchNormV3":
             return
         
+        #directly unsupport for node res5c_relu/Relu
+        if node.name == "res5c_relu/Relu":
+            self._ir_symtab.get(node.name).is_aixh_support = False
+        
         for succ_node in node.succs:
             #Ignore pad as pad will be removed 
             if succ_node.op == "Pad":
