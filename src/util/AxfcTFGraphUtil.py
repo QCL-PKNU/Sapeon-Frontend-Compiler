@@ -47,12 +47,10 @@ class AxfcTFGraphUtil:
         # get the input tensor 
         tensor = self.get_tensor_by_name(orig_nodes[0])
         
-        print("before create the sub-graph on sub-graph")
         # create the sub-graph on sub_graph
         with tf.Graph().as_default() as graph:
             tensor = tf.compat.v1.placeholder(dtype=tensor.dtype, shape=tensor.shape,name=self.node_name(tensor.name))
             tf.import_graph_def(sub_graph, input_map={self.node_name(tensor.name): tensor}, name='')
-        print("after create the sub-graph on sub-graph")
         # take only the sub-graph from orig_nodes to dest_nodes
         sub_graph = self.extract_sub_graph_from_begin(graph.as_graph_def(), dest_nodes , node_to_skip_list)
 
