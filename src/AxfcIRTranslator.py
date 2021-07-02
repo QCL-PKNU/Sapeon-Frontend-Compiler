@@ -101,12 +101,6 @@ class AxfcIRTranslator:
             # ignore blocks not supported by hardware
             if not ir_block.is_aixh_support:
                 continue
-            
-            #Test Aix_graph limit to only 3
-            support_count += 1
-            if support_count > 3:
-                print ("Test aix graph limit to only 3")
-                break
 
             err, aix_graph = self.__emit_aixh_block(ir_block)
             if err is AxfcError.SUCCESS:

@@ -96,6 +96,10 @@ class AxfcCustomGraphV2:
                 
             custom_graph = self.optimize_graph_node(custom_graph, node_to_check, input_node_list, last_node_list)
 
+            
+            """
+            Currently support aix graph to 3 for retinanet model
+            """
             if index == 2:
                 break
 
