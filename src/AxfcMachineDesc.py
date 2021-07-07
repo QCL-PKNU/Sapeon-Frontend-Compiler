@@ -30,6 +30,9 @@ class AxfcMachineDesc:
     # for hardware acceleration
     DEFAULT_PROFIT_THRESHOLD = 1000
 
+    # for compiling break point condition
+    BREAK_POINT_CONDITION = False
+
     ## @var __aix_model_info_tbl
     # general info. of dictionary type for AIX compiler
 
@@ -148,6 +151,22 @@ class AxfcMachineDesc:
         except KeyError as e:
             logging.warning("get_profit_threshold: %s", str(e))
             return AxfcMachineDesc.DEFAULT_PROFIT_THRESHOLD
+
+    def get_break_point_node(self):
+        try:
+            break_point_node = self.__aix_model_info_tbl["STOP_COMPILING_POINT"]
+            return break_point_node
+        except KeyError as e:
+            logging.warning("get_break_point_node: %s", str(e))
+            return ""
+
+    def get_input_point(self):
+        try:
+            input_point = self.__aix_model_info_tbl["INPUT_POINT"]
+            return input_point
+        except KeyError as e:
+            logging.warning("get_input_point: %s", str(e))
+            return ""
 
     ## For debugging
     def __str__(self):

@@ -11,8 +11,9 @@ class AxfcCustomGraphV2:
                 ir_blocks,
                 aix_graph_path,
                 input_tensors,
-                output_tensors):
-        
+                output_tensors,
+                md):
+        self.__md = md
         self.__graph_def = graph_def
         self.__axfc_util = AxfcTFGraphUtil(graph_def)
         self.__path_module = path_module
@@ -21,12 +22,33 @@ class AxfcCustomGraphV2:
         self.__ir_block_list = ir_blocks
         self.__input_tensors = input_tensors
         self.__output_tensors = output_tensors
-        self.__input_node_to_check = ["input_1_1"] #to check in optimization
+        
+        #set input_node
+        input_node = self.__md.get_input_point()
+        self.__input_node_to_check = [input_node+"_1"] if input_node else []
 
-    def get_custom_graph(self):
+    def __load_aix_op(self, custom_graph, input_tensor_list, aix_op_block_index):
         
         tf.compat.v1.disable_eager_execution()
         op_module = tf.load_op_library(self.__path_module)
+
+        with custom_graph.as_default() as custom_graph:
+                tensor_transpose_list = []
+                #convert the input node list into NCHW format for aix op 
+                for input_tensor in input_tensor_list:
+                    tensor_tranpose = tf.transpose(input_tensor, [0, 3, 1, 2], name='Transpose_to_NCHW')
+                    tensor_transpose_list.append(tensor_tranpose)
+                
+                #emit aix op
+                aix_tensor = op_module.aix_op(
+                    input = tensor_transpose_list,
+                    output_type = self.__output_type,
+                    aix_graph_path = self.__aix_graph_path + "%s" %aix_op_block_index
+                )
+
+        return custom_graph, aix_tensor
+
+    def get_custom_graph(self):
 
         #Loop through support ir_block supported by aix graph
         for index, ir_block in enumerate(self.__ir_block_list):
@@ -49,19 +71,8 @@ class AxfcCustomGraphV2:
                 tensor = custom_graph.get_tensor_by_name("{}:0".format(input_node))
                 input_tensor_list.append(tensor)
             
-            with custom_graph.as_default() as custom_graph:
-                tensor_transpose_list = []
+            custom_graph, aix_tensor = self.__load_aix_op(custom_graph, input_tensor_list, index)
 
-                #convert the input node list into NCHW format for aix op 
-                for input_tensor in input_tensor_list:
-                    tensor_tranpose = tf.transpose(input_tensor, [0, 3, 1, 2], name='Transpose_to_NCHW')
-                    tensor_transpose_list.append(tensor_tranpose)
-                #emit aix op
-                aix_tensor = op_module.aix_op(
-                    input = tensor_transpose_list,
-                    output_type = self.__output_type,
-                    aix_graph_path = self.__aix_graph_path + "%s" %index
-                )
             #Get the last node from the supported ir block
             last_node_list = [ir_block.nodes[-1].name]
             #Get the last outputs of the graph
@@ -73,7 +84,7 @@ class AxfcCustomGraphV2:
             #extract sub graph from model start from the last_node_list until the output_node_list
             tensor_def = self.__axfc_util.extract_sub_graph(last_node_list, output_node_list)
             
-            #merge aixop grpah with sub graph
+            #merge aixop graph with sub graph
             with custom_graph.as_default() as custom_graph:
                 
                 aix_op_name = "AixOp:0" if index == 0 else f"AixOp_{index}:0"
@@ -85,23 +96,19 @@ class AxfcCustomGraphV2:
                                     input_map={last_node_list[0]: tensor_transpose_NHWC},
                                     name="")
             
-            #reset the graph def for next aix 
+            #reset the graph_def for next aix op
             self.__axfc_util.graph_def = custom_graph.as_graph_def()
             self.__graph_def = custom_graph.as_graph_def()
 
+            #Filter node to optimize
             node_to_check = []
             for optimize_node in optimized_node_list:
+                #Ignore /kernel, transpose, AixOp and Pad, as those nodes are not require optmization
                 if "/kernel" not in optimize_node and "Transpose_" not in optimize_node and "AixOp" not in optimize_node and "Pad" not in optimize_node:
                     node_to_check.append(optimize_node)
-                
-            custom_graph = self.optimize_graph_node(custom_graph, node_to_check, input_node_list, last_node_list)
-
             
-            """
-            Currently support aix graph to 3 for retinanet model
-            """
-            if index == 2:
-                break
+            #Optimize custom model
+            custom_graph = self.optimize_graph_node(custom_graph, node_to_check, input_node_list, last_node_list)
 
         return custom_graph
 
@@ -111,15 +118,8 @@ class AxfcCustomGraphV2:
         node_to_remove = []
         
         for input_node in input_node_list:
-            if "/kernel" in input_node:
-                #Ignore /kernel node
-                continue
-                try:
-                    node_tensor = custom_graph.get_tensor_by_name(f"{input_node}:0")
-                    node_to_remove.append(node_tensor.op.name)
-                except Exception as e:
-                    continue
-            else:
+            #Ignore /kernel node
+            if "/kernel" not in input_node:
                 self.__input_node_to_check += [input_node+"_1"]
         
         #Search to find the node from last to first input
@@ -179,47 +179,3 @@ class AxfcCustomGraphV2:
             tf.import_graph_def(custom_graph_def, name='')
         
         return main_graph
-
-    def __load_aix_op(self, input_node_list, output_node_list, aix_graph_path):
-
-        input_tensor_list, sub_graph = self.__emit_input_tensors(input_node_list, output_node_list)
-
-        tf.compat.v1.disable_eager_execution()
-
-        op_module = tf.load_op_library(self.__path_module)
-
-        with sub_graph.as_default() as aix_graph:
-            
-            tensor_transpose_list = []
-            for input_tensor in input_tensor_list:
-
-                tensor_transpose = tf.transpose(input_tensor, [0, 3, 1, 2], name='Transpose_to_NCHW')
-                tensor_transpose_list.append(tensor_transpose)
-
-            aix_tensor = op_module.aix_op(
-                input = tensor_transpose_list,
-                output_type = self.__output_type,
-                aix_graph_path = aix_graph_path
-            )
-
-        return aix_tensor, aix_graph
-
-    def __emit_input_tensors(self, input_node_list, output_node_list):
-
-        sub_graph = self.__axfc_util.extract_sub_graph_from_begin(self.__graph_def, input_node_list, output_node_list)
-
-        # sub_graph = self.__axfc_util.extract_sub_graph(input_node_list, output_node_list)
-
-        with tf.Graph().as_default() as import_graph:
-            tf.import_graph_def(sub_graph, name="")
-        
-        input_tensor_list = []
-
-        for input_node in input_node_list:
-            #ignore conv1/kernel
-            # if input_node == "conv1/kernel":
-            #     continue
-            tensor = import_graph.get_tensor_by_name("{}:0".format(input_node))
-            input_tensor_list.append(tensor)
-
-        return input_tensor_list, import_graph

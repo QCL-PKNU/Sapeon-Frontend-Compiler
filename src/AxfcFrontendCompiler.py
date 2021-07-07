@@ -234,9 +234,8 @@ class AxfcFrontendCompiler:
         aix_launcher = AxfcLauncherWriter(frozen_model_path=path,
                                           aix_graph_path=aix_graph_path,
                                           kernel_op_path=kernel_path,
-                                          ir_graph=self.get_ir_graph())
-        # get custom graph model
-        # custom_graph_model = aix_launcher.get_custom_graph()
+                                          ir_graph=self.get_ir_graph(),
+                                          md = self.__md)
 
         # get custom graph model
         custom_graph_model = aix_launcher.get_custom_graph_v2()

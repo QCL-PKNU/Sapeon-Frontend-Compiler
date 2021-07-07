@@ -81,13 +81,11 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
 
                 pred_node = self._ir_symtab[pred_name]
                 if pred_node is not None:
-                    # if pred_node.op == 'FusedBatchNorm':
                     if pred_node.op is not None and "FusedBatchNorm" in pred_node.op: #to support different version of FusedBatchNorm
                         tf_node_def.input[index] += '/BiasaddClone'
 
             err = self.__append_node_def(tf_node_def)
 
-            # if tf_node_def.op == 'FusedBatchNorm':
             if tf_node_def.op is not None and "FusedBatchNorm" in tf_node_def.op: #to support different version of FusedBatchNorm
                 tf_node_clone_def = tf.compat.v1.NodeDef()
                 tf_node_clone_def.CopyFrom(tf_node_def)
@@ -122,9 +120,9 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
         if node.name == "FusedBatchNormV3":
             return
         
-        #directly unsupport for node res5c_relu/Relu
-        if node.name == "res5c_relu/Relu":
-            self._ir_symtab.get(node.name).is_aixh_support = False
+        #Ignore break point node
+        if node.name == self._md.get_break_point_node():
+            return
         
         for succ_node in node.succs:
             #Ignore pad as pad will be removed 
@@ -234,7 +232,7 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
         # check the node that is supported by AIXH hardware
         layer_info = self._md.get_layer_info(ir_node.op)
 
-        if self._md.get_aixh_support(ir_node.op):
+        if self._md.get_aixh_support(ir_node.op) and not self._md.BREAK_POINT_CONDITION:
             ir_node.is_aixh_support = True
             ir_node.aixh_profit = layer_info.profit
         else:
@@ -262,6 +260,10 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
 
         # append the new IR into a IR graph
         self._ir_graph.append_node(ir_node)
+
+        # check break point node
+        if ir_node.name == self._md.get_break_point_node():
+            self._md.BREAK_POINT_CONDITION = True
 
         return AxfcError.SUCCESS
 
