@@ -102,15 +102,6 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
 
             if err != AxfcError.SUCCESS:
                 return err
-        
-        #Check aix supprt layer by checking the complexity of its sucessor
-        for node in sorted(self._ir_symtab.values(), key=lambda node: node.is_aixh_support, reverse=True):
-            
-            #Stop when meet not supported node
-            if not node.is_aixh_support:
-                break
-
-            self.check_unsupported_pred_succ(node)
 
         # remove unnecessary IR nodes
         return self.__prune_ir_nodes()
@@ -142,35 +133,44 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
 
         # for each node
         for ir_node in self._ir_graph.nodes:
+            #The checking code for Identity validity is incorrect, needs to fix
+            # if ir_node.op == "Identity":
+            #     # check validity of the identity node
+            #     if len(ir_node.preds) != 1 or len(ir_node.succs) != 1:
+            #         #can not remove identify if it is invalid 
+            #         continue
+            #         # return AxfcError.INVALID_IDENTITY_LAYER
 
-            if ir_node.op == "Identity":
-                # check validity of the identity node
-                if len(ir_node.preds) != 1 or len(ir_node.succs) != 1:
-                    return AxfcError.INVALID_IDENTITY_LAYER
+            #     # remove the current node from the graph
+            #     pred_node = ir_node.preds[0]
+            #     succ_node = ir_node.succs[0]
 
-                # remove the current node from the graph
-                pred_node = ir_node.preds[0]
-                succ_node = ir_node.succs[0]
+            #     pred_node.succs[0] = succ_node
 
-                pred_node.succs[0] = succ_node
+            #     for i, node in enumerate(succ_node.preds):
+            #         if node == ir_node:
+            #             succ_node.preds[i] = pred_node
+            #             break
 
-                for i, node in enumerate(succ_node.preds):
-                    if node == ir_node:
-                        succ_node.preds[i] = pred_node
-                        break
-
-                self._ir_graph.nodes.remove(ir_node)
-
-            elif ir_node.op == "Pad":
+            #     self._ir_graph.nodes.remove(ir_node)
+            
+            #The checking code for Pad validity is incorrectl so can not remove Pad
+            #if it is not valid. Needs to fix. 
+            # elif ir_node.op == "Pad":
+            if ir_node.op == "Pad":
                 # check validity of the pad node
                 if len(ir_node.preds) != 2 or len(ir_node.succs) != 1:
-                    return AxfcError.INVALID_PAD_LAYER
+                    #can not remove pad if it is invalid
+                    continue
+                    # return AxfcError.INVALID_PAD_LAYER
 
                 # check the following convolution node
                 succ_node = ir_node.succs[0]
 
                 if succ_node.op.find("Conv") < 0:
-                    return AxfcError.INVALID_PAD_LAYER
+                    #can not remove pad if it is invalid
+                    continue
+                    # return AxfcError.INVALID_PAD_LAYER
 
                 # remove the current node from the graph
                 pred_node = ir_node.preds[0]
