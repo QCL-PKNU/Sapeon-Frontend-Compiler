@@ -56,3 +56,6 @@ class AxfcError(enum.Enum):
     # Calibration data
     INVALID_CALIB_FILE_PATH = 28
     INVALID_CALIB_DATA_FORMAT = 29
+    
+    # Valdation
+    INVALID_NODE = 30

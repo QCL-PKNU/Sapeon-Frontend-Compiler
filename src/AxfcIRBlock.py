@@ -49,6 +49,8 @@ class AxfcIRBlock:
         self.is_aixh_support = False
         self.aixh_profit = 0
         self.aix_graph = None
+        self.input_nodes = list() #input node of the ir block can be multiple
+        self.output_node = None #output node of the ir block must be only one
 
     ## This method is used to perform the local liveness analysis in the scope of an IR block.
     #  We employ a simple heuristic scheme to find live-ins and live-outs of a block without
@@ -153,7 +155,9 @@ class AxfcIRBlock:
 
         # accumulate the profit of each node in this block
         for node in self.nodes:
-            profit += node.analyze_profit()
+            #skip if node is a Const or Pad
+            if node.op not in ["Const", "Pad"]:
+                profit += node.analyze_profit()
 
         self.aixh_profit = profit
         return AxfcError.SUCCESS

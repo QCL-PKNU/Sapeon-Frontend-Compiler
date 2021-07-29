@@ -125,8 +125,8 @@ class AxfcIRTranslator:
         # translate all the nodes into AIX layers
         for ir_node in ir_block.nodes:
 
-            # skip already emitted nodes
-            if ir_node.aix_layer is not None:
+            # skip already emitted nodes and Const
+            if ir_node.aix_layer is not None or ir_node.op == "Const":
                 continue
 
             # emit the current node into an AIX layer and append it to the AIXGraph

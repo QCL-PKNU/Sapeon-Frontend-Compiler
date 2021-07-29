@@ -2,7 +2,7 @@
 	"AIX_MODEL_TYPE": "TENSORFLOW", 
 	"AIX_MODEL_NAME": "resnet_model", 
 	"AIX_PROFIT_THRESHOLD": 500,
-	"STOP_COMPILING_POINT":"resnet_model/Relu_48",
+	"STOP_COMPILING_POINT":"",
 	"AIX_LAYER": { 
 		"Conv2D": {
 			"layer": "AIX_LAYER_CONVOLUTION",

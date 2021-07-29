@@ -1,5 +1,9 @@
 
 
+import enum
+from os import name
+
+from tensorflow.python.eager.context import remove_function
 from util.AxfcTFGraphUtil import AxfcTFGraphUtil
 from copy import deepcopy
 import tensorflow as tf
@@ -20,18 +24,14 @@ class AxfcCustomGraphV2:
         self.__output_type = output_type
         self.__aix_graph_path = aix_graph_path
         self.__ir_block_list = ir_blocks
-        self.__input_tensors = input_tensors
-        self.__output_tensors = output_tensors
-        
-        #set input_node
-        input_node = self.__md.get_input_point()
-        self.__input_node_to_check = [input_node+"_1"] if input_node else []
 
+    #For connecting aix op and tranposes to the input and output of the block
     def __load_aix_op(self, custom_graph, input_tensor_list, aix_op_block_index):
         
         tf.compat.v1.disable_eager_execution()
         op_module = tf.load_op_library(self.__path_module)
 
+        #Connect tranpose to block's inputs
         with custom_graph.as_default() as custom_graph:
                 tensor_transpose_list = []
                 #convert the input node list into NCHW format for aix op 
@@ -45,137 +45,134 @@ class AxfcCustomGraphV2:
                     output_type = self.__output_type,
                     aix_graph_path = self.__aix_graph_path + "%s" %aix_op_block_index
                 )
-
-        return custom_graph, aix_tensor
-
-    def get_custom_graph(self):
-
-        #Loop through support ir_block supported by aix graph
-        for index, ir_block in enumerate(self.__ir_block_list):
-            #Take input list from the first node in the block
-            input_node_list = ir_block.nodes[0].node_def.input
-
-            #extract sub_graph from begin until the input_node_list
-            sub_graph = self.__axfc_util.extract_sub_graph_from_begin(self.__graph_def, input_node_list)
-
-            with tf.Graph().as_default() as custom_graph:
-                tf.import_graph_def(sub_graph, name="")
-
-            #Get input_tensor_list
-            input_tensor_list = []
-            for input_node in input_node_list:
-                #ignore kernel node
-                if "/kernel" in input_node:
-                    continue
-                #get the gensor opeator for all the input node list except /kernel
-                tensor = custom_graph.get_tensor_by_name("{}:0".format(input_node))
-                input_tensor_list.append(tensor)
-            
-            custom_graph, aix_tensor = self.__load_aix_op(custom_graph, input_tensor_list, index)
-
-            #Get the last node from the supported ir block
-            last_node_list = [ir_block.nodes[-1].name]
-            #Get the last outputs of the graph
-            output_node_list = [i.name for i in self.__output_tensors]
-            
-            #save node from the custom graph for optimization purpose
-            optimized_node_list = [node.name for node in custom_graph.as_graph_def().node]
-
-            #extract sub graph from model start from the last_node_list until the output_node_list
-            tensor_def = self.__axfc_util.extract_sub_graph(last_node_list, output_node_list)
-            
-            #merge aixop graph with sub graph
-            with custom_graph.as_default() as custom_graph:
-                
-                aix_op_name = "AixOp:0" if index == 0 else f"AixOp_{index}:0"
-
+        #Tranpose AixOp back to NHWC
+        with custom_graph.as_default() as custom_graph:
+                aix_op_name = "AixOp:0" if aix_op_block_index == 0 else f"AixOp_{aix_op_block_index}:0"
                 aix_op = custom_graph.get_tensor_by_name(aix_op_name)
-                tensor_transpose_NHWC = tf.transpose(aix_op, [0, 2, 3, 1], name='Transpose_to_NHWC')
+                tensor_transpose_NHWC = tf.transpose(aix_op, [0, 2, 3, 1], name='Transpose_to_NHWC')                
 
-                tf.import_graph_def(tensor_def,
-                                    input_map={last_node_list[0]: tensor_transpose_NHWC},
-                                    name="")
+        return custom_graph, aix_tensor, tensor_transpose_NHWC
+    
+    #Detach all the nodes that supported by the AIX graph from __graph_def
+    def detach_aix_graph_nodes(self, ir_block, ignore_nodes):
+        
+        #Clean ir_block nodes input such as padding and kernel
+        clean_input_node_list = []
+        
+        #detach nodes from ir_block
+        graph_nodes = self.__graph_def.node 
+        for node in ir_block.nodes:
+            for index, node_def in enumerate(graph_nodes):
+                if node_def.name == node.name:
+                    del self.__graph_def.node[index]
+                
+                #Append input such as Pad and kernel to list
+                for input in node.node_def.input:
+                    # if ("Pad" in input or "kernel" in input) and input not in ignore_nodes:
+                    if "Pad" in input and input not in ignore_nodes:
+                        clean_input_node_list.append(input)
+        
+        # Clean inputs node left over in graph_def
+        graph_nodes = self.__graph_def.node
+        for input_node in clean_input_node_list:
+            for index, node_def in enumerate(graph_nodes):
+                if input_node == node_def.name:
+                    # self.__graph_def.node.remove(node_def) #check why noise node appear when remove node_def 
+                    del self.__graph_def.node[index]
+    
+    #For maping aix tranpose_NHWC to connect to all of the block successors
+    #outside of the block
+    def map_aix_tranpose_output(self, last_node_name, tranpose_tensor, graph):
+        
+        graph_def = graph.as_graph_def()
+        for index, node in enumerate(graph_def.node):
+            for input_index, input in enumerate(node.input):
+                if last_node_name == input:
+                    graph_def.node[index].input[input_index] = tranpose_tensor.name.split(":")[0]
+                    
+        with tf.Graph().as_default() as custom_graph:
+            tf.import_graph_def(graph_def, name="")
             
-            #reset the graph_def for next aix op
-            self.__axfc_util.graph_def = custom_graph.as_graph_def()
-            self.__graph_def = custom_graph.as_graph_def()
-
-            #Filter node to optimize
-            node_to_check = []
-            for optimize_node in optimized_node_list:
-                #Ignore /kernel, transpose, AixOp and Pad, as those nodes are not require optmization
-                if "/kernel" not in optimize_node and "Transpose_" not in optimize_node and "AixOp" not in optimize_node and "Pad" not in optimize_node:
-                    node_to_check.append(optimize_node)
-            
-            #Optimize custom model
-            custom_graph = self.optimize_graph_node(custom_graph, node_to_check, input_node_list, last_node_list)
-
         return custom_graph
 
-    def optimize_graph_node(self, custom_graph, node_to_check, input_node_list = [], last_node_list= []):
+    #For removing Const and Identity node that has no connection
+    def optimize_custom_graph(self, custom_graph):
         
         custom_graph_def = custom_graph.as_graph_def()
-        node_to_remove = []
-        
-        for input_node in input_node_list:
-            #Ignore /kernel node
-            if "/kernel" not in input_node:
-                self.__input_node_to_check += [input_node+"_1"]
-        
-        #Search to find the node from last to first input
-        node_connection = [node for node in self.__input_node_to_check]
-        while(node_connection):
-            input_node = node_connection.pop()
-            try:
-                node_tensor = custom_graph.get_tensor_by_name(f"{input_node}:0")
-                node_to_remove.append(node_tensor.op.name)
-
-                for node_input in node_tensor.op.inputs:
-                    node_connection.append(node_input.op.name)
-            except Exception as e:
-                continue
-
-        #Connecting node to its original input
-        for check_node in node_to_check:
-            for index, node in enumerate(custom_graph_def.node):
-                for input_index, input in enumerate(node.input):
-                    if check_node in input and check_node != input:
-                        custom_graph_def.node[index].input[input_index] = check_node
-        
-        #Clean duplicate
-        node_to_remove = set(node_to_remove)
-        with tf.Graph().as_default() as custom_graph:
-            tf.import_graph_def(custom_graph_def, name='')
-        custom_graph_def = custom_graph.as_graph_def()
-
-        #Append the remove node to the list
-        remove_node_def_list = []
-        for index, op in enumerate(custom_graph.get_operations()):
-            
-            #remove all last_node_list that exist in custom graph
-            for node_name in last_node_list:
-                if op.name == node_name:
-                    remove_node_def_list.append(custom_graph_def.node[index])
-            #Remove the node from extracting graph
-            for node_name in node_to_remove:
-                if op.name == node_name:
-                    remove_node_def_list.append(custom_graph_def.node[index])
-        
-        #Start remove the node from graph def
-        for remove_node_def in remove_node_def_list:
-            custom_graph_def.node.remove(remove_node_def)
-        
-        with tf.Graph().as_default() as custom_graph:
-            tf.import_graph_def(custom_graph_def, name='')
-        custom_graph_def = custom_graph.as_graph_def()
-        
         # take only tensor that has connection
+        node_to_remove = []
         for index, op in enumerate(custom_graph.get_operations()):
-            if not op.inputs and not op.outputs[0].consumers():
-                del custom_graph_def.node[index]
-                break
+            if not op.inputs and not op.outputs[0].consumers() and op.type in ["Const", "Identity"]:
+                node_to_remove.append(custom_graph_def.node[index])
         
-        with tf.Graph().as_default() as main_graph:
-            tf.import_graph_def(custom_graph_def, name='')
+        #remove node
+        for node in node_to_remove:
+            custom_graph_def.node.remove(node)
         
-        return main_graph
+        with tf.Graph().as_default() as custom_graph:
+            tf.import_graph_def(custom_graph_def, name="")
+        
+        return custom_graph
+    
+    #Compile all the aix supported block into AixOp
+    def get_custom_graph(self):
+        
+        for index, ir_block in enumerate(self.__ir_block_list):
+            #Take input list from the first node in the block
+            
+            # input_node_list = ir_block.nodes[0].node_def.input
+            input_node_list = [node.name for node in ir_block.input_nodes if node.op != "Const"]
+            
+            with tf.Graph().as_default() as custom_graph:
+                tf.import_graph_def(self.__graph_def, name="")
+            
+            #Get input_tensor_list
+            input_tensor_list = []
+            for input_node in ir_block.input_nodes:
+                #Ignore Const, Pad and Identity node
+                if input_node.op in ["Const", "Pad", "Identity"]:
+                    continue
+                
+                #validate input name, in case it is a tensor from previous aixop
+                input_name = input_node.name.split(":")[0]
+                
+                #get the gensor opeator for all the input node list except /kernel
+                tensor = custom_graph.get_tensor_by_name("{}:0".format(input_name))
+                if tensor not in input_tensor_list:
+                    input_tensor_list.append(tensor)
+            
+            #get aixop graph
+            aix_graph, aix_tensor, tensor_transpose_NHWC = self.__load_aix_op(custom_graph, input_tensor_list, index)
+            
+            #map tensor_tranpose_NHWC to last_node outputs
+            last_node_name = ir_block.output_node.name
+            custom_graph = self.map_aix_tranpose_output(last_node_name, tensor_transpose_NHWC, aix_graph)
+            
+            #abrogate last_node_list input to tranpose in ir_block if ir_block is_aixh_support
+            self.abrogate_node_succs(ir_block.output_node, tensor_transpose_NHWC)
+            
+            #detach the node in ir_block from custom graph
+            self.__graph_def = custom_graph.as_graph_def()
+            self.detach_aix_graph_nodes(ir_block, input_node_list)
+        
+        with tf.Graph().as_default() as custom_graph:
+            tf.import_graph_def(self.__graph_def, name="")
+        
+        return self.optimize_custom_graph(custom_graph)        
+
+    #Abrogate in memory ir_node of last aix ir graph node's successor to connect to aix tranpose as input
+    def abrogate_node_succs(self, abrogate_node, input_node):
+        input_node_name = input_node.name.split(":")[0]
+        #Change the input of the node that connected to the 
+        #last node that have been turned into AixOp
+        for abrogate_node_succs in abrogate_node.succs:
+            for index, succ_node_input in enumerate(abrogate_node_succs.node_def.input):
+                if succ_node_input == abrogate_node.name:
+                    abrogate_node_succs.node_def.input[index] = input_node_name
+        
+        #Change the input of the block if it is contains
+        #the node that have been turned into AixOp
+        for block in self.__ir_block_list:
+            for index, block_input_node in enumerate(block.input_nodes):
+                if abrogate_node == block_input_node:
+                     block.input_nodes[index] = input_node

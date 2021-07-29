@@ -3,7 +3,7 @@
 	"AIX_MODEL_NAME": "retinanet", 
 	"AIX_PROFIT_THRESHOLD": 500,
 	"INPUT_POINT": "input_1",
-	"STOP_COMPILING_POINT":"res5c_relu/Relu",
+	"STOP_COMPILING_POINT":"",
 	"AIX_LAYER": { 
 		"Conv2D": {
 			"layer": "AIX_LAYER_CONVOLUTION",
