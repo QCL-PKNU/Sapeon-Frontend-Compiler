@@ -166,8 +166,18 @@ class AxfcIRBuilder:
             self.__eval_block_output(ir_block)
 
             #set block output node
-            ir_block.output_node = self.__get_block_output_node(ir_block)
+            self.__set_block_output_node(ir_block)
             
+        return AxfcError.SUCCESS
+    
+    def __set_block_output_node(self, ir_block: AxfcIRBlock) -> AxfcError:
+        
+        output_node = self.__get_block_output_node(ir_block)
+        
+        if output_node:
+            output_node.is_output = True
+            ir_block.output_node = output_node
+        
         return AxfcError.SUCCESS
     
     #For evaluating the block input and every node input

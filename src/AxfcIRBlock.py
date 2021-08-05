@@ -101,36 +101,23 @@ class AxfcIRBlock:
         # check if the block is ready to be analyzed
         if self.nodes is None:
             return AxfcError.EMPTY_IR_BLOCK
-
-        # find input nodes
+        
+        #find the fist node that receive input in the block
         for ir_node in self.nodes:
-            num_aixh_support = 0
-
-            # count the number of predecessors in this block
+            
             for pred in ir_node.preds:
-                if pred.is_aixh_support:
-                    num_aixh_support += 1
-
-            # specify the node is an input node if there is no predecessors
-            if num_aixh_support == 0:
-                ir_node.is_input = True
-            else:
-                ir_node.is_input = False
-
-        # find output nodes
-        for ir_node in self.nodes:
-            num_aixh_support = 0
-
-            # count the number of successors in this block
-            for succ in ir_node.succs:
-                if succ.is_aixh_support:
-                    num_aixh_support += 1
-
-            # specify the node is an output node if there is no successors
-            if num_aixh_support == 0:
-                ir_node.is_output = True
-            else:
-                ir_node.is_output = False
+                if pred in self.input_nodes:
+                    ir_node.is_input = True
+                else:
+                    ir_node.is_input = False
+        
+        #find output nodes:
+        for ir_node in reversed(self.nodes):
+            for succ_node in ir_node.succs:
+                if succ_node not in self.nodes:
+                    ir_node.is_output = True
+                else:
+                    ir_node.is_output = False
 
         return AxfcError.SUCCESS
 

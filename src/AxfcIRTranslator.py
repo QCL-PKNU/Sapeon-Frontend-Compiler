@@ -130,7 +130,7 @@ class AxfcIRTranslator:
                 continue
 
             # emit the current node into an AIX layer and append it to the AIXGraph
-            err, aix_layer = self.__emit_aixh_node(ir_node)
+            err, aix_layer = self.__emit_aixh_node(ir_node, ir_block)
             if err is not AxfcError.SUCCESS:
                 return err, None
 
@@ -153,7 +153,7 @@ class AxfcIRTranslator:
     # @param self this object
     # @param ir_node input IR node to be translated
     # @return error info and an output AIXLayer object
-    def __emit_aixh_node(self, ir_node: AxfcIRNode) -> {AxfcError, AIXLayer}:
+    def __emit_aixh_node(self, ir_node: AxfcIRNode, ir_block: AxfcIRBlock) -> {AxfcError, AIXLayer}:
         # logging.info("AxfcTFIRTranslator:_emit_aixh_node - node %d", ir_node.layer_id)
 
         # get the operation information specified in the machine description
@@ -171,6 +171,14 @@ class AxfcIRTranslator:
             aix_layer.type.append(AIXLayer.AIX_LAYER_SKIP_CONV)
         layer_type = AIXLayer.AIXLayerType.Value(layer_info.layer)
         aix_layer.type.append(layer_type)
+        
+        #check if ir_node is the block input & output
+        if ir_node.is_input:
+            input_layer = AIXLayer.AIXLayerType.Value("AIX_LAYER_INPUT")
+            aix_layer.type.append(input_layer)
+        elif ir_node.is_output:
+            input_layer = AIXLayer.AIXLayerType.Value("AIX_LAYER_OUTPUT")
+            aix_layer.type.append(input_layer)
 
         # input
         aix_layer.input.CopyFrom(self._emit_aix_tensor_input(ir_node))
@@ -197,11 +205,11 @@ class AxfcIRTranslator:
 
         # predecessors & successors
         for pred in ir_node.preds:
-            if pred.is_aixh_support:
+            if pred.is_aixh_support and pred in ir_block.nodes:
                 aix_layer.preds.append(pred.layer_id)
 
         for succ in ir_node.succs:
-            if succ.is_aixh_support:
+            if succ.is_aixh_support and succ in ir_block.nodes:
                 aix_layer.succs.append(succ.layer_id)
 
         # activation
