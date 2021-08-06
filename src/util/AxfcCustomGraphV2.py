@@ -154,7 +154,7 @@ class AxfcCustomGraphV2:
             input_tensor_list = []
             for input_node in ir_block.input_nodes:
                 #Ignore Const, Pad and Identity node
-                if input_node.op in ["Const", "Pad", "Identity"]:
+                if input_node.op in ["Const", "Pad", "Identity"] and len(ir_block.input_nodes) > 1:
                     continue
                 
                 #validate input name, in case it is a tensor from previous aixop
