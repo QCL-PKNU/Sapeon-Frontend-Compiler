@@ -982,20 +982,20 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         sampling_desc = AIXLayer.AIXSamplingDesc()
 
         # mode
-        layer_type = ir_node.aix_layer.type[-1]
+        # layer_type = ir_node.aix_layer.type[-1]
 
-        if layer_type == AIXLayer.AIXLayerType.AIX_LAYER_MAXPOOL:
-            sampling_desc.mode = AIXLayer.AIXSamplingMode.AIX_POOLING_MAX
-        elif layer_type == AIXLayer.AIXLayerType.AIX_LAYER_AVGPOOL:
-            sampling_desc.mode = AIXLayer.AIXSamplingMode.AIX_POOLING_AVERAGE
-        elif layer_type == AIXLayer.AIXLayerType.AIX_LAYER_REORG:
-            sampling_desc.mode = AIXLayer.AIXSamplingMode.AIX_POOLING_REORG
-        elif layer_type == AIXLayer.AIXLayerType.AIX_LAYER_UPSAMPLE:
-            sampling_desc.mode = AIXLayer.AIXSamplingMode.AIX_POOLING_UPSAMPLE
-        elif layer_type == AIXLayer.AIXLayerType.AIX_LAYER_PIXELSHUFFLE:
-            sampling_desc.mode = AIXLayer.AIXSamplingMode.AIX_POOLING_PIXELSHUFFLE
-        else:
-            return None
+        for layer_type in ir_node.aix_layer.type:
+
+            if layer_type == AIXLayer.AIXLayerType.AIX_LAYER_MAXPOOL:
+                sampling_desc.mode = AIXLayer.AIXSamplingMode.AIX_POOLING_MAX
+            elif layer_type == AIXLayer.AIXLayerType.AIX_LAYER_AVGPOOL:
+                sampling_desc.mode = AIXLayer.AIXSamplingMode.AIX_POOLING_AVERAGE
+            elif layer_type == AIXLayer.AIXLayerType.AIX_LAYER_REORG:
+                sampling_desc.mode = AIXLayer.AIXSamplingMode.AIX_POOLING_REORG
+            elif layer_type == AIXLayer.AIXLayerType.AIX_LAYER_UPSAMPLE:
+                sampling_desc.mode = AIXLayer.AIXSamplingMode.AIX_POOLING_UPSAMPLE
+            elif layer_type == AIXLayer.AIXLayerType.AIX_LAYER_PIXELSHUFFLE:
+                sampling_desc.mode = AIXLayer.AIXSamplingMode.AIX_POOLING_PIXELSHUFFLE
 
         # window
         if 'ksize' in tensor.op.node_def.attr:

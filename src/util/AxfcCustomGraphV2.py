@@ -66,19 +66,43 @@ class AxfcCustomGraphV2:
                 if node_def.name == node.name:
                     del self.__graph_def.node[index]
                 
-                #Append input such as Pad and kernel to list
+                #----------------------------------------
+                #Check input for cleaning nodes
                 for input in node.node_def.input:
-                    # if ("Pad" in input or "kernel" in input) and input not in ignore_nodes:
-                    if "Pad" in input and input not in ignore_nodes:
-                        clean_input_node_list.append(input)
+                    clean_input_node_list.append(input)
         
-        # Clean inputs node left over in graph_def
         graph_nodes = self.__graph_def.node
+        #Remove the Const, Identity and Pad that has no connection
+        #This process need to optimize more when Pruning Identity node problem
+        #is resolved
         for input_node in clean_input_node_list:
             for index, node_def in enumerate(graph_nodes):
-                if input_node == node_def.name:
-                    # self.__graph_def.node.remove(node_def) #check why noise node appear when remove node_def 
-                    del self.__graph_def.node[index]
+                
+                if input_node == node_def.name and node_def.op in ["Const", "Identity", "Pad"]:
+                    #Need to check if other node requires the Const or Identity as input
+                    is_required = False
+                    for check_input_node in self.__graph_def.node:
+                        if input_node in check_input_node.input:
+                            is_required = True
+                            break
+                    
+                    if not is_required:
+                        del self.__graph_def.node[index]
+
+                ###-----------------------------------------
+                #Append input such as Pad and kernel to list
+        #         for input in node.node_def.input:
+        #             # if ("Pad" in input or "kernel" in input) and input not in ignore_nodes:
+        #             if "Pad" in input and input not in ignore_nodes:
+        #                 clean_input_node_list.append(input)
+        
+        # # Clean inputs node left over in graph_def
+        # graph_nodes = self.__graph_def.node
+        # for input_node in clean_input_node_list:
+        #     for index, node_def in enumerate(graph_nodes):
+        #         if input_node == node_def.name:
+        #             # self.__graph_def.node.remove(node_def) #check why noise node appear when remove node_def 
+        #             del self.__graph_def.node[index]
     
     #For maping aix tranpose_NHWC to connect to all of the block successors
     #outside of the block
