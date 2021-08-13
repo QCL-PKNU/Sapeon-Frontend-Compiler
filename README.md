@@ -96,13 +96,16 @@ To use the makefile, please follow the following steps below:
 ## **Contact**
 
 Youngsun Han (youngsun@pknu.ac.kr)
+
 * Associate Professor
 * Department of Computer Engineering, Pukyong National University
 
 Sengthai Heng (sengthai37@gmail.com)
+
 * Graduated Student
 * Department of AI Convergence, Pukong National University
 
 Leanghok Hour (leanghok@pukyong.ac.kr)
+
 * Graduated Student
 * Department of AI Convergence, Pukyong National University
