@@ -2,9 +2,9 @@
 
 This README describes the organization and usage of the SKT AIX Frontend Compiler.
 
-## <strong> Source Organization </strong> ##
+## **Source Organization** ##
 
-### <strong> Common </strong> ###
+### **Common** ###
 
 * AxfcFrontendCompiler
 * AxfcIRBuilder
@@ -19,39 +19,38 @@ This README describes the organization and usage of the SKT AIX Frontend Compile
 * AxfcError
 * AxfcMain
 
-### <strong> Util </strong> ###
+### **Util** ###
 
 * AxfcAIXLayerView
 * AxfcCustomGraph
 * AxfcTFGraphUtil
 * AxfcUtil
 
-### <strong> Tensorflow </strong> ###
+### **Tensorflow** ###
 
 * AxfcTFIRBuilder
 * AxfcTFIRTranslator
 
-### <strong> SKT-AIX </strong> ###
+### **SKT-AIX** ###
 
 * aixh_pb2
 
-## <strong> Prerequisites </strong> ##
+## **Prerequisites** ##
 * Installation
   > pip3 install -r requirements.txt
 
-## <strong> Usage </strong> ##  
+## **Usage** ##  
 
 Our frontend compiler currently provides 2 ways for the executing, by using Makefile or python3 command line.
-### <strong> Using Python3 Command Line </strong> ###
+### **Using Python3 Command Line** ###
 To use the python3 command line, we have to pass the required arguments listed below.
 
-<strong>Required Arguments</strong>
+**Required Arguments**
     
     -m: path to a machine description file 
     -i: path to the protocol buffer of a frozen model
     -k: path to the kernel (custom operation kernerl *.so) file
-
-<strong> Optional Arguments </strong>
+ **Optional Arguments**
 
     -c: Path to the calibration data of a frozen model (optional)
     -o: Path to output the generated AIXGraph (optional)
@@ -61,8 +60,7 @@ To use the python3 command line, we have to pass the required arguments listed b
   Note:
 
 * For -f argument, we recommend to use binary format as it is much faster for dumping the aix graph.
-
-<strong> Example </strong>
+ **Example**
 
 1. On terminal, go to aix frontend compiler directory
     ```    
@@ -72,9 +70,12 @@ To use the python3 command line, we have to pass the required arguments listed b
    ```
    $ python3 src/AxfcMain.py -m=tst/model_description.md -i=tst/model_name.pb -k=tst/custom_op_kernel.so -f=binary
    ```
-### <strong> Using Makefile: </strong> ###
+### **Using Makefile:** ###
 To use the makefile, please follow the following steps below:
+
 1. Configure makefile, go to edit Makefile at path ``skt-aix-frontend-compiler/Makefile``
+
+
 2. Fill in the required parameter belows:
    ```
    MODEL= ./tst/model_name.pb 
@@ -90,7 +91,7 @@ To use the makefile, please follow the following steps below:
     $ make all
     ```
 
-## <strong> Contact </strong> ##
+## **Contact** ##
 
 * Youngsun Han (youngsun@pknu.ac.kr)
   * Associate Professor
