@@ -9,6 +9,7 @@
 #
 #   High Performance Computing Laboratory (hpcl.pknu.ac.kr)
 #######################################################################
+from multiprocessing import Process
 import os
 from pathlib import Path
 
@@ -156,20 +157,39 @@ class AxfcFrontendCompiler:
         if aix_graphs is None:
             logging.warning("No AIXGraphs found")
             return AxfcError.INVALID_AIX_GRAPH
-
-        # print out the generated AIX graphs
+        
+        jobs = []
         for i, aix_graph in enumerate(aix_graphs):
-            # rename the output path using the graph index
             tmp_path = out_path + ".%s" % i
             aix_graph.input_layers.append(aix_graph.layer[0].id)
             aix_graph.output_layers.append(aix_graph.layer[-1].id)
-            # dump out each graph
-            fd = open(tmp_path, mode="wt")
-            fd.seek(0)
-            fd.write(str(aix_graph))
-            fd.close()
+
+            p = Process(target=self.write_aix_graph, args=(tmp_path, aix_graph,))
+            jobs.append(p)
+            p.start()
+
+        for j in jobs:
+            j.join()
 
         return AxfcError.SUCCESS
+
+    #For writing aix graph, implementation using multiprocess
+    #data_mode can be BINARY or TEXT to write to output file. 
+    def write_aix_graph(self, out_path: str, aix_graph: AIXGraph, data_mode = "BINARY") -> AxfcError:
+        
+        if data_mode.upper() == "BINARY":
+            f = open(out_path, "wb")
+            f.write(aix_graph.SerializeToString())
+            f.close()
+        elif data_mode.upper() == "TEXT":
+            f = open(out_path, "wt")
+            f.write(str(aix_graph))
+            f.close()
+        else:
+            return AxfcError.INVALID_PARAMETER
+
+        return  AxfcError.SUCCESS
+
 # aix_graph.input_layers.append(aix_graph.layer[0].id)
     ## This method is used to dump out result of launcher
     #
