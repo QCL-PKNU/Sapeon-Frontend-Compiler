@@ -25,6 +25,7 @@ def __main(params):
     out_path = params.out_path
     cal_path = params.calib_path
     kernel_path = params.kernel
+    aix_graph_format = params.aix_graph_format
 
     # for logging
     if log_path is not None and os.path.isfile(log_path):
@@ -46,7 +47,7 @@ def __main(params):
     logging.info("##########################")
 
     fc = AxfcFrontendCompiler()
-
+    
     # read a machine description file
     err = fc.read_md_file(md_path)
     if err is not AxfcError.SUCCESS:
@@ -70,7 +71,7 @@ def __main(params):
         out_path = os.path.dirname(in_path) + "/aix_graph.out"
 
     # AIX graph out
-    err = fc.dump_aix_graphs(out_path, aix_graphs)
+    err = fc.dump_aix_graphs(out_path, aix_graphs, aix_graph_format)
     if err is not AxfcError.SUCCESS:
         logging.error("Error] Dump out AIXGraphs: %s", err)
         return err
@@ -131,6 +132,8 @@ if __name__ == "__main__":
                         help='path to log out')
     parser.add_argument('-g', '--graph-path', metavar='', type=str, required=False,
                         help='path to dump an IR graph')
+    parser.add_argument('-f', '--aix_graph_format', metavar='', type=str, required=False,
+                        help='configure output format between binary and text for aix graph')
 
     args = parser.parse_args()
     __main(args)

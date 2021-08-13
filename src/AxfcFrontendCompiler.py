@@ -152,7 +152,7 @@ class AxfcFrontendCompiler:
     # @param out_path a file path to output the AIXGraphs
     # @param aix_graphs a list of AIXGraphs to be dumped out
     # @return error info
-    def dump_aix_graphs(self, out_path: str, aix_graphs: list) -> AxfcError:
+    def dump_aix_graphs(self, out_path: str, aix_graphs: list, aix_graph_format:str) -> AxfcError:
         logging.info("AxfcIRTranslator:dump_aix_graphs - %s", out_path)
         if aix_graphs is None:
             logging.warning("No AIXGraphs found")
@@ -164,7 +164,7 @@ class AxfcFrontendCompiler:
             aix_graph.input_layers.append(aix_graph.layer[0].id)
             aix_graph.output_layers.append(aix_graph.layer[-1].id)
 
-            p = Process(target=self.write_aix_graph, args=(tmp_path, aix_graph,))
+            p = Process(target=self.write_aix_graph, args=(tmp_path, aix_graph, aix_graph_format,))
             jobs.append(p)
             p.start()
 
@@ -175,8 +175,11 @@ class AxfcFrontendCompiler:
 
     #For writing aix graph, implementation using multiprocess
     #data_mode can be BINARY or TEXT to write to output file. 
-    def write_aix_graph(self, out_path: str, aix_graph: AIXGraph, data_mode = "BINARY") -> AxfcError:
+    def write_aix_graph(self, out_path: str, aix_graph: AIXGraph, data_mode:str) -> AxfcError:
         
+        if not data_mode:
+            data_mode == "BINARY"
+
         if data_mode.upper() == "BINARY":
             f = open(out_path, "wb")
             f.write(aix_graph.SerializeToString())
