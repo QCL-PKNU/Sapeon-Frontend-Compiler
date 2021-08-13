@@ -62,6 +62,7 @@ To use the python3 command line, we have to pass the required arguments listed b
   Note:
 
 * For -f argument, we recommend to use binary format as it is much faster for dumping the aix graph.
+ 
  **Example**
 
 1. On terminal, go to aix frontend compiler directory
