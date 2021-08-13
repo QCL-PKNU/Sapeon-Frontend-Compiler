@@ -1,10 +1,10 @@
-# SKT AIX Frontend Compiler #
+# SKT AIX Frontend Compiler
 
 This README describes the organization and usage of the SKT AIX Frontend Compiler.
 
-## **Source Organization** ##
+## **Source Organization**
 
-### **Common** ###
+### **Common**
 
 * AxfcFrontendCompiler
 * AxfcIRBuilder
@@ -19,30 +19,30 @@ This README describes the organization and usage of the SKT AIX Frontend Compile
 * AxfcError
 * AxfcMain
 
-### **Util** ###
+### **Util**
 
 * AxfcAIXLayerView
 * AxfcCustomGraph
 * AxfcTFGraphUtil
 * AxfcUtil
 
-### **Tensorflow** ###
+### **Tensorflow**
 
 * AxfcTFIRBuilder
 * AxfcTFIRTranslator
 
-### **SKT-AIX** ###
+### **SKT-AIX**
 
 * aixh_pb2
 
-## **Prerequisites** ##
+## **Prerequisites**
 * Installation
   > pip3 install -r requirements.txt
 
-## **Usage** ##  
+## **Usage** 
 
 Our frontend compiler currently provides 2 ways for the executing, by using Makefile or python3 command line.
-### **Using Python3 Command Line** ###
+### **Using Python3 Command Line**
 To use the python3 command line, we have to pass the required arguments listed below.
 
 **Required Arguments**
@@ -70,7 +70,7 @@ To use the python3 command line, we have to pass the required arguments listed b
    ```
    $ python3 src/AxfcMain.py -m=tst/model_description.md -i=tst/model_name.pb -k=tst/custom_op_kernel.so -f=binary
    ```
-### **Using Makefile:** ###
+### **Using Makefile:**
 To use the makefile, please follow the following steps below:
 
 1. Configure makefile, go to edit Makefile at path ``skt-aix-frontend-compiler/Makefile``
@@ -91,14 +91,16 @@ To use the makefile, please follow the following steps below:
     $ make all
     ```
 
-## **Contact** ##
+## **Contact**
 
-* Youngsun Han (youngsun@pknu.ac.kr)
+Youngsun Han (youngsun@pknu.ac.kr)
   * Associate Professor
   * Department of Computer Engineering, Pukyong National University
-* Sengthai Heng (sengthai37@gmail.com)
+
+Sengthai Heng (sengthai37@gmail.com)
   * Graduated Student
   * Department of AI Convergence, Pukong National University
-* Leanghok Hour (leanghok@pukyong.ac.kr)
+
+Leanghok Hour (leanghok@pukyong.ac.kr)
   * Graduated Student
   * Department of AI Convergence, Pukyong National University
