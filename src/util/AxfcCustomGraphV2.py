@@ -1,7 +1,8 @@
 
 
 import enum
-from os import name
+import multiprocessing
+from multiprocessing import Process
 
 from tensorflow.python.eager.context import remove_function
 from util.AxfcTFGraphUtil import AxfcTFGraphUtil
@@ -57,7 +58,7 @@ class AxfcCustomGraphV2:
     def detach_aix_graph_nodes(self, ir_block, ignore_nodes):
         
         #Clean ir_block nodes input such as padding and kernel
-        clean_input_node_list = []
+        input_to_clean = []
         
         #detach nodes from ir_block
         graph_nodes = self.__graph_def.node 
@@ -65,44 +66,48 @@ class AxfcCustomGraphV2:
             for index, node_def in enumerate(graph_nodes):
                 if node_def.name == node.name:
                     del self.__graph_def.node[index]
-                
-                #----------------------------------------
-                #Check input for cleaning nodes
-                for input in node.node_def.input:
-                    clean_input_node_list.append(input)
-        
-        graph_nodes = self.__graph_def.node
-        #Remove the Const, Identity and Pad that has no connection
-        #This process need to optimize more when Pruning Identity node problem
-        #is resolved
-        for input_node in clean_input_node_list:
-            for index, node_def in enumerate(graph_nodes):
-                
-                if input_node == node_def.name and node_def.op in ["Const", "Identity", "Pad"]:
-                    #Need to check if other node requires the Const or Identity as input
-                    is_required = False
-                    for check_input_node in self.__graph_def.node:
-                        if input_node in check_input_node.input:
-                            is_required = True
-                            break
-                    
-                    if not is_required:
-                        del self.__graph_def.node[index]
+                    break
 
-                ###-----------------------------------------
-                #Append input such as Pad and kernel to list
-        #         for input in node.node_def.input:
-        #             # if ("Pad" in input or "kernel" in input) and input not in ignore_nodes:
-        #             if "Pad" in input and input not in ignore_nodes:
-        #                 clean_input_node_list.append(input)
+            for input in node.node_def.input:
+                input_to_clean.append(input)
+
+        graph_nodes = self.__graph_def.node
+        manager = multiprocessing.Manager()
         
-        # # Clean inputs node left over in graph_def
-        # graph_nodes = self.__graph_def.node
-        # for input_node in clean_input_node_list:
-        #     for index, node_def in enumerate(graph_nodes):
-        #         if input_node == node_def.name:
-        #             # self.__graph_def.node.remove(node_def) #check why noise node appear when remove node_def 
-        #             del self.__graph_def.node[index]
+        process_list = []
+        return_dict = manager.dict() #For storing that node that can be removed
+        #Use multiprocess to check whether or not the node can be removed
+        for input_node in input_to_clean:
+            p = Process(target=self.check_input_node, args=(input_node, graph_nodes, return_dict,))
+            process_list.append(p)
+            p.start()
+
+        for p in process_list:
+            p.join()
+        
+        #Remove all the nodes from return_dict
+        for node in return_dict.values():
+            self.__graph_def.node.remove(node)
+    
+    #This function is used to check the whether or not the input node can be remove
+    #It will check if the input node is required as input or has connection to another node
+    def check_input_node(self, input_node, graph_nodes, return_dict):
+
+        for index, node_def in enumerate(graph_nodes):
+                
+            if input_node == node_def.name and node_def.op in ["Const", "Identity", "Pad"]:
+                #Need to check if other node requires the Const or Identity as input
+                is_required = False
+                for node in self.__graph_def.node:
+                    if input_node in node.input:
+                        is_required = True
+                        break
+                
+                #If no node requires it as input then return it in the dictionary
+                if not is_required:
+                    return_dict[node_def.name] = self.__graph_def.node[index]
+                
+                break
     
     #For maping aix tranpose_NHWC to connect to all of the block successors
     #outside of the block
