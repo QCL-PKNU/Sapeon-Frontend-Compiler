@@ -64,6 +64,9 @@ class AxfcLauncherWriter:
 
         graph_def = loadFrozenModel(self.__frozen_model_path)
 
+        #remove training node
+        graph_def = tf.compat.v1.graph_util.remove_training_nodes(graph_def, protected_nodes=None)
+
         with tf.Graph().as_default() as graph:
             tf.import_graph_def(graph_def, name="")
         

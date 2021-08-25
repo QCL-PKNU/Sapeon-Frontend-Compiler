@@ -42,8 +42,8 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
             tf.import_graph_def(tf_graph)
 
         # remove identity nodes
-        # self._tf_graph = tf.compat.v1.graph_util.remove_training_nodes(tf_graph)
-        self._tf_graph = tf_graph
+        self._tf_graph = tf.compat.v1.graph_util.remove_training_nodes(tf_graph, protected_nodes=None)
+        # self._tf_graph = tf_graph
 
         return AxfcError.SUCCESS
 

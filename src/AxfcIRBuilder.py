@@ -167,6 +167,9 @@ class AxfcIRBuilder:
 
             #set block output node
             self.__set_block_output_node(ir_block)
+        
+        #set block input
+        ir_block.input_nodes = self.__find_block_input_node(ir_block)
             
         return AxfcError.SUCCESS
     
@@ -188,7 +191,7 @@ class AxfcIRBuilder:
         block_inputs = self.__find_block_input_node(ir_block)
         
         #set block input node
-        ir_block.input_nodes = block_inputs
+        # ir_block.input_nodes = block_inputs
         
         #Set eval_flag to False to prepare node for evaluation
         for node in ir_block.nodes:
@@ -289,13 +292,20 @@ class AxfcIRBuilder:
         #eval output with the last node
         # self.__eval_block_output(ir_block.nodes[0], ir_block, ir_block.nodes[-1])
         
-        if not output_node:
+        #---------------------------------
+        for node in reversed(ir_block.nodes):
+            if node.op != "Const":
+                output_node = node
+                break
+        #--------------------------
+        # if not output_node:
             
-            # get last node of the block
-            for node in reversed(ir_block.nodes):
-                if node.op != "Const":
-                    output_node = node
-                    break
+        #     # get last node of the block
+        #     for node in reversed(ir_block.nodes):
+        #         if node.op != "Const":
+        #             output_node = node
+        #             break
+        #----------------------------
         
         for node in ir_block.nodes:
             #skip node that is already evaluated
