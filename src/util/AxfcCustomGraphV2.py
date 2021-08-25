@@ -58,8 +58,13 @@ class AxfcCustomGraphV2:
     def detach_aix_graph_nodes(self, ir_block, ignore_nodes):
         
         #Clean ir_block nodes input such as padding and kernel
-        input_to_clean = []
+        # check_to_clean = []
+
+        #For cleaning directly without checking
+        # direct_clean = []
         
+        #For cleaning input
+        node_to_clean = []
         #detach nodes from ir_block
         graph_nodes = self.__graph_def.node 
         for node in ir_block.nodes:
@@ -67,34 +72,82 @@ class AxfcCustomGraphV2:
                 if node_def.name == node.name:
                     del self.__graph_def.node[index]
                     break
+            #_______________________
+            node_to_clean += node.preds
 
-            for input in node.node_def.input:
-                input_to_clean.append(input)
+        all_node_name = [node.name for node in self.__graph_def.node]
+        keep_nodes = []
+        for node in node_to_clean:
+            #Skip Padding
+            if node.op == "Pad":
+                continue
+
+            #check if current node is required from other node
+            for succ_node in node.succs:
+                if succ_node.name in all_node_name:
+                    # node_to_clean.remove(node)
+                    keep_nodes.append(node)
+                    break
+        
+        node_to_clean = [node for node in node_to_clean if node not in keep_nodes]
 
         graph_nodes = self.__graph_def.node
-        manager = multiprocessing.Manager()
-        
-        process_list = []
-        return_dict = manager.dict() #For storing that node that can be removed
-        #Use multiprocess to check whether or not the node can be removed
-        for input_node in input_to_clean:
-            p = Process(target=self.check_input_node, args=(input_node, graph_nodes, return_dict,))
-            process_list.append(p)
-            p.start()
+        pad_to_clean = []
+        for node in node_to_clean:
+            #Remove Padding successors
+            if node.op == "Pad":
+                pad_to_clean += node.succs
 
-        for p in process_list:
-            p.join()
+            #Remove all Const, Identity and Pad
+            if node.op in ["Const", "Identity", "Pad"]:
+                for index, node_def in enumerate(graph_nodes):
+                    if node.name == node_def.name:
+                        del self.__graph_def.node[index]
+                        break
         
-        #Remove all the nodes from return_dict
-        for node in return_dict.values():
-            self.__graph_def.node.remove(node)
+        graph_nodes = self.__graph_def.node
+        for pad_node in pad_to_clean:
+            for index, node_def in enumerate(graph_nodes):
+                if pad_node.name == node_def.name:
+                    del self.__graph_def.node[index]
+                    break
+
+            #_______________________
+        #     if "FusedBatchNorm" in node.name:
+        #         direct_clean += node.node_def.input
+        #     else:
+        #         check_to_clean += node.node_def.input
+        #         # for input in node.node_def.input:
+
+        #         # if "FusedBatchNorm" in node.name:
+        #         #     direct_clean.append(input)
+        #         # else:
+        #         #     check_to_clean.append(input)
+
+        # graph_nodes = self.__graph_def.node
+        # manager = multiprocessing.Manager()
+        
+        # process_list = []
+        # return_dict = manager.dict() #For storing that node that can be removed
+        # #Use multiprocess to check whether or not the node can be removed
+        # for input_node in check_to_clean:
+        #     p = Process(target=self.check_input_node, args=(input_node, graph_nodes, return_dict,))
+        #     process_list.append(p)
+        #     p.start()
+
+        # for p in process_list:
+        #     p.join()
+        
+        # #Remove all the nodes from return_dict
+        # for node in return_dict.values():
+        #     self.__graph_def.node.remove(node)
     
     #This function is used to check the whether or not the input node can be remove
     #It will check if the input node is required as input or has connection to another node
     def check_input_node(self, input_node, graph_nodes, return_dict):
 
         for index, node_def in enumerate(graph_nodes):
-                
+            
             if input_node == node_def.name and node_def.op in ["Const", "Identity", "Pad"]:
                 #Need to check if other node requires the Const or Identity as input
                 is_required = False
@@ -113,16 +166,18 @@ class AxfcCustomGraphV2:
     #outside of the block
     def map_aix_tranpose_output(self, last_node_name, tranpose_tensor, graph):
         
+        #Replace BiasaddClone for original FusedBatchNorm
+        if "FusedBatchNorm" in last_node_name:
+            last_node_name = last_node_name.split("/BiasaddClone")[0]
+
         graph_def = graph.as_graph_def()
+
         for index, node in enumerate(graph_def.node):
             for input_index, input in enumerate(node.input):
                 if last_node_name == input:
                     graph_def.node[index].input[input_index] = tranpose_tensor.name.split(":")[0]
-                    
-        with tf.Graph().as_default() as custom_graph:
-            tf.import_graph_def(graph_def, name="")
-            
-        return custom_graph
+        
+        return graph_def
 
     #For removing Const and Identity node that has no connection
     def optimize_custom_graph(self, custom_graph):
@@ -137,7 +192,7 @@ class AxfcCustomGraphV2:
         #remove node
         for node in node_to_remove:
             custom_graph_def.node.remove(node)
-        
+
         with tf.Graph().as_default() as custom_graph:
             tf.import_graph_def(custom_graph_def, name="")
         
@@ -145,7 +200,7 @@ class AxfcCustomGraphV2:
     
     #Compile all the aix supported block into AixOp
     def get_custom_graph(self):
-        
+
         for index, ir_block in enumerate(self.__ir_block_list):
             #Take input list from the first node in the block
             
@@ -175,13 +230,13 @@ class AxfcCustomGraphV2:
             
             #map tensor_tranpose_NHWC to last_node outputs
             last_node_name = ir_block.output_node.name
-            custom_graph = self.map_aix_tranpose_output(last_node_name, tensor_transpose_NHWC, aix_graph)
+            graph_def = self.map_aix_tranpose_output(last_node_name, tensor_transpose_NHWC, aix_graph)
             
             #abrogate last_node_list input to tranpose in ir_block if ir_block is_aixh_support
+            self.__graph_def = graph_def
             self.abrogate_node_succs(ir_block.output_node, tensor_transpose_NHWC)
             
             #detach the node in ir_block from custom graph
-            self.__graph_def = custom_graph.as_graph_def()
             self.detach_aix_graph_nodes(ir_block, input_node_list)
         
         with tf.Graph().as_default() as custom_graph:
