@@ -124,10 +124,20 @@ class AxfcIRBuilder:
             if err is AxfcError.SUCCESS:
                 
                 #Perform block node evaluation for aixh support block
-                err = self.__perform_block_eval(ir_block)
-                if err is AxfcError.SUCCESS and ir_block.nodes:
-                    self._ir_graph.append_block(ir_block)
+                # err = self.__perform_block_eval(ir_block)
+                # if err is AxfcError.SUCCESS and ir_block.nodes:
+                #     self._ir_graph.append_block(ir_block)
                 
+                #-----------
+                err = self.__perform_block_eval(ir_block)
+
+                if err == AxfcError.SUCCESS:
+                    #set block input
+                    ir_block.input_nodes = self.__find_block_input_node(ir_block, set_inout = True)
+                    #set block output
+                    ir_block.output_nodes = self.__get_block_output_node_list(ir_block, set_inout= True)
+                    self._ir_graph.append_block(ir_block)
+
             else:
                 return err
 
@@ -150,71 +160,56 @@ class AxfcIRBuilder:
 
         return AxfcError.SUCCESS
     
-    #perform block evaluation
-    #eval input and output of every node in the block
-    def __perform_block_eval(self, ir_block: AxfcIRBlock, eval_modes = ["INPUT", "OUTPUT"]) -> AxfcError:
-        
-        if not ir_block or not ir_block.nodes or not eval_modes:
-            return AxfcError.INVALID_PARAMETER
-        
-        #evaluation block input
-        if "INPUT" in eval_modes:
-            self.__eval_block_input(ir_block)
-        
-        #evaluation block output
-        if "OUTPUT" in eval_modes:
-            self.__eval_block_output(ir_block)
 
-            #set block output node
-            self.__set_block_output_node(ir_block)
+    def __perform_block_eval(self, ir_block: AxfcIRBlock) -> AxfcError:
         
-        #set block input
-        ir_block.input_nodes = self.__find_block_input_node(ir_block)
-            
+
+        input_nodes = self.__find_block_input_node(ir_block)
+
+        node_to_remove = []
+        for node in input_nodes:
+            for pred_node in node.preds:
+                if pred_node in ir_block.nodes:
+                    node_to_remove.append(node)
+                    break
+        
+        for node in node_to_remove:
+            self.__remove_succ_from_block(node, ir_block)
+        
         return AxfcError.SUCCESS
-    
-    def __set_block_output_node(self, ir_block: AxfcIRBlock) -> AxfcError:
+
+    def __remove_succ_from_block(self, ir_node: AxfcIRNode, ir_block: AxfcIRBlock):
         
-        output_node = self.__get_block_output_node(ir_block)
+        #remove node if it exists in block
+        if ir_node in ir_block.nodes:
+            #Set eval flag to fail so can revaluate for another block
+            ir_node.eval_flag = False
+            ir_block.nodes.remove(ir_node)
         
-        if output_node:
-            output_node.is_output = True
-            ir_block.output_node = output_node
-        
-        return AxfcError.SUCCESS
-    
-    #For evaluating the block input and every node input
-    def __eval_block_input(self, ir_block: AxfcIRBlock) -> AxfcError:
-        
-        #Get block inputs from first node
-        # block_inputs = ir_block.nodes[0].preds
-        block_inputs = self.__find_block_input_node(ir_block)
-        
-        #set block input node
-        # ir_block.input_nodes = block_inputs
-        
-        #Set eval_flag to False to prepare node for evaluation
-        for node in ir_block.nodes:
-            node.eval_flag = False
-        
-        for node in ir_block.nodes:
-            #skip node that is already evaluated
-            if node.eval_flag:
-                continue
-            #perform node input evaluation
-            self.__eval_node_input(node, ir_block, block_inputs)
-    
-    #To get the last node of the block
-    #which is block output node
-    def __get_block_output_node(self, ir_block: AxfcIRBlock) -> AxfcIRNode:
-        
+        for succ_node in ir_node.succs:
+            if succ_node in ir_block.nodes:
+                self.__remove_succ_from_block(succ_node, ir_block)
+
+    #Get block output node list
+    def __get_block_output_node_list(self, ir_block: AxfcIRBlock, set_inout = False):
+
+        output_node_list = []
+
         for node in reversed(ir_block.nodes):
             for succ_node in node.succs:
-                if succ_node not in ir_block.nodes:
-                    return node
+                if succ_node not in ir_block.nodes and node.op not in ["Const", "Identity", "Pad"]:
+                    if node not in output_node_list:
+                        output_node_list.append(node)
+
+                        if set_inout:
+                            node.is_output = True
+
+                    # break
+        
+        return output_node_list
     
     #To get the input node from outside block
-    def __find_block_input_node(self, ir_block: AxfcIRBlock) -> list:
+    def __find_block_input_node(self, ir_block: AxfcIRBlock, set_inout = False) -> list:
         
         for node in ir_block.nodes:
             node.eval_flag = False
@@ -225,6 +220,9 @@ class AxfcIRBuilder:
             err, pred_nodes = self.__find_node_input(node, ir_block)
             if err is AxfcError.SUCCESS:
                 input_node_list += pred_nodes
+
+                if set_inout and "FusedBatchNorm" not in node.name and len(pred_nodes) > 0:
+                    node.is_input = True
         
         return input_node_list
     
@@ -237,7 +235,8 @@ class AxfcIRBuilder:
             ir_node.eval_flag = True
         else:
             return AxfcError.INVALID_PARAMETER, [ir_node]
-        
+
+        pred_node_inputs = []
         #check if pred_node is in ir_block
         for pred_node in ir_node.preds:
             #skip Const
@@ -245,121 +244,14 @@ class AxfcIRBuilder:
                 continue
             
             #if pred_node is in ir_block then its preds can not be the block input
-            if pred_node in ir_block.nodes:
-                return AxfcError.INVALID_PARAMETER, [ir_node]
+            if pred_node not in ir_block.nodes and "Pad" not in pred_node.name:
+                # return AxfcError.INVALID_PARAMETER, [ir_node]
+                pred_node_inputs.append(pred_node)
         
         #ir_node does not contains preds in ir_block
         #then its preds are the input of the block
-        return AxfcError.SUCCESS, ir_node.preds
+        return AxfcError.SUCCESS, pred_node_inputs
             
-    
-    #if node in block connnect to outside node (except const)
-    #put the node as invalid, if it's const, clone const add to aix graph
-    def __eval_node_input(self, ir_node: AxfcIRNode, ir_block: AxfcIRNode, block_inputs: list) -> AxfcError:
-        
-        if not ir_node.eval_flag:
-            ir_node.eval_flag = True
-        else:
-            return AxfcError.SUCCESS
-
-        #Check if pred node is in block_inputs
-        for pred_node in ir_node.preds:
-            if pred_node in block_inputs:
-                return AxfcError.SUCCESS
-
-        #check if pred node not in ir_block
-        for pred_node in ir_node.preds:
-            #if pred_node not in ir_block also is not a Const and Pad Node
-            #Set it to not supported and remove from ir_block
-            if pred_node not in ir_block.nodes and pred_node.op not in ["Const", "Pad", "Identity"]:
-                ir_node.is_aixh_support = False
-                ir_block.nodes.remove(ir_node)
-        
-        return AxfcError.SUCCESS
-        
-    
-    #For evaluating block output to make a valid ir block 
-    #A valid ir block can contain only one output node to outside of the block
-    def __eval_block_output(self, ir_block: AxfcIRBlock, output_node = None) -> AxfcError: 
-        
-        if not ir_block or not ir_block.nodes:
-            return AxfcError.INVALID_PARAMETER
-        
-        #Set eval_flag to False
-        for node in ir_block.nodes:
-            node.eval_flag = False
-        
-        #eval output with the last node
-        # self.__eval_block_output(ir_block.nodes[0], ir_block, ir_block.nodes[-1])
-        
-        #---------------------------------
-        for node in reversed(ir_block.nodes):
-            if node.op != "Const":
-                output_node = node
-                break
-        #--------------------------
-        # if not output_node:
-            
-        #     # get last node of the block
-        #     for node in reversed(ir_block.nodes):
-        #         if node.op != "Const":
-        #             output_node = node
-        #             break
-        #----------------------------
-        
-        for node in ir_block.nodes:
-            #skip node that is already evaluated
-            if node.eval_flag:
-                continue
-            
-            err, expected_output_node = self.__eval_node_output(node, ir_block, output_node)
-            if err is AxfcError.INVALID_NODE:
-                break
-            
-        if err is not AxfcError.SUCCESS:
-            self.__eval_block_output(ir_block, expected_output_node)
-        
-        return AxfcError.SUCCESS
-    
-    #For check the ir_node's succs if the succs is outside of the block
-    #then set it as the expected output until there is only one node 
-    #connecting to outside of the block 
-    def __eval_node_output(self, ir_node:AxfcIRNode, ir_block:AxfcIRBlock, output_node:AxfcIRNode):
-        
-        if not ir_node.eval_flag:
-            ir_node.eval_flag = True
-        else:
-            return AxfcError.SUCCESS, ir_node
-
-        #Skip Const
-        if ir_node.op == "Const":
-            return AxfcError.SUCCESS, ir_node
-        
-        for succ_node in ir_node.succs:
-            if succ_node not in ir_block.nodes and ir_node != output_node:
-                #remove output_node because it is invalid 
-                #as it is not the output of the node
-                # ir_block.nodes.remove(output_node)
-                self.__remove_node_succ_from_block(output_node, ir_block)
-                
-                #return the current ir_node as output_node
-                return AxfcError.INVALID_NODE, ir_node
-        
-        return AxfcError.SUCCESS, ir_node
-
-    #For removing node and its succs from the block
-    def __remove_node_succ_from_block(self, ir_node: AxfcIRNode, ir_block: AxfcIRBlock) -> AxfcError:
-        
-        if ir_node not in ir_block.nodes:
-            return AxfcError.SUCCESS
-        else:
-            ir_block.nodes.remove(ir_node)
-            # ir_node.eval_flag = False
-        
-        for succ_node in ir_node.succs:
-            self.__remove_node_succ_from_block(succ_node, ir_block)
-        
-        return AxfcError.SUCCESS
     
     ## This method performs maximal munch algorithm to
     #  recursively find the longest successive AIXH-supported nodes.
@@ -393,9 +285,9 @@ class AxfcIRBuilder:
             return AxfcError.SUCCESS
         
         #end block if succ is not supported by hardware
-        for succ in ir_node.succs:
-            if not succ.is_aixh_support:
-                return AxfcError.SUCCESS
+        # for succ in ir_node.succs:
+        #     if not succ.is_aixh_support:
+        #         return AxfcError.SUCCESS
 
         # perform maximal munching to the predecessors
         for pred in ir_node.preds:

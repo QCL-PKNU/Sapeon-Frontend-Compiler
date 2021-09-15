@@ -106,24 +106,6 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
         # remove unnecessary IR nodes
         return self.__prune_ir_nodes()
 
-    def check_unsupported_pred_succ(self, node:AxfcIRNode):
-
-        if node.name == "FusedBatchNormV3":
-            return
-        
-        #Ignore break point node
-        if node.name == self._md.get_break_point_node():
-            return
-        
-        for succ_node in node.succs:
-            #Ignore pad as pad will be removed 
-            if succ_node.op == "Pad":
-                return
-
-            if not succ_node.is_aixh_support:
-                self._ir_symtab.get(node.name).is_aixh_support = False
-                break
-
     ## This method is used to prune unnecessary nodes from the IR graph.
     #  Currently, we will remove "identity" and "pad" nodes for the IR translation.
     #
