@@ -40,6 +40,7 @@ This README describes the organization and usage of the SKT AIX Frontend Compile
   ```
   $ pip3 install -r requirements.txt
   ```
+* Launcher: please kindly refer to aix-launcher project prerequisites, please make sure to create the virtual environment and install library there. 
 
 ## **Usage** 
 
@@ -51,7 +52,8 @@ To use the python3 command line, we have to pass the required arguments listed b
     
     -m: path to a machine description file 
     -i: path to the protocol buffer of a frozen model
-    -k: path to the kernel (custom operation kernerl *.so) file
+    -k: path to the skt-launcher project
+
  **Optional Arguments**
 
     -c: Path to the calibration data of a frozen model (optional)
@@ -61,6 +63,7 @@ To use the python3 command line, we have to pass the required arguments listed b
     -f: Configure output for aix graph format between 'binary' and 'text' (optional, default is binary)
   Note:
 
+* For -k argument, we have updated from using the custom_kernel.so to launcher directory path.
 * For -f argument, we recommend to use binary format as it is much faster for dumping the aix graph.
  
  **Example**
@@ -71,7 +74,7 @@ To use the python3 command line, we have to pass the required arguments listed b
     ```
 2. Run aix compiler
    ```
-   $ python3 src/AxfcMain.py -m=tst/model_description.md -i=tst/model_name.pb -k=tst/custom_op_kernel.so -f=binary
+   $ python3 src/AxfcMain.py -m=tst/model_description.md -i=tst/model_name.pb -k=/home/{username}/Documents/aix/skt-aix-launcher -f=binary
    ```
 ### **Using Makefile:**
 To use the makefile, please follow the following steps below:
@@ -83,7 +86,7 @@ To use the makefile, please follow the following steps below:
    ```
    MODEL= ./tst/model_name.pb 
    MD= ./tst/model_description.md
-   KERNEL= ./tst/custom_op_kernel.so
+   KERNEL= /home/{username}/Documents/aix_pro/skt-aix-launcher
    ```
 3. On terminal, go to aix frontend compiler directory:
     ```    
