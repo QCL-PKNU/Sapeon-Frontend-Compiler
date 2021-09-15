@@ -101,23 +101,6 @@ class AxfcIRBlock:
         # check if the block is ready to be analyzed
         if self.nodes is None:
             return AxfcError.EMPTY_IR_BLOCK
-        
-        #find the fist node that receive input in the block
-        for ir_node in self.nodes:
-            
-            for pred in ir_node.preds:
-                if pred in self.input_nodes:
-                    ir_node.is_input = True
-                else:
-                    ir_node.is_input = False
-        
-        #find output nodes:
-        for ir_node in reversed(self.nodes):
-            for succ_node in ir_node.succs:
-                if succ_node not in self.nodes:
-                    ir_node.is_output = True
-                else:
-                    ir_node.is_output = False
 
         return AxfcError.SUCCESS
 

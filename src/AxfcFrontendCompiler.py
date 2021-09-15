@@ -161,8 +161,6 @@ class AxfcFrontendCompiler:
         jobs = []
         for i, aix_graph in enumerate(aix_graphs):
             tmp_path = out_path + ".%s" % i
-            aix_graph.input_layers.append(aix_graph.layer[0].id)
-            aix_graph.output_layers.append(aix_graph.layer[-1].id)
 
             p = Process(target=self.write_aix_graph, args=(tmp_path, aix_graph, aix_graph_format,))
             jobs.append(p)

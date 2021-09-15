@@ -104,6 +104,14 @@ class AxfcIRTranslator:
 
             err, aix_graph = self.__emit_aixh_block(ir_block)
             if err is AxfcError.SUCCESS:
+                
+                #set input/output to the graph
+                for node in ir_block.nodes:
+                    if node.is_input:
+                        aix_graph.input_layers.append(node.layer_id)
+                    elif node.is_output:
+                        aix_graph.output_layers.append(node.layer_id)
+
                 self.aix_graphs.append(aix_graph)
                 ir_block.aix_graph = aix_graph
             else:
