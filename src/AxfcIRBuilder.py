@@ -160,7 +160,14 @@ class AxfcIRBuilder:
 
         return AxfcError.SUCCESS
     
-
+    
+    ## This method is used to perform the block evaluation by by checking all nodes
+    #  and remove any node that fall under the block constraints and effect 
+    #  the transformation of the block to aix graph
+    #
+    #  @param self this object
+    #  @param ir_block AxfcIRBlock type
+    #  @return error info
     def __perform_block_eval(self, ir_block: AxfcIRBlock) -> AxfcError:
         
 
@@ -178,6 +185,12 @@ class AxfcIRBuilder:
         
         return AxfcError.SUCCESS
 
+    ## This method is used to perform successors removing of a specific node
+    #  that successor must be a node of the block 
+    #
+    #  @param self this object
+    #  @param ir_node AxfcIRNode type
+    #  @param ir_block AxfcIRBlock type
     def __remove_succ_from_block(self, ir_node: AxfcIRNode, ir_block: AxfcIRBlock):
         
         #remove node if it exists in block
@@ -190,7 +203,16 @@ class AxfcIRBuilder:
             if succ_node in ir_block.nodes:
                 self.__remove_succ_from_block(succ_node, ir_block)
 
-    #Get block output node list
+    ## This method is used to get the output nodes of the block as a list
+    #  the output is defined by if the node is connected to another node outside 
+    #  then it is define as the output of the block since the another node outside 
+    #  of the block requires that node as an input
+    #
+    #  @param self this object
+    #  @param ir_block AxfcIRBlock type
+    #  @param set_input Boolean type is used as conditonal operation whether or not to 
+    #  set the node as an output node
+    #  @return list of AxfcIRNode which refers block's output nodes
     def __get_block_output_node_list(self, ir_block: AxfcIRBlock, set_inout = False):
 
         output_node_list = []
@@ -208,7 +230,15 @@ class AxfcIRBuilder:
         
         return output_node_list
     
-    #To get the input node from outside block
+    ## This method is used to get the input nodes of the the block as a list
+    #  the input node is defined by if the node in the block has any predecessor
+    #  outside of the block.
+    #
+    #  @param self this object
+    #  @param ir_block AxfcIRBlock type
+    #  @param set_input Boolean type is used as conditonal operation whether or not to 
+    #  set the node as an input node
+    #  @return list of AxfcIRNode which refers block's input nodes
     def __find_block_input_node(self, ir_block: AxfcIRBlock, set_inout = False) -> list:
         
         for node in ir_block.nodes:
@@ -226,9 +256,13 @@ class AxfcIRBuilder:
         
         return input_node_list
     
-    #To get the node node input or preds if it is in the block
-    #then it is a valid node for block but if it is outside of the block
-    #then it is not a valid node.
+    ## This method is used to identify the node inputs/preds as if 
+    #  it is in the block or outside of the block
+    #
+    #  @param self this object
+    #  @param ir_node AxfcIRNode type
+    #  @param ir_block AxfcIRBlock type
+    #  @return error info, list of AxfcIRNode which refers node's input
     def __find_node_input(self, ir_node:AxfcIRNode, ir_block: AxfcIRBlock):
         
         if not ir_node.eval_flag:

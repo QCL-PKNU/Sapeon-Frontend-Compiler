@@ -11,6 +11,28 @@ from copy import deepcopy
 import tensorflow as tf
 
 class AxfcCustomGraphV2:
+
+    ## @var __md
+    # the machine description object
+
+    ## @var __graph_def
+    # the definition of the graph
+
+    ## @var axfc_util 
+    # util object to different framework library
+
+    ## @var __path_module
+    # the path to the custom operation module
+
+    ## @var __output_type
+    # output type of the graph
+
+    ## @var __aix_graph_path
+    # the path to the generated aix graph
+
+    ## @var __ir_block_list = ir_blocks
+    # list of the AxfcIRBlock computation object
+
     def __init__(self, graph_def,
                 path_module,
                 output_type,
@@ -27,7 +49,16 @@ class AxfcCustomGraphV2:
         self.__aix_graph_path = aix_graph_path
         self.__ir_block_list = ir_blocks
 
-    #For connecting aix op and tranposes to the input and output of the block
+    ## This method is used to load the custom operation then connecting it 
+    #  to the tranposes for the inputs and outputs of the operation
+    #
+    #  @param self this object
+    #  @param custom_graph the custom graph definition
+    #  @param input_tensor_list the list of input tensors of the block
+    #  @param aix_op_block_index the index number of the aix op in the entire model
+    #  @param output_node_list the list of AxfcIRNode that represents the output of the block
+    #  @param custom_op_path the path to the custom op module that has been generated
+    #  @return custom_graph, aix_tensor refers to the tensor of AixOp, tensor_tranpose_NHWC_list which connected to the output of the AixOp
     def __load_aix_op(self, custom_graph, input_tensor_list, aix_op_block_index, output_node_list, custom_op_path):
         
         tf.compat.v1.disable_eager_execution()
@@ -80,8 +111,11 @@ class AxfcCustomGraphV2:
 
         return custom_graph, aix_tensor, tensor_transpose_NHWC_list
     
-    #Detach all the nodes that supported by the AIX graph from __graph_def
-    def detach_aix_graph_nodes(self, ir_block, ignore_nodes):
+    ## Detach all the nodes that supported by the Aix Graph (from the block) from the __graph_def in self
+    #
+    #  @param self this object
+    #  @param ir_bock AxfcIRBlock type
+    def detach_aix_graph_nodes(self, ir_block):
         
         #Clean ir_block nodes input such as padding and kernel
         # check_to_clean = []
@@ -158,8 +192,13 @@ class AxfcCustomGraphV2:
                 
                 break
     
-    #For maping aix tranpose_NHWC to connect to all of the block successors
-    #outside of the block
+    ## For mapping aix tranpose_NHWC to connect to all of the block successors
+    #  outside of the block after generating AixOp
+    #
+    #  @param output_node_list list of AxfcIRNode represent the output of th eblock
+    #  @param tranpose_tensor_list tensors connected the AixOp outputs to the node in the model
+    #  @param graph the graph to partitioning the output
+    #  @return graph_def the partitioned graph
     def map_aix_tranpose_output(self, output_node_list, tranpose_tensor_list, graph):
         
         graph_def = graph.as_graph_def()
@@ -177,7 +216,10 @@ class AxfcCustomGraphV2:
         
         return graph_def
 
-    #For removing Const and Identity node that has no connection
+    ## For removing Const and Identity node that has no connection
+    #
+    #  @param custom_graph the manipulated graph with AixOp tensor
+    #  @return custom_graph that hsa Const and Identity nodes removed
     def optimize_custom_graph(self, custom_graph):
         
         custom_graph_def = custom_graph.as_graph_def()
@@ -197,6 +239,10 @@ class AxfcCustomGraphV2:
         return custom_graph
     
     #Compile all the aix supported block into AixOp
+    ## Compile all the aix supported block into AixOp
+    #
+    #  @param self this object
+    #  @return custom_graph the completed custom graph with AixOps 
     def get_custom_graph(self):
 
         #Generate custom op outputs number based on largest number from aix graphs
@@ -259,7 +305,11 @@ class AxfcCustomGraphV2:
         
         return self.optimize_custom_graph(custom_graph)        
 
-    #Abrogate in memory ir_node of last aix ir graph node's successor to connect to aix tranpose as input
+    ## Abrogate in the memory ir_node of the last aix ir graph's successor
+    #  to connect to aix tranpose as input
+    #
+    #  @param abrogate_nodes the node to manipulate the input
+    #  @param tensor_tranpose_NHWC_list list of the output of AixOp tensors
     def abrogate_node_succs(self, abrogate_nodes, tensor_transpose_NHWC_list):
 
         for node_index, abrogate_node in enumerate(abrogate_nodes):
