@@ -189,9 +189,11 @@ class AxfcIRTranslator:
             aix_layer.type.append(input_layer)
 
         # input
+        # logging.warning("AxfcIRTranslator: AIXLayer input can be multiple layers.")
         aix_layer.input.CopyFrom(self._emit_aix_tensor_input(ir_node))
 
         # output
+        # logging.warning("AxfcIRTranslator: AIXLayer output can be multiple layers.")
         aix_layer.output.CopyFrom(self._emit_aix_tensor_output(ir_node))
 
         # emit the output specific to each AIX layer type

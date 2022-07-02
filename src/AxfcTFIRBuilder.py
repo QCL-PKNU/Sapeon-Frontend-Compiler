@@ -14,6 +14,7 @@ import tensorflow as tf
 
 from AxfcIRBuilder import *
 from AxfcGraphWriter import *
+import util.AxfcUtil as _util
 
 
 #######################################################################
@@ -25,6 +26,8 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
     ## The constructor
     def __init__(self, md):
         super().__init__(md)
+
+        self.__tf_graph = None
 
     ## This method is used to read a tensorflow graph from an input file in the given path.
     #
@@ -42,8 +45,8 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
             tf.import_graph_def(tf_graph)
 
         # remove identity nodes
-        self._tf_graph = tf.compat.v1.graph_util.remove_training_nodes(tf_graph, protected_nodes=None)
-        # self._tf_graph = tf_graph
+        self.__tf_graph = tf.compat.v1.graph_util.remove_training_nodes(tf_graph, protected_nodes=None)
+        # self.__tf_graph = tf_graph
 
         return AxfcError.SUCCESS
 
@@ -61,11 +64,16 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
             return err
 
         # translation from Tensorflow graph to AIXIR
-        tf_graph_def = self._tf_graph
+        tf_graph_def = self.__tf_graph
 
         if tf_graph_def is None:
-            return AxfcError.INVALID_TF_GRAPH
+            return AxfcError.INVALID__TF_GRAPH
         
+        #TESTING
+        _util.write_file("tf_node", str(tf_graph_def.node))
+        #END TESTING
+
+
         #Add all graph def node into the _sym_ir
         for tf_node_def in tf_graph_def.node:
             err = self.__append_node_sym_ir(tf_node_def)
@@ -77,6 +85,7 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
             for index, pred_name in enumerate(tf_node_def.input):
                 # find the predecessor using the symbol table
                 if not (pred_name in self._ir_symtab):
+                    #END TESTING
                     continue
 
                 pred_node = self._ir_symtab[pred_name]
@@ -251,5 +260,5 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
 
     ## For debugging
     def __str__(self):
-        # tf.io.write_graph(self._tf_graph, './', '../tst/graph_def.pbtxt', as_text=True)
+        # tf.io.write_graph(self.__tf_graph, './', '../tst/graph_def.pbtxt', as_text=True)
         return

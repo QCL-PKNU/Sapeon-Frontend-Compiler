@@ -37,7 +37,8 @@ class AxfcIRBuilder:
     ## The constructor
     def __init__(self, md):
         self._md = md
-        self._tf_graph = None
+        #remove _tf_graph from AxfcIRBuilder
+        #self._tf_graph = None 
         self._ir_graph = None
         self._ir_symtab = None
 
@@ -100,9 +101,10 @@ class AxfcIRBuilder:
         if self._ir_graph is None:
             return AxfcError.INVALID_IR_GRAPH
 
+        # **Leanghok - The warning sections has been implemented
         # second, construct aixh blocks that contain successive IR nodes
-        logging.warning("** YOUNGSUN - Need to determine how to organize a block for hardware acceleration **")
-        logging.warning("** YOUNGSUN - Need to determine how to calculate the profit of hardware acceleration **")
+        # logging.warning("** YOUNGSUN - Need to determine how to organize a block for hardware acceleration **")
+        # logging.warning("** YOUNGSUN - Need to determine how to calculate the profit of hardware acceleration **")
 
         # filter nodes that supported by AIXH
         supported_nodes = list(filter(lambda node: node.is_aixh_support, self._ir_graph.nodes))
@@ -240,7 +242,8 @@ class AxfcIRBuilder:
     #  set the node as an input node
     #  @return list of AxfcIRNode which refers block's input nodes
     def __find_block_input_node(self, ir_block: AxfcIRBlock, set_inout = False) -> list:
-        
+
+        # **Leanghok - using eval_flag here might cause error on finding block
         for node in ir_block.nodes:
             node.eval_flag = False
         
@@ -272,6 +275,8 @@ class AxfcIRBuilder:
 
         pred_node_inputs = []
         #check if pred_node is in ir_block
+        # **Leanghok - block cannot find block's input node when input is actually constant
+        # conflict from having others constant ignore
         for pred_node in ir_node.preds:
             #skip Const
             if pred_node.op == "Const":

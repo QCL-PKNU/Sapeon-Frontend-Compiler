@@ -12,9 +12,15 @@
 from multiprocessing import Process
 import os
 from pathlib import Path
+from AxfcONNXWriter import AxfcONNXWriter
+
 
 from AxfcTFIRBuilder import *
 from AxfcTFIRTranslator import *
+
+from AxfcONNXIRBuilder import AxfcONNXIRBuilder
+from AxfcONNXIRTranslator import AxfcONNXIRTranslator
+
 from AxfcLauncherWriter import *
 import glob
 from util.AxfcUtil import *
@@ -126,6 +132,11 @@ class AxfcFrontendCompiler:
         if model_type is AxfcMachineDesc.TYPE_TENSORFLOW:
             self.__ir_builder = AxfcTFIRBuilder(self.__md)
             self.__ir_translator = AxfcTFIRTranslator(self.__md, path)
+        
+        elif model_type is AxfcMachineDesc.TYPE_ONNX:
+            self.__ir_builder = AxfcONNXIRBuilder(self.__md)
+            self.__ir_translator = AxfcONNXIRTranslator(self.__md, path)
+            
         else:
             # currently, we support only Tensorflow as an input type for the compilation
             logging.warning("Not supported input type: %d", model_type)
@@ -251,24 +262,44 @@ class AxfcFrontendCompiler:
     # @return AxfcError
     def dump_custom_model(self, path: str, kernel_path: str, aix_graph_path: str, save_path: str):
 
-        # AIX Launcher
-        aix_launcher = AxfcLauncherWriter(frozen_model_path=path,
-                                          aix_graph_path=aix_graph_path,
-                                          kernel_op_path=kernel_path,
-                                          ir_graph=self.get_ir_graph(),
-                                          md = self.__md)
 
-        # get custom graph model
-        custom_graph_model = aix_launcher.get_custom_graph_v2()
+        model_type = self.__md.get_model_type()
 
-        # write to file
-        file_name = "custom_model"
-        path = write2pb(custom_graph_model, des_path=save_path, name_file=file_name)
+        if model_type is AxfcMachineDesc.TYPE_TENSORFLOW:
+            # AIX Launcher
+            aix_launcher = AxfcLauncherWriter(frozen_model_path=path,
+                                            aix_graph_path=aix_graph_path,
+                                            kernel_op_path=kernel_path,
+                                            ir_graph=self.get_ir_graph(),
+                                            md = self.__md)
 
-        if not Path(path).is_file():
-            return AxfcError.INVALID_AIX_GRAPH, path
+            # get custom graph model
+            custom_graph_model = aix_launcher.get_custom_graph_v2()
 
-        return AxfcError.SUCCESS, path
+            # write to file
+            file_name = "custom_model"
+            path = write2pb(custom_graph_model, des_path=save_path, name_file=file_name)
+
+            if not Path(path).is_file():
+                return AxfcError.INVALID_AIX_GRAPH, path
+
+            return AxfcError.SUCCESS, path
+        
+        elif model_type is AxfcMachineDesc.TYPE_ONNX:
+            
+            onnx_writer = AxfcONNXWriter(frozen_model_path=path,
+                                            aix_graph_path=aix_graph_path,
+                                            kernel_op_path=kernel_path,
+                                            ir_graph=self.get_ir_graph(),
+                                            md = self.__md)
+
+            return onnx_writer.get_custom_graph(), ""
+        
+        else:
+            # currently, we support only Tensorflow as an input type for the compilation
+            logging.warning("Not supported input type: %d", model_type)
+            return AxfcError.INVALID_INPUT_TYPE, None
+
 
     ## For debugging
     def __str__(self):

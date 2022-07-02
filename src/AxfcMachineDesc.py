@@ -22,10 +22,12 @@ from AxfcError import *
 
 class AxfcMachineDesc:
     # for input type
-    TYPE_TENSORFLOW = 0
-    TYPE_PYTORCH = 1
-    TYPE_MXNET = 2
-    TYPE_UNKNOWN = 3
+    TYPE_UNKNOWN = 0
+    TYPE_TENSORFLOW = 1
+    TYPE_PYTORCH = 2
+    TYPE_MXNET = 3
+    TYPE_ONNX = 4
+    
 
     # for hardware acceleration
     DEFAULT_PROFIT_THRESHOLD = 1000
@@ -116,8 +118,10 @@ class AxfcMachineDesc:
         try:
             model_type = self.__aix_model_info_tbl["AIX_MODEL_TYPE"]
 
-            if model_type == "TENSORFLOW":
+            if model_type.upper() == "TENSORFLOW":
                 return AxfcMachineDesc.TYPE_TENSORFLOW
+            elif model_type.upper() == "ONNX":
+                return AxfcMachineDesc.TYPE_ONNX
             else:
                 return AxfcMachineDesc.TYPE_UNKNOWN
         except KeyError as e:

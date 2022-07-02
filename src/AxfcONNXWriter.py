@@ -1,3 +1,5 @@
+
+
 #######################################################################
 #   AxfcLauncherWriter
 #
@@ -10,16 +12,23 @@
 #   High Performance Computing Laboratory (hpcl.pknu.ac.kr)
 #######################################################################
 
+
+import onnx
+from onnx import shape_inference
+import onnx_graphsurgeon as gs
+
 from AxfcIRGraph import *
 from AxfcMachineDesc import *
-from util.AxfcUtil import *
-from util import AxfcTFCustomGraph
+
 
 #######################################################################
-# AxfcLauncherWriter class
+# AxfcONNXWriter class
 #######################################################################
 
-class AxfcLauncherWriter:
+
+
+
+class AxfcONNXWriter:
 
     # @var __frozen_model_path
     # the path of aix graph
@@ -59,38 +68,47 @@ class AxfcLauncherWriter:
 
     # This method is used to build the custom graph
     # @return custom_graph the custom graph from the custom kernel library
-    def get_custom_graph_v2(self):
+    def get_custom_graph(self):
+        onnx_model = onnx.load(self.__frozen_model_path)
+
+        inferred_model = shape_inference.infer_shapes(onnx_model)
+
+        gs_graph = gs.import_onnx(inferred_model)
+
+        gs_tensors = gs_graph.tensors()
+
+        #Custom op inline function for graph surgeon
+        @gs.Graph.register()
+        def replace_with_aixop(self, inputs, outputs, path):
+            for inp in inputs:
+                inp.outputs.clear()
+
+            for out in outputs:
+                out.inputs.clear()
+            
+            return self.layer(name="AixOp", 
+                                op="AixOp", 
+                                inputs= inputs,
+                                outputs = outputs,
+                                attrs=dict(aix_graph_path=path))
         
-        ir_blocks = [block for block in self.__ir_graph.blocks if block.is_aixh_support]
+        for count, block in enumerate(self.__ir_graph.blocks):
 
-        graph_def = loadFrozenModel(self.__frozen_model_path)
+            if not block.is_aixh_support:
+                continue
+            
+            inputs = [gs_tensors[node.name] for node in block.input_nodes]
+            outputs = [gs_tensors[node.name] for node in block.output_nodes]
 
-        #remove training node
-        graph_def = tf.compat.v1.graph_util.remove_training_nodes(graph_def, protected_nodes=None)
+            gs_graph.replace_with_aixop(inputs, outputs, self.__aix_graph_path+str(count))
+            gs_graph.cleanup().toposort()
 
-        with tf.Graph().as_default() as graph:
-            tf.import_graph_def(graph_def, name="")
-        
-        # get input and output tensors
-        input_tensors, output_tensors = analyze_inputs_outputs(graph)
+        save_path = self.__frozen_model_path.split(".onnx")[0] + "_custom.onnx" 
+       
+        onnx.save(gs.export_onnx(gs_graph), save_path)
 
-        aix_custom_graph = AxfcTFCustomGraph(ir_blocks = ir_blocks,
-                                            graph_def = graph_def,
-                                            path_module = self.__kernel_op_path,
-                                            output_type=tf.float32,
-                                            aix_graph_path=self.__aix_graph_path,
-                                            input_tensors = input_tensors,
-                                            output_tensors = output_tensors,
-                                            md = self.__md)
-        
-        return aix_custom_graph.get_custom_graph()
+        return AxfcError.SUCCESS
 
-        
-    ## This method is used to emit a launcher for the generated AIXGraph.
-    # @param self this object
-    def emit_aixh_launcher(self):
-        logging.info("AxfcLauncherWriter:emit_aixh_launcher")
-        pass
 
     ## For debugging
     def __str__(self):
