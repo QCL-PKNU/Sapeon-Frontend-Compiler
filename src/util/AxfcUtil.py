@@ -66,7 +66,6 @@ def print_name(graph_def):
 def print_def(tensor):
     return tensor.graph.as_graph_def()
 
-
 ## This method is used to print out the encoded value of tensor content in layer
 #
 # @param operation the operation object
@@ -93,3 +92,8 @@ def analyze_inputs_outputs(graph):
                     outputs_set.remove(input_tensor.op)
     outputs = list(outputs_set)
     return (inputs, outputs)
+
+def write_file(file_path:str, text, write_mode = "w"):
+
+    with open(file_path, write_mode) as f:
+        f.write(text)
