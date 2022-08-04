@@ -638,8 +638,8 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         # get input Tensor
         input_tensors = list(filter(lambda x: x.op.type != 'Const', tensor.op.inputs))
         if input_tensors:
-            #Leanghok - only one input is being emitted !Important
-            # logging.warning("AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph")
+            #Leanghok - only one input is being emitted !IMPORTANT
+            logging.warning("AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph")
             aix_tensor = self.__emit_aix_tensor(input_tensors[0], is_inout_tensor=True)
 
         return aix_tensor

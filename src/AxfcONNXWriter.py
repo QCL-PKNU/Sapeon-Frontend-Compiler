@@ -107,7 +107,7 @@ class AxfcONNXWriter:
        
         onnx.save(gs.export_onnx(gs_graph), save_path)
 
-        return AxfcError.SUCCESS
+        return AxfcError.SUCCESS, save_path
 
 
     ## For debugging

@@ -56,7 +56,7 @@ DEFAULT_TYPE = 'NCHW'
 DEFAULT_DTYPE = 'float32'
 
 #######################################################################
-# AxfcTFIRTranslator class
+# AxfcONNXIRTranslator class
 #######################################################################
 
 class AxfcONNXIRTranslator(AxfcIRTranslator):
@@ -72,10 +72,7 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
         self.graph = gs.import_onnx(inferred_model)
         self.tensors = self.graph.tensors() #orderedDict of tensors
         self._symtab = self.__build_node_symtab(self.graph) #build name:node symtab
-
-        #TESTING
-        # for k,v in self.tensors.items():
-        #     print(v.dtype, str(k))
+        self._input_names = [node.name for node in self.graph.inputs]
 
     #build name:node symtab
     def __build_node_symtab(self, onnx_graph):
@@ -88,12 +85,8 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
     def _emit_aix_tensor_input(self, ir_node: AxfcIRNode, **kwargs) -> AIXLayer.AIXTensor:
         # return super()._emit_aix_tensor_input(ir_node, **kwargs)
 
-        #TESTING emitting current node tensor
-        # return self.__emit_aix_tensor(ir_node)
-
         #get input tensor
-        #TESTING on data as input
-        input_nodes = list(filter(lambda x: x.op != "Const" or x.name == "data", ir_node.preds))
+        input_nodes = list(filter(lambda x: x.op != "Const" or x.name in self._input_names, ir_node.preds))
         input_tensors = [self.tensors[node.name] for node in input_nodes]
 
         aix_tensors = []
@@ -118,21 +111,23 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
         #get tensor
         tensor = self.tensors[ir_node.name]
 
-        
         dtype = tensor.dtype
 
         if not dtype:
             dtype = DEFAULT_DTYPE
         
-        #TESTING dtype always float32
-        aix_tensor.dtype = 0
-        # aix_tensor.dtype = aix_data_type_tbl[str(dtype)]
+        if not isinstance(dtype, np.dtype):
+            dtype = np.dtype(dtype)
+
+        aix_tensor.dtype = aix_data_type_tbl.get(dtype.name)
 
         #onnx data format is default at NCHW if any dtype is present then it is a vector
         if dtype is None:
             data_format = DEFAULT_TYPE.encode()
-        else:
+        elif len(tensor.shape) == 1:
             data_format = b'VECTOR'
+        else:
+            data_format = DEFAULT_TYPE.encode()
         
         #set format
         aix_tensor.format = aix_tensor_format_tbl[data_format]
@@ -141,16 +136,19 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
         #if tensor is a constant then fval need to be set
         if type(tensor) is gs.ir.tensor.Constant:
             tensor_values = tensor.values.flatten()
-            for dim in tensor_values:
-                aix_tensor.fval.append(dim)
+            for fval in tensor_values:
+                aix_tensor.fval.append(fval)
 
         #set aix tensor dims
         if tensor.shape:
             shape = list(map(lambda x: 1 if not x else x, tensor.shape))
+            
+            #aixgraph shape is NCHW, in reversed order
+            shape.reverse()
             aix_tensor.dims.extend(shape)
 
         else:
-            logging.warning("AxfcONNXIRTranslator: shape is none, should have default value or validate when this happens.")
+            logging.warning(f"AxfcONNXIRTranslator: {ir_node.name} shape is invalid.")
 
         #set aix tensor size
         aix_tensor.size = int(np.prod(aix_tensor.dims))
@@ -159,7 +157,7 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
     
     def _emit_aix_layer_convolution(self, ir_node: AxfcIRNode, **kwargs) -> AxfcError:
         # return super()._emit_aix_layer_convolution(ir_node, **kwargs)
-        logging.info("AxfcTFIRTranslator:_emit_aix_layer_convolution - node %d", ir_node.layer_id)
+        logging.info("AxfcONNXIRTranslator:_emit_aix_layer_convolution - node %d", ir_node.layer_id)
 
         aix_layer = ir_node.aix_layer
 
@@ -191,6 +189,7 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
         for input in node_inputs:
             if 'weight' in input.name:
                 aix_tensor = self.__emit_aix_tensor(input)
+                aix_tensor.format = aix_tensor_format_tbl[b'NCHW']
         
         if aix_tensor is None:
             aix_layer = ir_node.aix_layer
@@ -316,7 +315,7 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
     # @param ir_node an IR node to be emitted
     # @return an output AIX batchnorm layer
     def _emit_aix_layer_batchnorm(self, ir_node: AxfcIRNode, **kwargs) -> AxfcError:
-        logging.info("AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node %d", ir_node.layer_id)
+        logging.info("AxfcONNXIRTranslator:_emit_aix_layer_batchnorm - node %d", ir_node.layer_id)
 
         aix_layer = ir_node.aix_layer
 
@@ -355,7 +354,7 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
         return aix_tensor
     
     def _emit_aix_layer_activation(self, ir_node: AxfcIRNode, **kwargs) -> AxfcError:
-        logging.info("AxfcTFIRTranslator:_emit_aix_layer_activation - node %d, %s",
+        logging.info("AxfcONNXIRTranslator:_emit_aix_layer_activation - node %d, %s",
                      ir_node.layer_id, ir_node.op)
         
         aix_layer = ir_node.aix_layer
@@ -364,7 +363,7 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
         onnx_node = self._symtab[ir_node.name]
 
         # filter
-        # aix_layer.filter.CopyFrom(self._emit_aix_tensor_filter(ir_node, tensor=tensor))
+        aix_layer.filter.CopyFrom(self._emit_aix_tensor_filter(ir_node, tensor=tensor))
 
         # convolution desc
         aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node, tensor=tensor))
@@ -375,7 +374,7 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
         return AxfcError.SUCCESS
 
     def _emit_aix_layer_maxpool(self, ir_node: AxfcIRNode, **kwargs) -> AxfcError:
-        logging.info("AxfcTFIRTranslator:_emit_aix_layer_maxpool - node %d", ir_node.layer_id)
+        logging.info("AxfcONNXIRTranslator:_emit_aix_layer_maxpool - node %d", ir_node.layer_id)
 
         aix_layer = ir_node.aix_layer
 
@@ -383,7 +382,7 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
         onnx_node = self._symtab[ir_node.name]
 
         # filter
-        # aix_layer.filter.CopyFrom(self._emit_aix_tensor_filter(ir_node, tensor=tensor))
+        aix_layer.filter.CopyFrom(self._emit_aix_tensor_filter(ir_node, tensor=tensor))
 
         # convolution desc
         aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node, tensor=tensor))
@@ -392,13 +391,97 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
             aix_layer.epsilon = onnx_node.attrs['epsilon']
 
         # samplingdesc
-        # sampling_desc = self._emit_aix_sampling_desc(ir_node, tensor=tensor)
-        # aix_layer.samplingdesc.CopyFrom(sampling_desc)
+        sampling_desc = self._emit_aix_sampling_desc(ir_node, tensor=tensor)
+        aix_layer.samplingdesc.CopyFrom(sampling_desc)
         
         return AxfcError.SUCCESS
     
+    def _emit_aix_layer_avgpool(self, ir_node: AxfcIRNode, **kwargs) -> AxfcError:
+        logging.info("AxfcONNXIRTranslator:_emit_aix_layer_avgpool - node %d", ir_node.layer_id)
+
+        aix_layer = ir_node.aix_layer
+
+        tensor = self.tensors[ir_node.name]
+        onnx_node = self._symtab[ir_node.name]
+
+        # filter
+        aix_layer.filter.CopyFrom(self._emit_aix_tensor_filter(ir_node, tensor=tensor))
+        
+        # convolution desc
+        aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node, tensor=tensor))
+
+        # epsilon
+        if 'epsilon' in onnx_node.attrs:
+            aix_layer.epsilon = onnx_node.attrs.get('epsilon')
+        
+        # samplingdesc
+        sampling_desc = self._emit_aix_sampling_desc(ir_node, tensor=tensor)
+
+
+        # aixgraph requirement : set stride to default
+        sampling_desc.stride[:] = []
+        sampling_desc.stride.extend([0, 0, 0, 0])
+        aix_layer.filter.dims[0], aix_layer.filter.dims[1] = 1, 1
+
+        aix_layer.samplingdesc.CopyFrom(sampling_desc)
+
+        return AxfcError.SUCCESS
+
+    def _emit_aix_sampling_desc(self, ir_node: AxfcIRNode, **kwargs) -> AIXLayer.AIXSamplingDesc:
+
+        aix_layer = ir_node.aix_layer
+
+        onnx_node = self._symtab[ir_node.name]
+
+        if 'tensor' in kwargs:
+            tensor = kwargs['tensor']
+        else:
+            logging.error('AxfcONNXIRTranslator:_emit_aix_sampling_desc - need TensorProto object')
+        
+        sampling_desc = AIXLayer.AIXSamplingDesc()
+
+        for layer_type in ir_node.aix_layer.type:
+
+            if layer_type == AIXLayer.AIXLayerType.AIX_LAYER_MAXPOOL:
+                sampling_desc.mode = AIXLayer.AIXSamplingMode.AIX_POOLING_MAX
+            elif layer_type == AIXLayer.AIXLayerType.AIX_LAYER_AVGPOOL:
+                sampling_desc.mode = AIXLayer.AIXSamplingMode.AIX_POOLING_AVERAGE
+            elif layer_type == AIXLayer.AIXLayerType.AIX_LAYER_REORG:
+                sampling_desc.mode = AIXLayer.AIXSamplingMode.AIX_POOLING_REORG
+            elif layer_type == AIXLayer.AIXLayerType.AIX_LAYER_UPSAMPLE:
+                sampling_desc.mode = AIXLayer.AIXSamplingMode.AIX_POOLING_UPSAMPLE
+            elif layer_type == AIXLayer.AIXLayerType.AIX_LAYER_PIXELSHUFFLE:
+                sampling_desc.mode = AIXLayer.AIXSamplingMode.AIX_POOLING_PIXELSHUFFLE
+
+        
+        #window 
+        if "kernel_shape" in onnx_node.attrs:
+            stride_dict = dict(zip("HW", onnx_node.attrs.get("kernel_shape")))
+            sampling_desc.window.extend([stride_dict['H'], stride_dict['W'], 0, 0])
+
+            aix_layer.filter.dims[0] = stride_dict['H']
+            aix_layer.filter.dims[1] = stride_dict['W']
+        else:
+            sampling_desc.window.extend([0,0,0,0])
+
+        
+        # strides
+        if "strides" in onnx_node.attrs:
+            stride_dict = dict(zip("HW", onnx_node.attrs.get("strides")))
+            sampling_desc.stride.extend([stride_dict['H'], stride_dict['W'], 0, 0])
+        else:
+            sampling_desc.stride.extend([1, 1, 0, 0])
+        
+        # padding
+        if "pads" in onnx_node.attrs:
+            sampling_desc.padding.extend(onnx_node.attrs.get("pads"))
+        else:
+            sampling_desc.padding.extend([0, 0, 0, 0])
+        
+        return sampling_desc
+    
     def _emit_aix_layer_ewadd(self, ir_node: AxfcIRNode, **kwargs) -> AxfcError:
-        logging.info("AxfcTFIRTranslator:_emit_aix_layer_ewadd - node %d", ir_node.layer_id)
+        logging.info("AxfcONNXIRTranslator:_emit_aix_layer_ewadd - node %d", ir_node.layer_id)
 
         aix_layer = ir_node.aix_layer
 
@@ -453,7 +536,7 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
             convolution_desc.dilation.extend(onnx_node.attrs['dilations'])
             convolution_desc.dilation.extend([1,1])
         else:
-            convolution_desc.dilation.extend([1,1,1,1])
+            convolution_desc.dilation.extend([0, 0, 0, 0])
         
         # group
         if 'group' in onnx_node.attrs:

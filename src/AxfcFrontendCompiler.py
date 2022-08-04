@@ -81,7 +81,7 @@ class AxfcFrontendCompiler:
 
         # if an external calibration data is not available, return without error
         if path is None:
-            __calib_data = None
+            self.__calib_data = None
             return AxfcError.SUCCESS
 
         if not os.path.isfile(path):
@@ -138,7 +138,6 @@ class AxfcFrontendCompiler:
             self.__ir_translator = AxfcONNXIRTranslator(self.__md, path)
             
         else:
-            # currently, we support only Tensorflow as an input type for the compilation
             logging.warning("Not supported input type: %d", model_type)
             return AxfcError.INVALID_INPUT_TYPE, None
 
@@ -266,6 +265,10 @@ class AxfcFrontendCompiler:
         model_type = self.__md.get_model_type()
 
         if model_type is AxfcMachineDesc.TYPE_TENSORFLOW:
+            #Leanghok: TensorFlow not supported for custom op and custom model at the moment
+            logging.warning("%d is currently not supported. Only AIXGraph are generated.", model_type)
+            return AxfcError.SUCCESS, None
+            
             # AIX Launcher
             aix_launcher = AxfcLauncherWriter(frozen_model_path=path,
                                             aix_graph_path=aix_graph_path,
@@ -292,8 +295,11 @@ class AxfcFrontendCompiler:
                                             kernel_op_path=kernel_path,
                                             ir_graph=self.get_ir_graph(),
                                             md = self.__md)
+            
+            err, out_path = onnx_writer.get_custom_graph()
+            logging.info("AxfcFrontendCompiler:dump_custom_model - %s", out_path)
 
-            return onnx_writer.get_custom_graph(), ""
+            return err, path
         
         else:
             # currently, we support only Tensorflow as an input type for the compilation

@@ -43,7 +43,7 @@ def __main(params):
         return
 
     logging.info("##########################")
-    logging.info("# Start to compile")
+    logging.info("# Start Compilation")
     logging.info("##########################")
 
     fc = AxfcFrontendCompiler()
@@ -107,7 +107,7 @@ def __main(params):
     #         return err
 
     logging.info("##########################")
-    logging.info("# Finish to compile")
+    logging.info("# Finished Compilation")
     logging.info("##########################")
 
     return AxfcError.SUCCESS
@@ -122,8 +122,8 @@ if __name__ == "__main__":
                         help='path to a machine description file')
     parser.add_argument('-i', '--in-path', metavar='', type=str, required=True,
                         help='path to the protocol buffer of a frozen model')
-    parser.add_argument('-k', '--kernel', metavar='', type=str, required=False,
-                        help='path to the kernel (custom operation kernel *.so) file')
+    # parser.add_argument('-k', '--kernel', metavar='', type=str, required=False,
+    #                     help='path to the kernel (custom operation kernel *.so) file')
     parser.add_argument('-c', '--calib-path', metavar='', type=str, required=False,
                         help='path to the calibration data of a frozen model')
     parser.add_argument('-o', '--out-path', metavar='', type=str, required=False,

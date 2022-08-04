@@ -92,9 +92,6 @@ class AxfcIRTranslator:
 
         # create a new list of AIX graphs to output
         self.aix_graphs = list()
-
-        #Test aix_grpah limit to only 3
-        support_count = 0
         
         # translate all the blocks into AIX graphs
         for ir_block in ir_graph.blocks:

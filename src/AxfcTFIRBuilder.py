@@ -68,11 +68,6 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
 
         if tf_graph_def is None:
             return AxfcError.INVALID__TF_GRAPH
-        
-        #TESTING
-        _util.write_file("tf_node", str(tf_graph_def.node))
-        #END TESTING
-
 
         #Add all graph def node into the _sym_ir
         for tf_node_def in tf_graph_def.node:
@@ -85,7 +80,6 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
             for index, pred_name in enumerate(tf_node_def.input):
                 # find the predecessor using the symbol table
                 if not (pred_name in self._ir_symtab):
-                    #END TESTING
                     continue
 
                 pred_node = self._ir_symtab[pred_name]
