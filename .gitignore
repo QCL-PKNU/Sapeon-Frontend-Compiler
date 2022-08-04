@@ -207,11 +207,18 @@ venv.bak/
 
 # mkdocs documentation
 /site
+/doc/html
+/doc/latex
+tst
 
 # mypy
 .mypy_cache/
 .dmypy.json
 dmypy.json
+
+# vs code
+.vscode
+.gitignore
 
 # Pyre type checker
 .pyre/
