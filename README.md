@@ -61,7 +61,6 @@ To use the python3 command line, we have to pass the required arguments listed b
     -f: Configure output for aix graph format between 'binary' and 'text' (optional, default is binary)
   Note:
 
-* For -k argument, we have updated from using the custom_kernel.so to launcher directory path.
 * For -f argument, we recommend to use binary format as it is much faster for dumping the aix graph.
  
  **Example**
@@ -72,7 +71,7 @@ To use the python3 command line, we have to pass the required arguments listed b
     ```
 2. Run aix compiler
    ```
-   $ python3 src/AxfcMain.py -m=tst/model_description.md -i=tst/model_name.pb -k=/home/{username}/Documents/aix/skt-aix-launcher -f=text
+   $ python3 src/AxfcMain.py -m=tst/model_description.md -i=tst/model_name.pb -f=text
    ```
 ### **Using Makefile:**
 To use the makefile, please follow the following steps below:
