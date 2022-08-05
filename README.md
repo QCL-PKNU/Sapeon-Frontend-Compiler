@@ -71,8 +71,11 @@ To use the python3 command line, we have to pass the required arguments listed b
     ```
 2. Run aix compiler
    ```
-   $ python3 src/AxfcMain.py -m=tst/model_description.md -i=tst/model_name.pb -f=text
+   $ python3 src/AxfcMain.py -m=tst/machine_description.md -i=tst/model_name.pb -f=text
    ```
+
+   Note: you can find sample machine description file for ONNX model (onnx_sample.md) and TensorFlow model (tf_sample.md) in the 'skt-aix-frontend-compiler/tst' directory.
+
 ### **Using Makefile:**
 To use the makefile, please follow the following steps below:
 
@@ -101,6 +104,7 @@ Youngsun Han (youngsun@pknu.ac.kr)
 * Department of Computer Engineering, Pukyong National University
 
 Sengthai Heng (sengthai37@gmail.com)
+
 * Graduated Student
 * Department of AI Convergence, Pukong National University
 

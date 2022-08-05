@@ -209,7 +209,6 @@ venv.bak/
 /site
 /doc/html
 /doc/latex
-tst
 
 # mypy
 .mypy_cache/

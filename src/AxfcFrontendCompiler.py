@@ -266,7 +266,7 @@ class AxfcFrontendCompiler:
 
         if model_type is AxfcMachineDesc.TYPE_TENSORFLOW:
             #Leanghok: TensorFlow not supported for custom op and custom model at the moment
-            logging.warning("%d is currently not supported. Only AIXGraph are generated.", model_type)
+            logging.warning("TensorFlow is currently not supported for generating custom model. Only AIXGraph is generated.")
             return AxfcError.SUCCESS, None
             
             # AIX Launcher
