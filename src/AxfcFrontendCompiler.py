@@ -181,12 +181,11 @@ class AxfcFrontendCompiler:
 
         return AxfcError.SUCCESS
 
-    #For writing aix graph, implementation using multiprocess
     #data_mode can be BINARY or TEXT to write to output file. 
     def write_aix_graph(self, out_path: str, aix_graph: AIXGraph, data_mode:str) -> AxfcError:
         
         if not data_mode:
-            data_mode == "BINARY"
+            data_mode = "BINARY"
 
         if data_mode.upper() == "BINARY":
             f = open(out_path, "wb")
