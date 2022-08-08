@@ -2,6 +2,62 @@
 
 This README describes the organization and usage of the SKT AIX Frontend Compiler.
 
+## **Release Note v1.0 (UAT)**
+
+### **New Updates**
+
+This release includes features:
+
+1. Enable to compile ONNX-to-AIXGraph  
+
+    We have implemented parser and translator for ONNX model, the following files were added for the purpose of this implementation:  
+
+    * src/AxfcONNXIRBuilder: parser for ONNX graph
+    * src/AxfcONNXIRTranslator: translator for ONNX graph   
+    * src/AxfcONNXWriter: custom model generator for ONNX model 
+
+2. Enable to generate ONNX custom graph.  
+
+    The custom model replaces AIXGraph with AIXOp (custom domain) on ONNX model.
+    
+    ![Scheme](doc/images/ex_onnx_model.png)
+        
+    * Example of an ONNX model and compiled ONNX model  
+
+    This feature should be able to generate any type of ONNX graph, including multiple AIXOps support.
+
+3. Option to choose AIXGraph in binary or text format
+
+    You can pick a format between binary and text format for generating AIXGraph.   
+    The binary format is preferred and is set to default for the compilation due to having inferior for writing to file time.  
+    However, the text format serves the  purpose of testing and debugging. Please refer to README.md file for usage 
+    guideline.
+
+4. Support multiple AIXGraphs or/and AIXOps for TensorFlow and ONNX
+
+    Like shown in No.2 multiple AIXGraphs can be generated from a model and supported model includes, TensorFlow and ONNX.
+
+### **Open Issues**
+
+This release contains the following issue that needs to be addressed:
+
+1. Generated AIXGraph only contains input information (type, dims, size) but does not contain input value (fval) for AIX_LAYER_INPUT.    
+
+    Generated AIXGraph only contains input information:
+
+      * Generated AIXGraph get the input from the previous node in the model so it only contains input information like type, dims and size.  
+      It doesn’t contain the input value (fval) for the AIX_LAYER_INPUT node. Due to this reason, when testing with AIXGraph simulator, the input value (fval) needs to be manually inserted.
+      
+      ![Scheme](doc/images/ex_gen_aixgraph.png)
+
+2. TensorFlow custom model cannot be generated due to the required re-implementation of the custom operation kernel to change support from Darknet to AIXGraph simulator.
+
+    TensorFlow custom model cannot be generated:
+
+    * In this release, the compiler can generate AIXGraph, includes multiple AIXGraph from a model.  
+     However, the custom model that contains AIXOp cannot be generated. Because to generate a custom operation like AIXOp on TensorFlow, it is required to have a custom kernel for that specific operation.  
+     Previously, we implemented the custom kernel using Darknet but now we have shifted to use on AIXGraph simulator. Thus, the custom kernel needs to be rewritten to support on AIXGraph simulator.
+
 ## **Source Organization**
 
 ### **Common**
@@ -42,8 +98,8 @@ This README describes the organization and usage of the SKT AIX Frontend Compile
   ```
 
 ## **Usage** 
-
 Our frontend compiler currently provides 2 ways for the executing, by using Makefile or python3 command line.
+
 ### **Using Python3 Command Line**
 To use the python3 command line, we have to pass the required arguments listed below.
 
