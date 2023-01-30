@@ -137,7 +137,11 @@ class AxfcFrontendCompiler:
         elif model_type is AxfcMachineDesc.TYPE_ONNX:
             self.__ir_builder = AxfcONNXIRBuilder(self.__md)
             self.__ir_translator = AxfcONNXIRTranslator(self.__md, path)
-            
+        
+        elif model_type is AxfcMachineDesc.TYPE_PYTORCH:
+            self.__ir_builder = AxfcPTBuilder(self.__md)
+            self.__ir_builder = AxfcPTIRTranslator(self.__md, path)
+        
         else:
             logging.warning("Not supported input type: %d", model_type)
             return AxfcError.INVALID_INPUT_TYPE, None
