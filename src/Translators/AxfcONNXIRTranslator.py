@@ -17,7 +17,7 @@ from onnx import shape_inference
 import tensorflow as tf
 import numpy as np
 
-from AxfcIRTranslator import *
+from .AxfcIRTranslator import *
 from util import loadFrozenModel, print_tensor_content
 
 #######################################################################

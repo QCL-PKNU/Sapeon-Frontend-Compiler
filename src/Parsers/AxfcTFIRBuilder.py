@@ -12,7 +12,7 @@
 
 import tensorflow as tf
 
-from AxfcIRBuilder import *
+from .AxfcIRBuilder import *
 from AxfcGraphWriter import *
 import util.AxfcUtil as _util
 

@@ -43,6 +43,7 @@ class AxfcLauncher:
 
         self.custom_model = custom_model
 
+    #TODO: Change this function to work with AIX Graph Simulator
     # This method is used to evaluate the custom graph
     # @param feed_input the input data (normally it's for import/input layer)
     # @param input_tensor_name the first input tensor name (default: take the first layer name)

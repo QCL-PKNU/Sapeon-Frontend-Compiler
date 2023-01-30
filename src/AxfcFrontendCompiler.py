@@ -12,14 +12,15 @@
 from multiprocessing import Process
 import os
 from pathlib import Path
-from AxfcONNXWriter import AxfcONNXWriter
+from CustomGraphs.AxfcONNXWriter import AxfcONNXWriter
 
+#TF Components
+from Parsers.AxfcTFIRBuilder import *
+from Translators.AxfcTFIRTranslator import *
 
-from AxfcTFIRBuilder import *
-from AxfcTFIRTranslator import *
-
-from AxfcONNXIRBuilder import AxfcONNXIRBuilder
-from AxfcONNXIRTranslator import AxfcONNXIRTranslator
+#ONNX Components
+from Parsers.AxfcONNXIRBuilder import AxfcONNXIRBuilder
+from Translators.AxfcONNXIRTranslator import AxfcONNXIRTranslator
 
 from AxfcLauncherWriter import *
 import glob
@@ -136,7 +137,11 @@ class AxfcFrontendCompiler:
         elif model_type is AxfcMachineDesc.TYPE_ONNX:
             self.__ir_builder = AxfcONNXIRBuilder(self.__md)
             self.__ir_translator = AxfcONNXIRTranslator(self.__md, path)
-            
+        
+        elif model_type is AxfcMachineDesc.TYPE_PYTORCH:
+            self.__ir_builder = AxfcPTBuilder(self.__md)
+            self.__ir_builder = AxfcPTIRTranslator(self.__md, path)
+        
         else:
             logging.warning("Not supported input type: %d", model_type)
             return AxfcError.INVALID_INPUT_TYPE, None

@@ -7,6 +7,7 @@
 
 # Generated files
 .idea/**/contentModel.xml
+tst/*
 
 # Sensitive or high-churn files
 .idea/**/dataSources/
@@ -236,4 +237,3 @@ dmypy.json
 ### VisualStudioCode Patch ###
 # Ignore all local history of files
 .history
-*.pb
