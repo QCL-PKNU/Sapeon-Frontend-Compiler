@@ -12,14 +12,15 @@
 from multiprocessing import Process
 import os
 from pathlib import Path
-from AxfcONNXWriter import AxfcONNXWriter
+from CustomGraphs.AxfcONNXWriter import AxfcONNXWriter
 
+#TF Components
+from Parsers.AxfcTFIRBuilder import *
+from Translators.AxfcTFIRTranslator import *
 
-from AxfcTFIRBuilder import *
-from AxfcTFIRTranslator import *
-
-from AxfcONNXIRBuilder import AxfcONNXIRBuilder
-from AxfcONNXIRTranslator import AxfcONNXIRTranslator
+#ONNX Components
+from Parsers.AxfcONNXIRBuilder import AxfcONNXIRBuilder
+from Translators.AxfcONNXIRTranslator import AxfcONNXIRTranslator
 
 from AxfcLauncherWriter import *
 import glob

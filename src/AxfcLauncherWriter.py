@@ -12,8 +12,10 @@
 
 from AxfcIRGraph import *
 from AxfcMachineDesc import *
+
+from CustomGraphs.AxfcTFWriter import AxfcTFWriter
+
 from util.AxfcUtil import *
-from util import AxfcTFCustomGraph
 
 #######################################################################
 # AxfcLauncherWriter class
@@ -74,7 +76,7 @@ class AxfcLauncherWriter:
         # get input and output tensors
         input_tensors, output_tensors = analyze_inputs_outputs(graph)
 
-        aix_custom_graph = AxfcTFCustomGraph(ir_blocks = ir_blocks,
+        aix_custom_graph = AxfcTFWriter(ir_blocks = ir_blocks,
                                             graph_def = graph_def,
                                             path_module = self.__kernel_op_path,
                                             output_type=tf.float32,

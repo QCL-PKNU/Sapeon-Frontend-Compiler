@@ -16,7 +16,7 @@ from onnx import helper, shape_inference, save_model
 
 import logging
 from AxfcError      import AxfcError
-from AxfcIRBuilder  import AxfcIRBuilder
+from .AxfcIRBuilder  import AxfcIRBuilder
 from AxfcIRNode     import AxfcIRNode
 
 import util.AxfcUtil as _util

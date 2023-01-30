@@ -10,7 +10,8 @@ from util.AxfcTFGraphUtil import AxfcTFGraphUtil
 from copy import deepcopy
 import tensorflow as tf
 
-class AxfcTFCustomGraph:
+# class AxfcTFCustomGraph:
+class AxfcTFWriter:
 
     ## @var __md
     # the machine description object
