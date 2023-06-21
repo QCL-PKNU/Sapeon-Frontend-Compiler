@@ -34,23 +34,18 @@ class AxfcPTBuilder(AxfcIRBuilder):
         #write log
         logging.info("AxfcPyTorchBuilder:read_model_graph - path: %s", model_path)
 
-        #path for model and model_state
-        # model_path = state_path = ""
-
-        # #find each model, model_state file
-        # for file in os.listdir(path):
-        #     if file.endswith(".pt"):
-        #         model_path = os.path.join(path, file)
-        #     elif file.endswith(".pth"):
-        #         state_path = os.path.join(path, file)
-        #     else:
-        #         return AxfcError.INVALID_FILE_PATH
-
         #load pytorch model
         pt_model: torch.nn.Module = torch.load(model_path)
+
+        test = pt_model.state_dict()
         
         #update state_dict
         pt_model.load_state_dict(torch.load(state_path))
+
+        #create input placeholders for the graph
+        input_placeholder = torch.randn(1, 3, 244, 244)
+        
+        pt_model(input_placeholder)
 
         #set model in evaluation mode
         pt_model.eval()
@@ -58,8 +53,6 @@ class AxfcPTBuilder(AxfcIRBuilder):
         #generate graph_module by applying symblolic trace
         graph_module = torch.fx.symbolic_trace(pt_model)
 
-        #create input placeholders for the graph
-        input_placeholder = Variable(torch.randn(1, 3, 244, 244))
 
         #extract graph from graph_module
         self.__pt_graph = graph_module.graph
@@ -84,12 +77,12 @@ class AxfcPTBuilder(AxfcIRBuilder):
             #sholud respond INVALID_PT_GRAPH
             return AxfcError.INVALID_IR_GRAPH
         
-        #build ir node for placeholders
+        #build ir node
         for pt_node_def in pt_graph_def.nodes:
-            if pt_node_def.op is "placeholder":
+            if pt_node_def.op == "placeholder":
                 #append placeholder nodes into ir_sym
                 err = self.__append_node_sym_ir(pt_node_def, op = "placeholder")
-            elif pt_node_def.op is "output":
+            elif pt_node_def.op == "output":
                 #append output node into ir_sym
                 err = self.__append_node_sym_ir(pt_node_def, op = "output")
             else:
@@ -130,6 +123,7 @@ class AxfcPTBuilder(AxfcIRBuilder):
         ir_node = self._ir_symtab.get(pt_node_def.name)
 
         #set ir node operation
+        #FIXME: Change to accessing way to node.target (** refer the notion)
         if ir_node.op is None:
             ir_node.op = pt_node_def.target
 
@@ -151,7 +145,7 @@ class AxfcPTBuilder(AxfcIRBuilder):
         ir_node = self._ir_symtab.get(pt_node_def.name)
 
         if not ir_node:
-            logging.error("AxfcONNXIRBuilder:_connect_node_def ir_node: %s not found", pt_node_def.name)
+            logging.error("AxfcPyTorchIRBuilder:_connect_node_def ir_node: %s not found", pt_node_def.name)
 
         #Const and input are not required to connect
         if ir_node.op != None and ir_node.op not in ["placeholder, output"]:
@@ -159,7 +153,7 @@ class AxfcPTBuilder(AxfcIRBuilder):
                 #get ir node
                 pred_node = self._ir_symtab.get(pred_name)
                 if not pred_node:
-                    logging.error("AxfcONNXIRBuilder:_connect_node_def ir_node: %s pred not found", pt_node_def.name)
+                    logging.error("AxfcPyTorchIRBuilder:_connect_node_def ir_node: %s pred not found", pt_node_def.name)
                     return AxfcError.PRED_NODE_NOT_FOUND
                 
                 pred_node.succs.append(ir_node)
