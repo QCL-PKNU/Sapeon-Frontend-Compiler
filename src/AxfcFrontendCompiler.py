@@ -22,6 +22,10 @@ from Translators.AxfcTFIRTranslator import *
 from Parsers.AxfcONNXIRBuilder import AxfcONNXIRBuilder
 from Translators.AxfcONNXIRTranslator import AxfcONNXIRTranslator
 
+#PT Components
+from Parsers.AxfcPTBuilder import AxfcPTBuilder
+from Translators.AxfcPTIRTranslator import AxfcPTIRTranslator
+
 from AxfcLauncherWriter import *
 import glob
 from util.AxfcUtil import *

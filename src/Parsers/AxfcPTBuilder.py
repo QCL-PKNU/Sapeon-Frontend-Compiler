@@ -26,6 +26,18 @@ class AxfcPTBuilder(AxfcIRBuilder):
 
         #to store ir readout data
         self._ir_symtab_cnt = dict()
+
+
+    def __find_matched_op(self, node_name) -> torch.nn:
+        # operator list used in ResNet50
+        op_list = ['conv', 'relu', 'bn', 'add', 'downsampling', 'add']
+
+        # if op is in target name, return op
+        # For example, op is 'conv' and target is 'layer1.0.conv1'
+        for op in op_list:
+            if op in node_name:
+                return op
+                
     
     #This function is used to read out the PyTorch mode;
     #You may use PyTorch generic library to perform it.
@@ -53,7 +65,6 @@ class AxfcPTBuilder(AxfcIRBuilder):
         #generate graph_module by applying symblolic trace
         graph_module = torch.fx.symbolic_trace(pt_model)
 
-
         #extract graph from graph_module
         self.__pt_graph = graph_module.graph
 
@@ -77,18 +88,24 @@ class AxfcPTBuilder(AxfcIRBuilder):
             #sholud respond INVALID_PT_GRAPH
             return AxfcError.INVALID_IR_GRAPH
         
-        #build ir node
+        #build ir node symbolic table
         for pt_node_def in pt_graph_def.nodes:
             if pt_node_def.op == "placeholder":
-                #append placeholder nodes into ir_sym
+                # append placeholder nodes into ir_sym
+                # placeholder is the input of model
                 err = self.__append_node_sym_ir(pt_node_def, op = "placeholder")
             elif pt_node_def.op == "output":
                 #append output node into ir_sym
                 err = self.__append_node_sym_ir(pt_node_def, op = "output")
             else:
-                #append node into ir_sym
-                err = self.__append_node_sym_ir(pt_node_def, op = pt_node_def.target)
+                # Since, the pt_node.op is function for calling module and method and so on
+                # extract the operator from the pt_node definition like 'conv', 'bn'
+                node_op = self.__find_matched_op(pt_node_def.name)
 
+                # Make the symbolic table for pt_node_def
+                err = self.__append_node_sym_ir(pt_node_def, op = node_op)
+
+                # Append info to ir_node
                 err = self.__append_node_def(pt_node_def)
 
             if err is not AxfcError.SUCCESS:
@@ -102,34 +119,39 @@ class AxfcPTBuilder(AxfcIRBuilder):
 
         return AxfcError.SUCCESS
     
-
+    ## This method is used to make the symbolic table for the pt node definition
     def __append_node_sym_ir(self, pt_node_def, op = None) -> AxfcError:
 
         #initializing ir node
         ir_node         = AxfcIRNode(pt_node_def)
-        ir_node.name    = pt_node_def.name
+
+        # NOTE: node.target is the name of node
+        # such as 'layer1.0.conv1'
+        ir_node.name    = pt_node_def.target     
 
         if op:
             ir_node.op = op
 
-        #ops
-        self._ir_symtab[pt_node_def.name] = ir_node
+        # Make symbolic table
+        # table consists of {'node_name': node_definition}
+        self._ir_symtab[pt_node_def.target] = ir_node
 
         return AxfcError.SUCCESS
     
+    ## This method is used to append the info of pt node definition to ir_node
     def __append_node_def(self, pt_node_def) -> AxfcError:
 
-        #get ir node
-        ir_node = self._ir_symtab.get(pt_node_def.name)
+        # Get ir node
+        ir_node = self._ir_symtab.get(pt_node_def.target)
 
-        #set ir node operation
-        #FIXME: Change to accessing way to node.target (** refer the notion)
+        # Set ir node operation
         if ir_node.op is None:
-            ir_node.op = pt_node_def.target
+            ir_node.op = self.__find_matched_op(pt_node_def.name)
 
-        #check the node is supported by AIXH hardware
+        # Check the node is supported by AIXH hardware
         layer_info = self._md.get_layer_info(ir_node.op)
 
+        # Set the profit property
         if self._md.get_aixh_support(ir_node.op) and not self._md.BREAK_POINT_CONDITION:
             ir_node.is_aixh_support = True
             ir_node.aixh_profit = layer_info.profit
@@ -139,10 +161,11 @@ class AxfcPTBuilder(AxfcIRBuilder):
 
         return AxfcError.SUCCESS
     
+    ## This function is used to connect all nodes each other
     def __connect_node_def(self, pt_node_def) -> AxfcError:
 
         #get ir node
-        ir_node = self._ir_symtab.get(pt_node_def.name)
+        ir_node = self._ir_symtab.get(pt_node_def.target)
 
         if not ir_node:
             logging.error("AxfcPyTorchIRBuilder:_connect_node_def ir_node: %s not found", pt_node_def.name)
@@ -156,7 +179,10 @@ class AxfcPTBuilder(AxfcIRBuilder):
                     logging.error("AxfcPyTorchIRBuilder:_connect_node_def ir_node: %s pred not found", pt_node_def.name)
                     return AxfcError.PRED_NODE_NOT_FOUND
                 
-                pred_node.succs.append(ir_node)
+                # Succs denotes the next node
+                pred_node.succs.append(ir_node.next)
+
+                # Preds denotes the previous node
                 ir_node.preds.append(pred_node)
 
         #add node to ir graph
