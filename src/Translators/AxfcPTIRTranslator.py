@@ -3,10 +3,10 @@ import torch.fx
 
 import numpy as np
 from collections import OrderedDict
-from AxfcIRGraph import AxfcError, AxfcIRNode
+# from ..AxfcIRGraph import *
 
-from AxfcIRTranslator import *
-from AxfcMachineDesc import AxfcError
+from .AxfcIRTranslator import *
+# from ..AxfcMachineDesc import AxfcError
 
 #######################################################################
 # Global tables for AIXDataType and AIXTensorFormat
@@ -47,13 +47,13 @@ DEFAULT_DTYPE = torch.float32
 class AxfcPTIRTranslator(AxfcIRTranslator):
 
     ## The constructor
-    def __init__(self, md, model_path: str, state_path: str):
+    def __init__(self, md, model_path: str):
         super().__init__(md)
 
         # To load complete torch.graph, need to load module and state together
-        pt_model = torch.load(model_path)
-        pt_model.load_state_dict(torch.load(state_path))
-        pt_model.eval()
+        pt_model: torch.nn.Module = torch.load(model_path)
+        # pt_model.load_state_dict(torch.load(state_path))
+        # pt_model.eval()
 
         self._pt_model : torch.nn.Module = pt_model
         self.graph: torch.fx.graph = torch.fx.symbolic_trace(pt_model).graph
@@ -159,6 +159,14 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
         return AxfcError.SUCCESS
 
     def _emit_aix_layer_activation(self, ir_node: AxfcIRNode, **kwargs) -> AxfcError:
+        logging.info("AxfcPTBuilderTranslator:_emit_aix_layer_activation - node %d", ir_node.layer_id)
+
+        pt_node = self._symtab[ir_node.name]
+
+        aix_layer = ir_node.aix_layer
+
+        #
+
         return NotImplementedError()
     
     def _emit_aix_layer_wildcard(self, ir_node: AxfcIRNode, **kwargs) -> AxfcError:

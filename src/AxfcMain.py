@@ -81,10 +81,11 @@ def __main(params):
     tst_path = dir + '/tst'
     aix_graph_path = tst_path + '/aix_graph.out.'
     print(aix_graph_path)
-    err, custom_model_path = fc.dump_custom_model(path=in_path,
-                               kernel_path=kernel_path,
-                               aix_graph_path=aix_graph_path,
-                               save_path=os.path.dirname(in_path))
+    
+    # err, custom_model_path = fc.dump_custom_model(path=in_path,
+    #                            kernel_path=kernel_path,
+    #                            aix_graph_path=aix_graph_path,
+    #                            save_path=os.path.dirname(in_path))
 
     if err is not AxfcError.SUCCESS:
         logging.error("Error] Dump out AIX custom model: %s", err)

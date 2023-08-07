@@ -8,7 +8,7 @@ from torchvision import models
 from torch.autograd import Variable
 
 from AxfcError          import AxfcError
-from AxfcIRBuilder     import AxfcIRBuilder
+from .AxfcIRBuilder     import AxfcIRBuilder
 from AxfcIRNode         import AxfcIRNode
 
 import util.AxfcUtil    as _util
@@ -25,12 +25,12 @@ class AxfcPTBuilder(AxfcIRBuilder):
         self.model_input = None
 
         #to store ir readout data
-        self._ir_symtab_cnt = dict()
+        self._ir_symtab = dict()
 
 
     def __find_matched_op(self, node_name) -> torch.nn:
         # operator list used in ResNet50
-        op_list = ['conv', 'relu', 'bn', 'add', 'downsampling', 'add']
+        op_list = ['conv', 'relu', 'bn', 'add', 'downsampling', 'maxpool', 'avgpool', 'flatten', 'fc']
 
         # if op is in target name, return op
         # For example, op is 'conv' and target is 'layer1.0.conv1'
@@ -41,7 +41,7 @@ class AxfcPTBuilder(AxfcIRBuilder):
     
     #This function is used to read out the PyTorch mode;
     #You may use PyTorch generic library to perform it.
-    def _read_model_graph(self, model_path: str, state_path: str) -> AxfcError:
+    def _read_model_graph(self, model_path: str) -> AxfcError:
         
         #write log
         logging.info("AxfcPyTorchBuilder:read_model_graph - path: %s", model_path)
@@ -52,7 +52,7 @@ class AxfcPTBuilder(AxfcIRBuilder):
         test = pt_model.state_dict()
         
         #update state_dict
-        pt_model.load_state_dict(torch.load(state_path))
+        # pt_model.load_state_dict(torch.load(state_path))
 
         #create input placeholders for the graph
         input_placeholder = torch.randn(1, 3, 244, 244)
@@ -73,10 +73,10 @@ class AxfcPTBuilder(AxfcIRBuilder):
 
     #This function is used to map the readout ir to AIX IR node
     #as well as building the computation AIX IR graph
-    def _build_naive_ir(self, model_path: str, state_path: str) -> AxfcError:
+    def _build_naive_ir(self, model_path: str) -> AxfcError:
 
         #read pytorch graph
-        err = self._read_model_graph(model_path, state_path)
+        err = self._read_model_graph(model_path)
 
         if err is not AxfcError.SUCCESS:
             return err
@@ -152,7 +152,7 @@ class AxfcPTBuilder(AxfcIRBuilder):
         layer_info = self._md.get_layer_info(ir_node.op)
 
         # Set the profit property
-        if self._md.get_aixh_support(ir_node.op) and not self._md.BREAK_POINT_CONDITION:
+        if self._md.get_aixh_support(str(ir_node.op)) and not self._md.BREAK_POINT_CONDITION:
             ir_node.is_aixh_support = True
             ir_node.aixh_profit = layer_info.profit
         else:
@@ -171,16 +171,16 @@ class AxfcPTBuilder(AxfcIRBuilder):
             logging.error("AxfcPyTorchIRBuilder:_connect_node_def ir_node: %s not found", pt_node_def.name)
 
         #Const and input are not required to connect
-        if ir_node.op != None and ir_node.op not in ["placeholder, output"]:
+        if ir_node.op != None and ir_node.op not in ["placeholder", "output", "constant"]:
             for pred_name in pt_node_def.all_input_nodes:
                 #get ir node
-                pred_node = self._ir_symtab.get(pred_name)
+                pred_node = self._ir_symtab.get(pred_name.target)
                 if not pred_node:
                     logging.error("AxfcPyTorchIRBuilder:_connect_node_def ir_node: %s pred not found", pt_node_def.name)
                     return AxfcError.PRED_NODE_NOT_FOUND
                 
                 # Succs denotes the next node
-                pred_node.succs.append(ir_node.next)
+                pred_node.succs.append(ir_node)
 
                 # Preds denotes the previous node
                 ir_node.preds.append(pred_node)
