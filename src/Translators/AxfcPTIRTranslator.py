@@ -56,24 +56,21 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
         # pt_model.eval()
 
         self._pt_model : torch.nn.Module = pt_model
-        self.graph: torch.fx.graph = torch.fx.symbolic_trace(pt_model).graph
-        # self.tensors: OrderedDict = pt_model.state_dict() # tensors has the inputs value such as weight, bias, mean, etc
-        self._symtab = self.__build_node_symtab(self._pt_model) # make symtab for named_modules
-        self._input_names = [node.op for node in self.graph.nodes if node.op == 'placeholder'] # the input for model has name of 'placeholder'
+        self._pt_graph: torch.fx.graph = torch.fx.symbolic_trace(pt_model).graph
+        self.tensors: OrderedDict = pt_model.state_dict() # tensors has the inputs value such as weight, bias, mean, etc
+        self._symtab = self.__build_node_symtab(self._pt_graph) # make symtab for named_modules
+        self._input_names = [node.name for node in self._pt_graph.nodes if node.op == 'placeholder'] # the input for model has name of 'placeholder'
         
-    def __build_node_symtab(self, pt_model):
+    def __build_node_symtab(self, pt_graph):
         symtab = dict()
-        for module in pt_model.named_modules():
+        for node in pt_graph.nodes:
             # # replace '_' into '.' / EX) 'layer1_0_conv1' -> 'layer1.0.conv1'
             # node.name = node.name.replace('_', '.')
             # # dictionary symbolic table with {node_name: 'node_name.weight', 'node_name.bias', ...}
             # symtab[node.name] = {key: val for key, val in tensors.items() if key.startswith(node.name)}
 
             # unpacking the name and attributes
-            module_name, module_attr = module
-
-            # save in dict
-            symtab[module_name] = module_attr
+            symtab[node.name] = node
         
         return symtab
     
@@ -221,6 +218,11 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
 
             return aix_tensor
 
+    ## This function emits the 'input tensor' of IR graph
+    #  
+    # @param self this object
+    # @param ir_node input node of IR block
+    # @return aix_tensor tensor data of input node
     def _emit_aix_tensor_input(self, ir_node: AxfcIRNode, **kwargs) -> AIXLayer.AIXTensor:
         #extract input tensor of torch.graph
         #the input of torch.grpah named as 'placeholder'

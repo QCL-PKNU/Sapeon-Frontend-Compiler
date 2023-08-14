@@ -10,6 +10,9 @@
 #   High Performance Computing Laboratory (hpcl.pknu.ac.kr)
 #######################################################################
 
+import sys
+sys.path.append("/home/sanghyeon/repos/aix-project/skt-aix-frontend-compiler/src/")
+
 from aixh_pb2 import *
 from AxfcIRGraph import *
 from AxfcMachineDesc import *
@@ -117,7 +120,6 @@ class AxfcIRTranslator:
         return AxfcError.SUCCESS, self.aix_graphs
 
     ## This method is used to translate an IR block into an AIXGraph.
-    #
     # @param self this object
     # @param ir_block input IR block
     # @return error info and an output AIXGraph
@@ -185,11 +187,12 @@ class AxfcIRTranslator:
             input_layer = AIXLayer.AIXLayerType.Value("AIX_LAYER_OUTPUT")
             aix_layer.type.append(input_layer)
 
-        # input
-        # logging.warning("AxfcIRTranslator: AIXLayer input can be multiple layers.")
+        # For input node
+        # Emit a tensor from input node of IR block
         aix_layer.input.CopyFrom(self._emit_aix_tensor_input(ir_node))
 
-        # output
+        # For output node
+        # Emit a tensor from output node of IR block
         # logging.warning("AxfcIRTranslator: AIXLayer output can be multiple layers.")
         aix_layer.output.CopyFrom(self._emit_aix_tensor_output(ir_node))
 
