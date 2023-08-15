@@ -16,7 +16,7 @@ from onnx import helper, shape_inference, save_model
 
 import logging
 from AxfcError      import AxfcError
-from .AxfcIRBuilder  import AxfcIRBuilder
+from . import AxfcIRBuilder
 from AxfcIRNode     import AxfcIRNode
 
 import util.AxfcUtil as _util
@@ -42,16 +42,18 @@ class AxfcONNXIRBuilder(AxfcIRBuilder):
         logging.info("AxfcONNXIRBuilder:read_model_graph - path: %s", path)
 
         # read input ONNX graph
+        # ex) load("model.onnx")
         onnx_model = onnx.load(path)
 
-        # inferred_model = shape_inference.infer_shapes(onnx_model)
-        # onnx.checker.check_model(inferred_model)
-        # print('After shape inference, the shape info of Y is:\n{}'.format(inferred_model.graph.value_info))
+        inferred_model = shape_inference.infer_shapes(onnx_model)
+        onnx.checker.check_model(inferred_model)
+        print('After shape inference, the shape info of Y is:\n{}'.format(inferred_model.graph.value_info))
 
-        # remove training nodes
+        #remove training nodes
         #use onnx runtime for removing
 
         self.__onnx_graph = onnx_model.graph
+        # print(self.__onnx_graph)
 
         return AxfcError.SUCCESS
 
@@ -77,6 +79,7 @@ class AxfcONNXIRBuilder(AxfcIRBuilder):
 
         #build ir node for constants:
         for onnx_node_def in onnx_graph_def.initializer:
+            # print("def", onnx_node_def)
 
             #append ir node into the _ir_symtab
             err = self.__append_node_sym_ir(onnx_node_def, op="Const")
@@ -97,7 +100,6 @@ class AxfcONNXIRBuilder(AxfcIRBuilder):
         
         #build ir node
         for onnx_node_def in onnx_graph_def.node:
-
             #append ir node into the _ir_symtab
             err = self.__append_node_sym_ir(onnx_node_def)
             if err is not AxfcError.SUCCESS:
@@ -108,28 +110,28 @@ class AxfcONNXIRBuilder(AxfcIRBuilder):
             if err is not AxfcError.SUCCESS:
                 return err
 
-        #connect node pred/succ
+        ## To make the connection from each nodes, connect a pred/succ
+        # Connect the operator node
         for onnx_node_def in onnx_graph_def.node:
-
             #build node connection
             err = self.__connect_node_def(onnx_node_def)
             if err is not AxfcError.SUCCESS:
                 return err
         
+        # Connect the input node
         for onnx_node_def in onnx_graph_def.input:
-
             #build node connection
             err = self.__connect_node_def(onnx_node_def)
             if err is not AxfcError.SUCCESS:
                 return err
         
+        # Connect the initializer node
         for onnx_node_def in onnx_graph_def.initializer:
-
             #build node connection
             err = self.__connect_node_def(onnx_node_def)
             if err is not AxfcError.SUCCESS:
                 return err
-        
+                    
         return AxfcError.SUCCESS
 
     

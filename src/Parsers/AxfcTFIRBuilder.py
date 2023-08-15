@@ -12,7 +12,7 @@
 
 import tensorflow as tf
 
-from .AxfcIRBuilder import *
+from . import AxfcIRBuilder
 from AxfcGraphWriter import *
 import util.AxfcUtil as _util
 
@@ -55,7 +55,7 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
     # @param self this object
     # @param path file path of input network model
     # @return error info
-    def _build_naive_ir(self, path: str) -> {AxfcError}:
+    def _build_naive_ir(self, path: str) -> AxfcError:
         logging.info("AxfcTFIRBuilder:build_naive_ir - path: %s", path)
 
         # read a Tensorflow graph

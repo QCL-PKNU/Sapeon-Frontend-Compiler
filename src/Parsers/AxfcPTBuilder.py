@@ -47,18 +47,11 @@ class AxfcPTBuilder(AxfcIRBuilder):
         #load pytorch model
         pt_model: torch.nn.Module = torch.load(model_path)
 
-        self.__pt_model = pt_model
-
         #create input placeholders for the graph
-        input_placeholder = torch.randn(1, 3, 244, 244)
+        input_tensor = torch.randn(1, 3, 244, 244)
         
-        pt_model(input_placeholder)
-
-        #set model in evaluation mode
-        pt_model.eval()
-
         #generate graph_module by applying symblolic trace
-        graph_module = torch.fx.symbolic_trace(pt_model)
+        graph_module = torch.fx.symbolic_trace(pt_model, (input_tensor, ))
 
         #extract graph from graph_module
         self.__pt_graph = graph_module.graph
@@ -97,10 +90,15 @@ class AxfcPTBuilder(AxfcIRBuilder):
         ## Second,
         # Build ir node symbolic table
         for pt_node_def in pt_graph_def.nodes:
-            if pt_node_def.op == "placeholder":
+            if pt_node_def.op == "placeholder" or pt_node_def.op == "get_attr":
                 # append placeholder nodes into ir_sym
                 # placeholder is the input of model
+                
+                # NOTE 'placeholder' is real input
                 err = self.__append_node_sym_ir(pt_node_def, op = "Input")
+
+                err = self.__append_node_sym_ir(pt_node_def, op = "Input")
+
             elif pt_node_def.op == "output":
                 #append output node into ir_sym
                 err = self.__append_node_sym_ir(pt_node_def, op = "Output")
@@ -126,23 +124,6 @@ class AxfcPTBuilder(AxfcIRBuilder):
                 return err
 
         return AxfcError.SUCCESS
-    
-    # def __append_node_sym_ir_inputs(self, input_name, param, op = None) -> AxfcError:
-    #     # make custom node definition
-    #     input_def = dict()
-    #     input_def[input_name] = param
-
-    #     # Initialize ir node
-    #     ir_node = AxfcIRNode(input_def)
-
-    #     ir_node.name = input_name
-
-    #     if op:
-    #         ir_node.op = op
-
-    #     self._ir_symtab[input_name] = ir_node
-
-    #     return AxfcError.SUCCESS
 
     ## This method is used to make the symbolic table for the pt node definition
     def __append_node_sym_ir(self, pt_node_def, op = None) -> AxfcError:
@@ -150,8 +131,6 @@ class AxfcPTBuilder(AxfcIRBuilder):
         #initializing ir node
         ir_node         = AxfcIRNode(pt_node_def)
 
-        # NOTE: node.target is the name of node
-        # such as 'layer1.0.conv1'
         ir_node.name    = pt_node_def.name     
 
         if op:
