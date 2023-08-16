@@ -184,15 +184,13 @@ class AxfcIRTranslator:
             input_layer = AIXLayer.AIXLayerType.Value("AIX_LAYER_INPUT")
             aix_layer.type.append(input_layer)
         elif ir_node.is_output:
-            input_layer = AIXLayer.AIXLayerType.Value("AIX_LAYER_OUTPUT")
-            aix_layer.type.append(input_layer)
+            output_layer = AIXLayer.AIXLayerType.Value("AIX_LAYER_OUTPUT")
+            aix_layer.type.append(output_layer)
 
-        # For input node
-        # Emit a tensor from input node of IR block
+        # Emit the input tensor of node, not the block input
         aix_layer.input.CopyFrom(self._emit_aix_tensor_input(ir_node))
 
-        # For output node
-        # Emit a tensor from output node of IR block
+        # Emit the output tensor of node, not the block output
         # logging.warning("AxfcIRTranslator: AIXLayer output can be multiple layers.")
         aix_layer.output.CopyFrom(self._emit_aix_tensor_output(ir_node))
 

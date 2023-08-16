@@ -381,7 +381,7 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
         tensor = self.tensors[ir_node.name]
         onnx_node = self._symtab[ir_node.name]
 
-        # filter
+        # filter 
         aix_layer.filter.CopyFrom(self._emit_aix_tensor_filter(ir_node, tensor=tensor))
 
         # convolution desc

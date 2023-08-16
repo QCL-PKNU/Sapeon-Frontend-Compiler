@@ -76,18 +76,6 @@ class AxfcPTBuilder(AxfcIRBuilder):
             #sholud respond INVALID_PT_GRAPH
             return AxfcError.INVALID_IR_GRAPH
         
-        ### To make the symbolic table, split the process into two sub-process
-        ## 1. Read the Inputs of node [by. def)__build_ir_symtab_inputs]
-        ## 2. Read the original node definition [by. def)__build_ir_symtab_def]
-
-        # ## First,
-        # # Add the Inputs of nodes into symbolic table
-        # # Ex. weight, biases, running_mean, etc..
-        # for input_name, param in self.__pt_model.state_dict().items():            
-        #     err = self.__append_node_sym_ir_inputs(input_name, param, op = "Const")
-
-
-        ## Second,
         # Build ir node symbolic table
         for pt_node_def in pt_graph_def.nodes:
             if pt_node_def.op == "placeholder" or pt_node_def.op == "get_attr":
