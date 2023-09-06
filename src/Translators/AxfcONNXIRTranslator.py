@@ -96,8 +96,6 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
 
         return aix_tensor
 
-        #return should be a list of aix_tensors from input
-        return aix_tensors
 
     def _emit_aix_tensor_output(self, ir_node: AxfcIRNode, **kwargs) -> AIXLayer.AIXTensor:
         # return super()._emit_aix_tensor_output(ir_node, **kwargs)

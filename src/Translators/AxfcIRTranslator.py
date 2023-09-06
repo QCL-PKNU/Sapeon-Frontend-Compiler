@@ -68,6 +68,7 @@ class AxfcIRTranslator:
             AIXLayer.AIXLayerType.AIX_LAYER_CONVOLUTION: self._emit_aix_layer_convolution,
             AIXLayer.AIXLayerType.AIX_LAYER_GROUP_CONV: self._emit_aix_layer_group_conv,
             AIXLayer.AIXLayerType.AIX_LAYER_BATCHNORM: self._emit_aix_layer_batchnorm,
+            # AIXLayer.AIXLayerType.AIX_LAYER_DOWNSAMPLE: self._emit_aix_layer_downsample,
             AIXLayer.AIXLayerType.AIX_LAYER_AVGPOOL: self._emit_aix_layer_avgpool,
             AIXLayer.AIXLayerType.AIX_LAYER_MAXPOOL: self._emit_aix_layer_maxpool,
             AIXLayer.AIXLayerType.AIX_LAYER_EWADD: self._emit_aix_layer_ewadd,
@@ -225,27 +226,28 @@ class AxfcIRTranslator:
         if activation is not None:
             aix_layer.activation = AIXLayer.AIXActivationMode.Value(activation)
 
-        # calibration
-        if self._calib_data is not None:
-            # get calibration data of this layer
-            postfix_name = ir_node.name.split('/')[-1]
-            name = ir_node.name
-            if postfix_name == 'BiasaddClone':
-                name = ir_node.name.replace('/BiasaddClone', '')
+        # # calibration
+        # if self._calib_data is not None:
+        #     # get calibration data of this layer
+        #     postfix_name = ir_node.name.split('/')[-1]
+        #     name = ir_node.name
+        #     if postfix_name == 'BiasaddClone':
+        #         name = ir_node.name.replace('/BiasaddClone', '')
             
-            calib_data = self._calib_data.get(name)
+        #     calib_data = self._calib_data.get(name)
 
-            if calib_data:
-                aix_layer.output_threshold = calib_data["output"]
-                aix_layer.input_threshold = calib_data["input"]
-            else:
-                logging.warning("AxfcIRTranslator: {} - {}".format(name, "No the calibration data"))
+        #     if calib_data:
+        #         aix_layer.output_threshold = calib_data["output"]
+        #         aix_layer.input_threshold = calib_data["input"]
+        #     else:
+        #         logging.warning("AxfcIRTranslator: {} - {}".format(name, "No the calibration data"))
 
-            if ir_node.is_input:
-                aix_layer.input_threshold = self._calib_data[list(self._calib_data)[0]]["input"]
+        #     if ir_node.is_input:
+        #         aix_layer.input_threshold = self._calib_data[list(self._calib_data)[0]]["input"]
 
-        else:
-            aix_layer.output_threshold = 0
+        # else:
+        #     aix_layer.output_threshold = 0
+        aix_layer.output_threshold = 0
 
         return AxfcError.SUCCESS, aix_layer
 

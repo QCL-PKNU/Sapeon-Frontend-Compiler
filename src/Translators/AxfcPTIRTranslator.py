@@ -44,13 +44,12 @@ DEFAULT_DTYPE = torch.float32
 
 # NOTE
 # ** Sanghyeon - symbolic_traced model doens't have a real input data tensor
-DUMMY_INPUT = torch.randn(1, 3, 244, 244)
+# @torch.fx.wrap
+def my_randn(shape):
+    return torch.randn(shape)
 
-# answers = []
-# def fhook(module, input, output):
-#     module
-#     answers.append(output)
-    
+DUMMY_INPUT = my_randn((1, 3, 244, 244))
+
 
 class AxfcPTIRTranslator(AxfcIRTranslator):
 
@@ -60,22 +59,25 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
 
         # To load complete torch.graph, need to load module and state together
         pt_model: torch.nn.Module = torch.load(model_path)
+        # pt_model.eval()
 
         # ** Sanghyeon - symbolic_trace makes all node as constant
+        # self._pt_model : torch.fx.graph_module = torch.fx.symbolic_trace(pt_model, (DUMMY_INPUT, ))
         self._pt_model : torch.fx.graph_module = torch.fx.symbolic_trace(pt_model, (DUMMY_INPUT, ))
-
+       
 
         self._pt_graph: torch.fx.graph = self._pt_model.graph
         self._tensor_symtab: OrderedDict = self._pt_model.state_dict() # tensors has the inputs value such as weight, bias, mean, etc
-        self._module_symtab = self.__build_module_symtab(self._pt_graph) # make symtab for named_modules
+        self._module_symtab = self.__build_module_symtab(self._pt_model) # make symtab for named_modules
         self._input_names = [node.name for node in self._pt_graph.nodes 
                              if node.op == 'placeholder' or node.op == "get_attr"] # the input for model has name of 'placeholder'
     
-    # TODO: Make the module symbolic table
     def __build_module_symtab(self, pt_model):
         symtab = dict()
+        for module_name, attr in pt_model.named_modules():
+            symtab[module_name] = attr
                 
-        return NotImplementedError
+        return symtab
 
     
     ##################################### 
@@ -90,14 +92,16 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
     def _emit_aix_tensor_input(self, ir_node: AxfcIRNode, **kwargs) -> AIXLayer.AIXTensor:
         #extract input tensor of torch.graph
         #the input of torch.grpah named as 'placeholder'
-        input_nodes = list(filter(lambda x: x.op != "Const" or x.name in self._input_names, ir_node.preds))
+        input_nodes = [node for node in ir_node.preds]
+        # input_nodes = list(filter(lambda x: x.op != "Const" or x.name in self._input_names, ir_node.preds))
         
         aix_tensors = []
         for input_node in input_nodes:
-            tensor_name = input_node.node_def.target
-            aix_tensor = self.__emit_aix_tensor(tensor_name, is_inout_tensor=True)
+            # tensor_name = input_node.node_def.target
+            aix_tensor = self.__emit_aix_tensor(input_node)
             aix_tensors.append(aix_tensor)
 
+        # TODO: Check why return only one tensor
         return aix_tensor
     
     ## This method emits the 'output tensor' of node
@@ -106,11 +110,19 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
     # @param ir_node; output node
     # @return aix_tensor; tensor data of output node
     def _emit_aix_tensor_output(self, ir_node: AxfcIRNode, **kwargs) -> AIXLayer.AIXTensor:
-        # Check tensor name
-        tensor_name = ir_node.node_def.target
+        # Read the output nodes of IR_node
+        output_nodes = [node for node in ir_node.succs]
+        # output_nodes = list(lambda x: x.op != "Const" or x.name in ir_node.succs)
         
+        aix_tensors = []
+        # for output_node in output_nodes:
+        #     tensor_name = output_node.node_def.target
+        #     aix_tensor = self.__emit_aix_tensor(output_node, is_inout_tensor=True)
+        #     aix_tensors.append(aix_tensor)
+
+       
         # Emit tensor
-        aix_tensor = self.__emit_aix_tensor(tensor_name)
+        aix_tensor = self.__emit_aix_tensor(ir_node)
 
         return aix_tensor
 
@@ -130,7 +142,7 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
         aix_layer.filter.CopyFrom(self._emit_aix_tensor_filter(ir_node))
 
         # bias
-        aix_layer.bias.CopyFrom(self._emit_aix_tensor_bias(ir_node))
+        # aix_layer.bias.CopyFrom(self._emit_aix_tensor_bias(ir_node))
         
         # convolution layer attrtibutes description
         aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node))
@@ -157,6 +169,32 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
         # Attributes for BatchNormalization in float format
         # epsilon, momentum
         aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node))
+
+        return AxfcError.SUCCESS
+    
+    def _emit_aix_layer_downsample(self, ir_node: AxfcIRNode, **kwargs) -> AxfcError:
+        logging.info("AxfcPTBuilderTranslator:_emit_aix_layer_downsample - node %d", ir_node.layer_id)
+
+        aix_layer = ir_node.aix_layer
+
+        aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node))
+
+        return AxfcError.SUCCESS
+
+
+    def _emit_aix_layer_ewadd(self, ir_node: AxfcIRNode, **kwargs) -> AxfcError:
+        logging.info("AxfcPTBuilderTranslator:_emit_aix_layer_ewadd - node %d", ir_node.layer_id)
+
+        aix_layer = ir_node.aix_layer
+
+        # aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node))
+
+        ewadddesc = AIXLayer.AIXEWAddDesc()
+        scale_size = len(ir_node.preds)
+
+        ewadddesc.scale.extend([1] * scale_size)
+
+        aix_layer.ewadddesc.CopyFrom(ewadddesc)
 
         return AxfcError.SUCCESS
 
@@ -191,7 +229,14 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
 
         aix_layer = ir_node.aix_layer
 
-        aix_layer.convdesc.CopyFrom(self._emit_aix_sampling_desc(ir_node))
+        # aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node))
+
+        sampling_desc = self._emit_aix_sampling_desc(ir_node)
+
+        sampling_desc.stride[:] = []
+        sampling_desc.stride.extend([0, 0, 0, 0])
+
+        aix_layer.samplingdesc.CopyFrom(sampling_desc)
 
         return AxfcError.SUCCESS
 
@@ -237,13 +282,26 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
     # @param tensor_name; name of node to search the tensor from tensor symtab
     # @param is_inout_tensor; flag value to check either in or out tensor
     # @return aix_tensor; tensor data
-    def __emit_aix_tensor(self, tensor_name, is_inout_tensor=False, **kwargs) -> AIXLayer.AIXTensor:
+    def __emit_aix_tensor(self, node: [AxfcIRNode, str], is_inout_tensor=False) -> AIXLayer.AIXTensor:
             # Initialize AIXLayer
             aix_tensor = AIXLayer.AIXTensor()
 
+            #TODO: 
+            exception_op = ['add']
+            # exception_op = ['relu', 'maxpool', 'avgpool', 'flatten']
+
+            if isinstance(node, AxfcIRNode) and node.op == "Input":
+                tensor_name = node.node_def.target
+            elif isinstance(node, AxfcIRNode) and node.op in exception_op:
+                tensor_name = node.name
+            elif isinstance(node, AxfcIRNode):
+                tensor_name = node.node_def.target + ".weight"
+            else:
+                tensor_name = node
+
             # Get tensor
             if self._tensor_symtab.get(tensor_name) is None:
-                return aix_tensor
+                tensor = self._tensor_symtab['_tensor_constant0']                
             else:
                 tensor = self._tensor_symtab[tensor_name]
 
@@ -251,9 +309,6 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
 
             if not dtype:
                 dtype = DEFAULT_DTYPE
-
-            # if not isinstance(dtype, np.dtype):
-            #     dtype = np.dtype(dtype)
 
             aix_tensor.dtype = aix_data_type_tbl.get(dtype)
 
@@ -290,16 +345,16 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
 
     def _emit_aix_tensor_filter(self, ir_node: AxfcIRNode, **kwargs) -> AIXLayer.AIXTensor:
         # node inputs
-        node_inputs = ir_node.preds
+        # node_inputs = ir_node.preds
 
-        tensor_names = [node.node_def.target for node in node_inputs]
+        # tensor_names = [node.node_def.target for node in node_inputs]
 
         aix_tensor = None
 
-        for tensor_name in tensor_names:
-            if tensor_name + ".weight" in self._tensor_symtab.keys():
-                aix_tensor = self.__emit_aix_tensor(tensor_name)
-                aix_tensor.format = aix_tensor_format_tbl[b'NCHW']
+        tensor_name = ir_node.node_def.target
+        if tensor_name + ".weight" in self._tensor_symtab.keys():
+            aix_tensor = self.__emit_aix_tensor(f"{tensor_name}.weight")
+            aix_tensor.format = aix_tensor_format_tbl[b'NCHW']
 
         if aix_tensor is None:
             aix_layer = ir_node.aix_layer
@@ -341,15 +396,11 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
     # @return aix_tensor; tensor data of mean bias
     def _emit_aix_tensor_bias(self, ir_node: AxfcIRNode, **kwargs) -> AIXLayer.AIXTensor:
         # node inputs
-        node_inputs = ir_node.preds
-
-        tensor_names = [node.node_def.target for node in node_inputs]
-        
         aix_tensor = None
 
-        for tensor_name in tensor_names:
-            if tensor_name + ".bias" in self._tensor_symtab.keys():
-                aix_tensor = self.__emit_aix_tensor(tensor_name)
+        tensor_name = ir_node.node_def.target
+        if tensor_name + ".bias" in self._tensor_symtab.keys():
+            aix_tensor = self.__emit_aix_tensor(f"{tensor_name}.bias")
 
 
         if aix_tensor is None:
@@ -364,15 +415,11 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
     # @return aix_tensor; tensor data of mean value
     def _emit_aix_tensor_mean(self, ir_node: AxfcIRNode, **kwargs) -> AIXLayer.AIXTensor:
         # node inputs
-        node_inputs = ir_node.preds
-
-        tensor_names = [node.node_def.target for node in node_inputs]
-
         aix_tensor = None
 
-        for tensor_name in tensor_names:
-            if tensor_name + ".running_mean" in self._tensor_symtab.keys():
-                aix_tensor = self.__emit_aix_tensor(tensor_name)
+        tensor_name = ir_node.node_def.target
+        if tensor_name + ".running_mean" in self._tensor_symtab.keys():
+            aix_tensor = self.__emit_aix_tensor(f"{tensor_name}.running_mean")
 
         if aix_tensor is None:
             aix_tensor = self.__emit_default_hyper_parameter(ir_node.aix_layer, 1)
@@ -385,16 +432,12 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
     # @param ir_node; node of IR block
     # @return aix_tensor; tensor data of variance value
     def _emit_aix_tensor_variance(self, ir_node: AxfcIRNode, **kwargs) -> AIXLayer.AIXTensor:
-        # node inputs
-        node_inputs = ir_node.preds
-
-        tensor_names = [node.node_def.target for node in node_inputs]
-
         aix_tensor = None
-
-        for tensor_name in tensor_names:
-            if tensor_name + ".running_var" in self._tensor_symtab.keys():
-                aix_tensor = self.__emit_aix_tensor(tensor_name)
+        
+        # node inputs
+        tensor_name = ir_node.node_def.target
+        if tensor_name + ".running_var" in self._tensor_symtab.keys():
+            aix_tensor = self.__emit_aix_tensor(f"{tensor_name}.running_var")
 
         if aix_tensor is None:
             aix_tensor = self.__emit_default_hyper_parameter(ir_node.aix_layer, 1)
@@ -418,7 +461,7 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
         convolution_desc.dtype = aix_layer.input.dtype
 
         # extract node attributes
-        pt_node = self._module_symtab[ir_node.name]
+        pt_node = self._module_symtab[ir_node.node_def.target]
 
         # stride
         if "stride" in vars(pt_node):
@@ -442,8 +485,8 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
 
         # group
         # Conv layer in PT model doesn't have group attributes
-        if "group" or "groups" in vars(pt_node):
-            convolution_desc.groups = getattr(pt_node, "group" or "groups")
+        if hasattr(pt_node, "groups" or "group"):
+            convolution_desc.groups = getattr(pt_node, "groups")
         else:
             convolution_desc.groups = 1 
 
@@ -459,12 +502,12 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
         aix_layer = ir_node.aix_layer
 
         # extract node attributes
-        pt_node = self._module_symtab[ir_node.name]
+        pt_node = self._module_symtab[ir_node.node_def.target]
 
-        if kwargs['tensor']:
-            tensor = kwargs['tensor']
-        else:
-            logging.error("AxfcPTIRTranslator:_emit_aix_sampling_desc - need TensorProto object")
+        # if kwargs['tensor']:
+        #     tensor = kwargs['tensor']
+        # else:
+        #     logging.error("AxfcPTIRTranslator:_emit_aix_sampling_desc - need TensorProto object")
 
         # mode
         for layer_type in ir_node.aix_layer.type:
@@ -480,19 +523,20 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
                 sampling_desc.mode = AIXLayer.AIXSamplingMode.AIX_POOLING_PIXELSHUFFLE
 
         ## kernel_shape (kernel_size in PT)
-        if "kernel_size" in vars(pt_node):        
-            if isinstance(pt_node.kenel_size, int): # If kernel_size is integer
-                window_size = pt_node.kernel_size 
-                sampling_desc.window.extend([window_size, window_size, 0, 0])
-
-                aix_layer.filter.dims[0] = aix_layer.filter.dims[1] = window_size
-            else: # if kernel_size is tuple
-                window_size = dict(zip("HW", pt_node.kernel_size))
-                sampling_desc.window.extend([window_size['H'], window_size['W'], 0 ,0])
+        #FIXME: Add the maxpooling layer filter attribute
+        if hasattr(pt_node, "kernel_size"):        
+            # if isinstance(pt_node.kernel_size, int): # If kernel_size is integer
+            #     window_size = pt_node.kernel_size 
+            #     sampling_desc.window.extend([window_size, window_size, 0, 0])
+            #     aix_layer.filter.dims[0] = aix_layer.filter.dims[1] = window_size
+            # else: # if kernel_size is tuple
+            #     window_size = dict(zip("HW", pt_node.kernel_size))
+            #     sampling_desc.window.extend([window_size['H'], window_size['W'], 0 ,0])
             
-                aix_layer.filter.dims[0] = window_size['H']
-                aix_layer.filter.dims[1] = window_size['W']
-        else:
+            #     aix_layer.filter.dims[0] = window_size['H']
+            #     aix_layer.filter.dims[1] = window_size['W']
+            # window_size = pt_node.kernel_size
+        # else:
             sampling_desc.window.extend([0, 0, 0, 0])
 
         # stride
@@ -536,4 +580,4 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
         tensor.size = output_channel
         tensor.fval.extend([default_value] * output_channel)
 
-        return 
+        return tensor

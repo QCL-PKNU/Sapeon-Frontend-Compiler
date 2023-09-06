@@ -13,6 +13,10 @@ from AxfcIRNode         import AxfcIRNode
 
 import util.AxfcUtil    as _util
 
+@torch.fx.wrap
+def torch_randn(shape):
+    return torch.randn(shape)
+
 #######################################################################
 # AxfcPTBuilder class
 #######################################################################
@@ -35,8 +39,8 @@ class AxfcPTBuilder(AxfcIRBuilder):
         for op in op_list:
             if op in node_name:
                 return op
-                
-    
+
+
     #This function is used to read out the PyTorch mode;
     #You may use PyTorch generic library to perform it.
     def _read_model_graph(self, model_path: str) -> AxfcError:
@@ -48,7 +52,8 @@ class AxfcPTBuilder(AxfcIRBuilder):
         pt_model: torch.nn.Module = torch.load(model_path)
 
         #create input placeholders for the graph
-        input_tensor = torch.randn(1, 3, 244, 244)
+        input_tensor = torch_randn((1, 3, 244, 244))
+        # input_tensor = torch.ones(1, 3, 244, 244)
         
         #generate graph_module by applying symblolic trace
         graph_module = torch.fx.symbolic_trace(pt_model, (input_tensor, ))
@@ -59,8 +64,8 @@ class AxfcPTBuilder(AxfcIRBuilder):
         return AxfcError.SUCCESS
     
 
-    #This function is used to map the readout ir to AIX IR node
-    #as well as building the computation AIX IR graph
+    ## This function is used to map the readout ir to AIX IR node
+    # as well as building the computation AIX IR graph
     def _build_naive_ir(self, model_path: str) -> AxfcError:
 
         #read pytorch graph

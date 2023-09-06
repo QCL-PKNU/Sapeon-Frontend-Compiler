@@ -13,7 +13,7 @@ from multiprocessing import Process
 import os
 from pathlib import Path
 from CustomGraphs.AxfcONNXWriter import AxfcONNXWriter
-# from CustomGraphs.AxfcPTWriter import AxfcPTWriter
+from CustomGraphs.AxfcPTWriter import AxfcPTWriter
 
 #TF Components
 from Parsers.AxfcTFIRBuilder import *
