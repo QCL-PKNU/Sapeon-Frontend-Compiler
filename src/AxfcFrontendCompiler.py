@@ -311,7 +311,6 @@ class AxfcFrontendCompiler:
 
             return err, path
         
-        # TODO: Add the torch machineDesc writer
         elif model_type is AxfcMachineDesc.TYPE_PYTORCH:
 
             pt_writer = AxfcPTWriter(frozen_model_path=path,
