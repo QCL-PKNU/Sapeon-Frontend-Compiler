@@ -1,107 +1,174 @@
 import torch
-import torch.fx
+import torch.nn as nn
+import torch.fx as fx
 from AxfcIRGraph import *
 from AxfcMachineDesc import *
-
-#######################################################################
-# AxfcPTWriter class
-#######################################################################
+import torchvision.models as models 
 
 
-class AIXOpLayer(torch.nn.Module):
-    def __init__(self, path: str):
+class AIXOpLayer(nn.Module):
+
+    # @var path
+    # path of aix graph
+
+    # @var outputs
+    # output tensor
+
+    ## The constructor
+    # def __init(self, path: str, outputs):
+    #     self.attrs = {"aix_graph_path": path}
+    #     self.outputs = outputs
+
+    ## The constructor
+    def __init__(self, path: str, outputs):
         super(AIXOpLayer, self).__init__()
-        self.path = path
+        self.attrs = {"aix_graph_path": path}
+        self.name = "AixOp"
+        self.op = "AixOp"
+        self.inputs = None
+        self.outputs = outputs
 
-    def forward(self, *inputs):
-        return inputs
+    ## Forward func is used to define the actual behaviour of custom op.
+    #
+    # @param self this object
+    # @param x output tensor of predecessor node
+    def forward(self, x):
+        self.inputs = [x]
+        scalar = (x * 0 + 1).mean()
+        return self.outputs * scalar
 
+## TODO: This method is used to define symbolic representation for AixOp, still required extending onnx runtime
+#
+# @param self this object
+def symbolic_aixop(g, input, *args, **kwargs):
+    return g.op("AixOp", input, args, kwargs)
+
+torch.onnx.register_custom_op_symbolic('::AixOp', symbolic_aixop, opset_version=11)
 
 class AxfcPTWriter:
-
-    ## @var __ir_graph
-    # an AIX graph that will be used for writing the laucher 
 
     ## @var __frozen_model_path
     # the path to the pre-trained and 'frozen' model
 
     # @var __aix_graph_path
     # the path of aix graph
+    
+    ## @var __ir_graph
+    # an AIX graph that will be used for writing the laucher 
 
     # @var hook_outputs
     # to store outputs from the registered hooks during the forward pass
 
-    # @var hook_handles
-    # to keep track of the hooks registered on the model
-
     ## The constructor
     # def __init(self, ir_graph: str, frozen_model_path: str, aix_graph_path: str):
-    #     self.__ir_graph = ir_graph
     #     self.frozen_model_path = frozen_model_path
     #     self.aix_graph_path = aix_graph_path
+    #     self.__ir_graph = ir_graph
 
     ## The constructor
-    def __init__(self, 
-                ir_graph: AxfcIRGraph, 
-                frozen_model_path: str, 
-                aix_graph_path: str):
-        self.ir_graph = ir_graph
+    def __init__(self,
+                 frozen_model_path: str,
+                 aix_graph_path: str,
+                ir_graph: AxfcIRGraph,
+                md: AxfcMachineDesc):
         self.frozen_model_path = frozen_model_path
         self.aix_graph_path = aix_graph_path
-        self.traced_module: torch.fx.GraphModule = None
+        self.ir_graph = ir_graph
+        self.model = torch.load(frozen_model_path)
+        self.gm = fx.GraphModule = fx.symbolic_trace(self.model)
         self.hook_outputs = {}
-        self.hook_handles = {}
-
-    ## Hook method to capture the output of specific layers during forward pass.
-    def hook(self, module, input, output):
-        self.hook_outputs[module.name] = output.detach()
-
-    ## This method is used to generate custom model
+    
+    ## This method is used to extract output tensor during forward pass
     #
     # @param self this object
-    def get_custom_model(self):
-        pt_model = torch.load(self.frozen_model_path)
-        self.traced_module = torch.fx.symbolic_trace(pt_model)
+    # @param module nn.module that has been register hook
+    def hook(self, module, input, output):
+        module_key = module.__class__.__name__
+        self.hook_outputs[module_key] = output.detach()
 
-        # Iterating through custom operation blocks in the IR graph and replacing them in the model.
-        for _, block in enumerate(self.ir_graph.blocks):
+    ## This method is used to modify model by replace custom AixOp to aixh block
+    #
+    # @param self this object
+    def get_custom_graph(self):
+        tensor = self.generate_input_tensor()
+        
+        # loop through block and replace aixh block with custom AixOpLayer
+        for block in self.ir_graph.blocks:
             if not block.is_aixh_support:
                 continue
-            custom_op_layer = AIXOpLayer(f"{self.aix_graph_path}/{block.id}")
-            custom_op_name = f"AixOp_{block.id}"
-            self.traced_module.add_module(custom_op_name, custom_op_layer)
+            ir_block_nodes = self.traverse_block(block)
+            gr_block_nodes = self.find_cor_graph_nodes(ir_block_nodes)
 
-            nodes_in_block = self.traverse_block(block)
-            nodes_to_remove = self.find_corresponding_graph_nodes(nodes_in_block)
-            self.replace_with_custom_operator(block, nodes_to_remove)
+            # register hook for output node to extract tensor
+            if gr_block_nodes[-1].name == block.output_nodes[0].name:
+                submodule = getattr(self.gm, gr_block_nodes[-1].target)
+                submodule.register_forward_hook(self.hook)
 
-        # Register forward hooks to capture output from custom layers.
-        for node in self.traced_module.graph.nodes:
-            if not self.should_register_hook(node):
-                continue
-            layer_to_replace = self.traced_module.get_submodule(node.name)
-            handle = layer_to_replace.register_forward_hook(self.hook)
-            self.hook_handles[node] = handle
+            self.gm.recompile()
+            self.gm(tensor)
+        
+            # add new module to the fx graph
+            self.gm.add_module('AixOp', AIXOpLayer(
+                self.aix_graph_path, list(self.hook_outputs.items())[0][1]
+            ))
 
-        # Perform a dummy forward pass to capture custom operation outputs.
-        dummy_input = torch.rand(1, 3, 224, 224)
-        _ = self.traced_module(dummy_input)
+            # find the node before new_node
+            pred_node = {}
+            if 'Input' in block.input_nodes[0].op:
+                pred_node = list(self.gm.graph.nodes)[0]
+            else:
+                for node in list(self.gm.graph.nodes):
+                    if not block.input_nodes[0].op == node.op:
+                        continue
+                    pred_node = node
 
-        self.remove_hook()
-        self.validate_graph()
+            # inserting new node
+            with self.gm.graph.inserting_after(pred_node):
+                new_node = self.gm.graph.create_node(
+                    'call_module',
+                    'AixOp',
+                    args=(list(self.gm.graph.nodes)[1].args[0],)
+                )
+            
+            # remove nodes and and rewire dependency
+            for node in gr_block_nodes:
+                for user, _ in list(node.users.items()):
+                    user.replace_input_with(node, new_node)
+                self.gm.graph.erase_node(node)
 
-        custom_model = self.create_new_model(self.traced_module, self.traced_module.graph)
-        saved_path = self.save_custom_model(custom_model)
+        self.gm.recompile()
 
-        return saved_path
+        # convert custom model to onnx format
+        torch.onnx.export(self.gm, tensor, 
+                          self.get_model_path('onnx'), 
+                          opset_version=11,
+                          input_names=['data'],
+                          output_names=['output'])
 
-    def should_register_hook(self, node):
-        return isinstance(node, torch.fx.Node) and node.op == "call_module"
-
+        # save pytorch custom model
+        saved_path = self.get_model_path('pt')
+        torch.save(self.gm, saved_path)
+        return AxfcError.SUCCESS, saved_path
+    
+    ## This method is used to generate input_shape of DL model
+    # 
+    # @param self this object
+    # @param batch_size number of training
+    def generate_input_tensor(self, batch_size = 1):
+        first_layer = next(self.model.children())
+        if isinstance(first_layer, nn.Conv2d):
+            # For Conv2D, the expected input format is (N, C, H, W)
+            return torch.randn(batch_size, first_layer.in_channels, 224, 224)
+        if isinstance(first_layer, nn.Linear):
+            # For Linear, the expected input format is (N, in_features)
+            return torch.randn(batch_size, first_layer.in_features)
+        else:
+            raise TypeError("Unsupported Type")
+    
     ## This method is used to traverse nodes within a block and return a set of nodes.
     #
     # @param self this object
-    # @param block containing nodes to be traversed.
+    # @param block aixh block contains nodes
     def traverse_block(self, block):
         node_to_process = list(block.input_nodes)
         processed_nodes = set()
@@ -119,89 +186,27 @@ class AxfcPTWriter:
                 if succ not in block.output_nodes:
                     node_to_process.append(succ)
 
+        nodes_in_block.add(block.output_nodes[0])
         return nodes_in_block
-
-    ## This method is used to find nodes in the traced module's graph corresponding to nodes in a block.
+    
+    ## This method is used to find the corresponding node in the fx graph
     #
-    # @param self this object
-    # @param nodes_in_block set of nodes within a block.
-    def find_corresponding_graph_nodes(self, nodes_in_block):
+    # @param self this objects
+    # @param nodes_in_block nodes in the aixh block of ir_graph
+    def find_cor_graph_nodes(self, nodes_in_block):
         corresponding_nodes = []
-        for node in self.traced_module.graph.nodes:
-            if node.name in nodes_in_block:
-                corresponding_nodes.append(node)
+        for node in self.gm.graph.nodes:
+            for b_node in nodes_in_block:
+                if node.name == b_node.name:
+                    corresponding_nodes.append(node)
 
         return corresponding_nodes
-
-    ## This method is used to replace specified nodes with custom operators in the traced module's graph.
-    #
-    # @param self this object
-    # @param block ir block containing custom operation information.
-    # @param nodes_to_remove list of nodes to be replaced
-    def replace_with_custom_operator(self, block: AxfcIRBlock, nodes_to_remove):
-        input_nodes = [node for node in block.input_nodes]
-        predecessors = self.find_predecessors(self.traced_module.graph, input_nodes)
-        last_predecessor = max(predecessors, key=lambda n: n._node_idx)
-
-        with self.traced_module.graph.inserting_after(last_predecessor):
-            # Retrieve the immediate tensors from the hook outputs
-            custom_op_inputs = tuple(
-                self.hook_outputs[node.name] for node in predecessors
-            )
-
-            # Call the custom module with inputs
-            custom_op = self.traced_module.graph.call_module(
-                f"AixOp_{block.id}", args=custom_op_inputs
-            )
-
-        for node in nodes_to_remove:
-            for user in list(node.users):
-                # Replace the input of the user nodes from the old node to the custom op node
-                user.args = tuple(
-                    custom_op if arg is node else arg for arg in user.args
-                )
-
-            self.traced_module.graph.erase_node(node)
-
-    ##  This method is used to find predecessor nodes of a set of target nodes in the traced module's graph.
-    #
-    # @param self this object
-    # @param input_nodes nodes of block that take input from outside
-    def find_predecessors(self, input_nodes: set):
-        predecessors = {
-            node
-            for node in self.traced_module.graph.nodes
-            if any(arg in input_nodes for arg in node.args)
-        }
-
-        return predecessors
-
-    ## This method is used to remove forward hooks from layers.
-    #
-    # @param self this object
-    def remove_hook(self):
-        for handle in self.hook_handles:
-            handle.remove()
-
-    ## This method is used to recompile and lint the traced module's graph for correctness.
-    #
-    # @param self this object
-    def validate_graph(self):
-        self.traced_module.recompile()
-        self.traced_module.graph.lint()
-
-    ## This method is used to create a new model with the modified graph.
-    #
-    # @param self this object
-    def create_new_model(self):
-        return torch.fx.GraphModule(self.traced_module, self.traced_module.graph)
-
-    ## This method is used to save the custom model to a file and return the file path.
-    #
-    # @param self this object
-    # @param custom_model a custom PyTorch model to be saved
-    def save_custom_model(self, custom_model):
-        saved_path = self.frozen_model_path.rsplit(".pt", 1)[0] + "_custom.pt"
-        torch.save(custom_model, saved_path)
-        return saved_path
     
+
+    ## This method is used to create a custom path for custom model
+    #
+    # @param self this object
+    # @param extension type of file to be save
+    def get_model_path(self, extension):
+        return self.frozen_model_path.rsplit('.', 1)[0] + f'_custom.{extension}'
+
