@@ -1,15 +1,15 @@
-
-
 #######################################################################
-#   AxfcLauncherWriter
+#   AxfcIRTranslator
 #
-#   Created: 2020. 08. 15
+#   Created: 2020. 08. 03
 #
 #   Authors:
 #      Youngsun Han (youngsun@pknu.ac.kr)
 #      Heng Sengthai (sengthai37@gmail.com)
+#      Hour Leanghok (hourleanghok@gmail.com)
 #
-#   High Performance Computing Laboratory (hpcl.pknu.ac.kr)
+#   Quantum Computing Labaratory (qcl.pknu.ac.kr)
+#   [Before:High Performance Computing Laboratory (hpcl.pknu.ac.kr)]
 #######################################################################
 
 

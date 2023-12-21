@@ -1,3 +1,18 @@
+#######################################################################
+#   AxfcIRTranslator
+#
+#   Created: 2020. 08. 03
+#
+#   Authors:
+#      Youngsun Han (youngsun@pknu.ac.kr)
+#      Heng Sengthai (sengthai37@gmail.com)
+#      Sanghyeon Lee (sanghyeon@pukyong.ac.kr)
+#      Pov Kimsay (povkimsay@gmail.com)
+#
+#   Quantum Computing Labaratory (qcl.pknu.ac.kr)
+#   [Before:High Performance Computing Laboratory (hpcl.pknu.ac.kr)]
+#######################################################################
+
 import logging
 import os
 

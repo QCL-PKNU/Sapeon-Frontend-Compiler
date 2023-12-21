@@ -1,3 +1,18 @@
+#######################################################################
+#   AxfcIRTranslator
+#
+#   Created: 2020. 08. 03
+#
+#   Authors:
+#      Youngsun Han (youngsun@pknu.ac.kr)
+#      Heng Sengthai (sengthai37@gmail.com)
+#      Sanghyeon Lee (sanghyeon@pukyong.ac.kr)
+#      Pov Kimsay (povkimsay@gmail.com)
+#
+#   Quantum Computing Labaratory (qcl.pknu.ac.kr)
+#   [Before:High Performance Computing Laboratory (hpcl.pknu.ac.kr)]
+#######################################################################
+
 import torch
 import torch.fx
 import torchvision
@@ -19,8 +34,8 @@ class AIXOpLayer(torch.nn.Module):
         self.output_type = torch.float32
         # torch.nn.init.
 
-    def forward(self, x):
-        return x
+    # def forward(self, x):
+    #     return x
 
 
 class AxfcPTWriter():
@@ -41,7 +56,7 @@ class AxfcPTWriter():
         
         customResNet50 = torch.nn.Sequential(
             AIXOpLayer(path),
-            module
+            module,
         )
         
         return customResNet50
@@ -63,7 +78,8 @@ class AxfcPTWriter():
             inputs = [pt_tensors.get(node.name) for node in block.input_nodes]
             outputs = [node.name for node in block.output_nodes]
 
-            modules = list(filter(lambda name:'avgpool' in name, traced_model.named_modules()))
+            #FIXME: Need to check the final operator automatically
+            modules = list(filter(lambda name:'linear' in name, traced_model.named_modules()))
 
             # pt_graph.replace_with_aixop(inputs, outputs, self.__aix_graph_path+str(count))
             pt_model = self.replace_with_aixop(modules[0][1], self.__aix_graph_path+str(count))

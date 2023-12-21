@@ -14,8 +14,13 @@ import torch.fx
 #Load the resnet50 resnet50
 resnet50 = models.resnet50(weights='DEFAULT')
 
+
+def my_randn(*args, **kwargs):
+    return torch.randn(*args, **kwargs)
+
 #Make dummy input_data
-input_data = Variable(torch.randn(1, 3, 224, 224))
+# input_data = Variable(torch.randn(1, 3, 224, 224))
+input_data = my_randn((1, 3, 244, 244))
 
 #Resnet model
 resnet50_model = 'resnet50.pt'
@@ -60,7 +65,7 @@ def do_script():
     pt_model.eval()
 
     #Freeze all parameters
-    scripted_model = torch.jit.trace(pt_model, torch.randn(1, 3, 244, 244))
+    scripted_model = torch.jit.trace(pt_model, input_data)
 
     scripted_model.save("scripted_model.pt")
 
@@ -194,5 +199,3 @@ if __name__ == '__main__':
     do_script()
 
     # visualize()
-
-    # pt2onnx()
