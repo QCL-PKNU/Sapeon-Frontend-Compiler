@@ -9,7 +9,6 @@
 #      Hour Leanghok (hourleanghok@gmail.com)
 #
 #   Quantum Computing Labaratory (qcl.pknu.ac.kr)
-#   [Before:High Performance Computing Laboratory (hpcl.pknu.ac.kr)]
 #######################################################################
 
 
@@ -24,8 +23,6 @@ from AxfcMachineDesc import *
 #######################################################################
 # AxfcONNXWriter class
 #######################################################################
-
-
 
 
 class AxfcONNXWriter:

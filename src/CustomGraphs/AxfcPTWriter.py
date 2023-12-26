@@ -10,7 +10,6 @@
 #      Pov Kimsay (povkimsay@gmail.com)
 #
 #   Quantum Computing Labaratory (qcl.pknu.ac.kr)
-#   [Before:High Performance Computing Laboratory (hpcl.pknu.ac.kr)]
 #######################################################################
 
 import torch
@@ -59,6 +58,11 @@ def symbolic_aixop(g, input, *args, **kwargs):
     return g.op("AixOp", input, args, kwargs)
 
 torch.onnx.register_custom_op_symbolic('::AixOp', symbolic_aixop, opset_version=11)
+
+#######################################################################
+# AxfcPTWriter class
+#######################################################################
+
 
 class AxfcPTWriter:
 
