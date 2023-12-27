@@ -30,17 +30,48 @@ This README describes the organization and usage of the SKT AIX Frontend Compile
 
 * AxfcTFIRBuilder
 * AxfcTFIRTranslator
+* AxfcTFWriter
+
+### **ONNX**
+* AxfcONNXBuilder
+* AxfcONNXIRTranslator
+* AxfcONNXWriter
+
+### **PyTorch**
+* AxfcPTBuilder
+* AxfcPTTranslator
+* AxfcPTWriter
 
 ### **SKT-AIX**
 
 * aixh_pb2
 
 ## **Prerequisites**
-* Install Dependencies 
-  ```
-  $ pip3 install -r requirements.txt
-  ```
+Install Dependencies (Ubuntu 20.04~)
 
+To prohibit the module confilit, recomend creating a virtual environment.
+
+```
+$ python3 -m venv {virtual_env_name}
+
+1.Ubuntu
+  $ cd {virtual_env_name}
+  $ source bin/activate
+
+2.Window
+  $ cd {virtual_env_name}/Scripts
+  $ activate.bat
+```
+
+And install the requirement packages.
+```
+$ pip3 install -r requirements.txt
+```
+If the `onnx_graphsurgeon` package is not be installed successfully, please check the latest version and installed it in latest version.
+
+```
+pip3 install onnx_graphsurgeon={latest_version}
+```
 ## **Usage** 
 
 Our frontend compiler currently provides 2 ways for the executing, by using Makefile or python3 command line.
@@ -119,6 +150,11 @@ Sanghyeon Lee (sanghyeon@pukyong.ac.kr)
 * Department of AI Convergence, Pukyong National University
 
 Myeongseong Go (gms3089@pukyong.ac.kr)
+
+* Graduated Student
+* Department of AI Convergence, Pukyong National University
+
+Kimsay Pov (povkimsay@gmail.com)
 
 * Graduated Student
 * Department of AI Convergence, Pukyong National University
