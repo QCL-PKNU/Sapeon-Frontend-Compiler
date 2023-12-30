@@ -2,40 +2,31 @@
 
 This README describes the organization and usage of the SKT AIX Frontend Compiler.
 
-## **Release Note v1.0 (UAT)**
+## **Release Note v2.0 (UAT)**
 
 ### **New Updates**
 
 This release includes features:
 
-1. Enable to compile ONNX-to-AIXGraph  
+1. Enable to compile PyTorch-to-AIXGraph  
 
-    We have implemented parser and translator for ONNX model, the following files were added for the purpose of this implementation:  
+    We have implemented parser and translator for PyTorch model, the following files were added for the purpose of this implementation:  
 
-    * src/AxfcONNXIRBuilder: parser for ONNX graph
-    * src/AxfcONNXIRTranslator: translator for ONNX graph   
-    * src/AxfcONNXWriter: custom model generator for ONNX model 
+    * src/AxfcPyTorchIRBuilder: parser for PyTorch graph
+    * src/AxfcPyTorchIRTranslator: translator for PyTorch graph   
+    * src/AxfcPyTorchWriter: custom model generator for PyTorch model 
 
-2. Enable to generate ONNX custom graph.  
+2. Enable to generate PyTorch custom graph.  
 
-    The custom model replaces AIXGraph with AIXOp (custom domain) on ONNX model.
+    The custom model replaces AIXGraph with arbitarily operator (custom domain) on PyTorch model.
     
-    ![Scheme](doc/images/ex_onnx_model.png)
+    ![Scheme](doc/images/ex_torch_model.png)
         
-    * Example of an ONNX model and compiled ONNX model  
+    * Example of an PyTorch model and compiled PyTorch model  
 
-    This feature should be able to generate any type of ONNX graph, including multiple AIXOps support.
+3. Support multiple AIXGraphs or/and AIXOps for TensorFlow, ONNX, and PyTorch
 
-3. Option to choose AIXGraph in binary or text format
-
-    You can pick a format between binary and text format for generating AIXGraph.   
-    The binary format is preferred and is set to default for the compilation due to having inferior for writing to file time.  
-    However, the text format serves the  purpose of testing and debugging. Please refer to README.md file for usage 
-    guideline.
-
-4. Support multiple AIXGraphs or/and AIXOps for TensorFlow and ONNX
-
-    Like shown in No.2 multiple AIXGraphs can be generated from a model and supported model includes, TensorFlow and ONNX.
+    Like shown in No.2 multiple AIXGraphs can be generated from a model and supported model includes, TensorFlow, ONNX, and PyTorch.
 
 ### **Open Issues**
 
@@ -92,11 +83,31 @@ This release contains the following issue that needs to be addressed:
 * aixh_pb2
 
 ## **Prerequisites**
-* Install Dependencies 
-  ```
-  $ pip3 install -r requirements.txt
-  ```
+Install Dependencies (Ubuntu 20.04~)
 
+To prohibit the module confilit, recomend creating a virtual environment.
+
+```
+$ python3 -m venv {virtual_env_name}
+
+1.Ubuntu
+  $ cd {virtual_env_name}
+  $ source bin/activate
+
+2.Window
+  $ cd {virtual_env_name}/Scripts
+  $ activate.bat
+```
+
+And install the requirement packages.
+```
+$ pip3 install -r requirements.txt
+```
+If the `onnx_graphsurgeon` package is not be installed successfully, please check the latest version and installed it in latest version.
+
+```
+pip3 install onnx_graphsurgeon={latest_version}
+```
 ## **Usage** 
 Our frontend compiler currently provides 2 ways for the executing, by using Makefile or python3 command line.
 
