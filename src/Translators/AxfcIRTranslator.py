@@ -10,6 +10,9 @@
 #   High Performance Computing Laboratory (hpcl.pknu.ac.kr)
 #######################################################################
 
+import sys
+sys.path.append("/home/sanghyeon/repos/aix-project/skt-aix-frontend-compiler/src/")
+
 from aixh_pb2 import *
 from AxfcIRGraph import *
 from AxfcMachineDesc import *
@@ -65,6 +68,7 @@ class AxfcIRTranslator:
             AIXLayer.AIXLayerType.AIX_LAYER_CONVOLUTION: self._emit_aix_layer_convolution,
             AIXLayer.AIXLayerType.AIX_LAYER_GROUP_CONV: self._emit_aix_layer_group_conv,
             AIXLayer.AIXLayerType.AIX_LAYER_BATCHNORM: self._emit_aix_layer_batchnorm,
+            # AIXLayer.AIXLayerType.AIX_LAYER_DOWNSAMPLE: self._emit_aix_layer_downsample,
             AIXLayer.AIXLayerType.AIX_LAYER_AVGPOOL: self._emit_aix_layer_avgpool,
             AIXLayer.AIXLayerType.AIX_LAYER_MAXPOOL: self._emit_aix_layer_maxpool,
             AIXLayer.AIXLayerType.AIX_LAYER_EWADD: self._emit_aix_layer_ewadd,
@@ -117,7 +121,6 @@ class AxfcIRTranslator:
         return AxfcError.SUCCESS, self.aix_graphs
 
     ## This method is used to translate an IR block into an AIXGraph.
-    #
     # @param self this object
     # @param ir_block input IR block
     # @return error info and an output AIXGraph
@@ -182,14 +185,13 @@ class AxfcIRTranslator:
             input_layer = AIXLayer.AIXLayerType.Value("AIX_LAYER_INPUT")
             aix_layer.type.append(input_layer)
         elif ir_node.is_output:
-            input_layer = AIXLayer.AIXLayerType.Value("AIX_LAYER_OUTPUT")
-            aix_layer.type.append(input_layer)
+            output_layer = AIXLayer.AIXLayerType.Value("AIX_LAYER_OUTPUT")
+            aix_layer.type.append(output_layer)
 
-        # input
-        # logging.warning("AxfcIRTranslator: AIXLayer input can be multiple layers.")
+        # Emit the input tensor of node, not the block input
         aix_layer.input.CopyFrom(self._emit_aix_tensor_input(ir_node))
 
-        # output
+        # Emit the output tensor of node, not the block output
         # logging.warning("AxfcIRTranslator: AIXLayer output can be multiple layers.")
         aix_layer.output.CopyFrom(self._emit_aix_tensor_output(ir_node))
 
@@ -224,27 +226,28 @@ class AxfcIRTranslator:
         if activation is not None:
             aix_layer.activation = AIXLayer.AIXActivationMode.Value(activation)
 
-        # calibration
-        if self._calib_data is not None:
-            # get calibration data of this layer
-            postfix_name = ir_node.name.split('/')[-1]
-            name = ir_node.name
-            if postfix_name == 'BiasaddClone':
-                name = ir_node.name.replace('/BiasaddClone', '')
+        # # calibration
+        # if self._calib_data is not None:
+        #     # get calibration data of this layer
+        #     postfix_name = ir_node.name.split('/')[-1]
+        #     name = ir_node.name
+        #     if postfix_name == 'BiasaddClone':
+        #         name = ir_node.name.replace('/BiasaddClone', '')
             
-            calib_data = self._calib_data.get(name)
+        #     calib_data = self._calib_data.get(name)
 
-            if calib_data:
-                aix_layer.output_threshold = calib_data["output"]
-                aix_layer.input_threshold = calib_data["input"]
-            else:
-                logging.warning("AxfcIRTranslator: {} - {}".format(name, "No the calibration data"))
+        #     if calib_data:
+        #         aix_layer.output_threshold = calib_data["output"]
+        #         aix_layer.input_threshold = calib_data["input"]
+        #     else:
+        #         logging.warning("AxfcIRTranslator: {} - {}".format(name, "No the calibration data"))
 
-            if ir_node.is_input:
-                aix_layer.input_threshold = self._calib_data[list(self._calib_data)[0]]["input"]
+        #     if ir_node.is_input:
+        #         aix_layer.input_threshold = self._calib_data[list(self._calib_data)[0]]["input"]
 
-        else:
-            aix_layer.output_threshold = 0
+        # else:
+        #     aix_layer.output_threshold = 0
+        aix_layer.output_threshold = 0
 
         return AxfcError.SUCCESS, aix_layer
 

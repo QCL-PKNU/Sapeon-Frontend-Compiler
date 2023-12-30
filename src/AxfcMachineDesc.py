@@ -122,6 +122,8 @@ class AxfcMachineDesc:
                 return AxfcMachineDesc.TYPE_TENSORFLOW
             elif model_type.upper() == "ONNX":
                 return AxfcMachineDesc.TYPE_ONNX
+            elif model_type.upper() == "PYTORCH":
+                return AxfcMachineDesc.TYPE_PYTORCH
             else:
                 return AxfcMachineDesc.TYPE_UNKNOWN
         except KeyError as e:

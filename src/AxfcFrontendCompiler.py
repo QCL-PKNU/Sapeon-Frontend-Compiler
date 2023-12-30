@@ -13,6 +13,7 @@ from multiprocessing import Process
 import os
 from pathlib import Path
 from CustomGraphs.AxfcONNXWriter import AxfcONNXWriter
+from CustomGraphs.AxfcPTWriter import AxfcPTWriter
 
 #TF Components
 from Parsers.AxfcTFIRBuilder import *
@@ -21,6 +22,10 @@ from Translators.AxfcTFIRTranslator import *
 #ONNX Components
 from Parsers.AxfcONNXIRBuilder import AxfcONNXIRBuilder
 from Translators.AxfcONNXIRTranslator import AxfcONNXIRTranslator
+
+#PT Components
+from Parsers.AxfcPTBuilder import AxfcPTBuilder
+from Translators.AxfcPTIRTranslator import AxfcPTIRTranslator
 
 from AxfcLauncherWriter import *
 import glob
@@ -140,7 +145,7 @@ class AxfcFrontendCompiler:
         
         elif model_type is AxfcMachineDesc.TYPE_PYTORCH:
             self.__ir_builder = AxfcPTBuilder(self.__md)
-            self.__ir_builder = AxfcPTIRTranslator(self.__md, path)
+            self.__ir_translator = AxfcPTIRTranslator(self.__md, path)
         
         else:
             logging.warning("Not supported input type: %d", model_type)
@@ -301,6 +306,19 @@ class AxfcFrontendCompiler:
                                             md = self.__md)
             
             err, out_path = onnx_writer.get_custom_graph()
+            logging.info("AxfcFrontendCompiler:dump_custom_model - %s", out_path)
+
+            return err, path
+        
+        elif model_type is AxfcMachineDesc.TYPE_PYTORCH:
+
+            pt_writer = AxfcPTWriter(frozen_model_path=path,
+                                     aix_graph_path=aix_graph_path,
+                                     kernel_op_path=kernel_path,
+                                     ir_graph=self.get_ir_graph(),
+                                     md=self.__md)
+
+            err, out_path = pt_writer.get_custom_graph()
             logging.info("AxfcFrontendCompiler:dump_custom_model - %s", out_path)
 
             return err, path

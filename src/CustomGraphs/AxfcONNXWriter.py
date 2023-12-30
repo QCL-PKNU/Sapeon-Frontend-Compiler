@@ -91,7 +91,8 @@ class AxfcONNXWriter:
                                 inputs= inputs,
                                 outputs = outputs,
                                 attrs=dict(aix_graph_path=path))
-        
+
+
         for count, block in enumerate(self.__ir_graph.blocks):
 
             if not block.is_aixh_support:
@@ -101,6 +102,7 @@ class AxfcONNXWriter:
             outputs = [gs_tensors[node.name] for node in block.output_nodes]
 
             gs_graph.replace_with_aixop(inputs, outputs, self.__aix_graph_path+str(count))
+            # Since, after replace, the nodes lose their connection, need to be topologically sorted
             gs_graph.cleanup().toposort()
 
         save_path = self.__frozen_model_path.split(".onnx")[0] + "_custom.onnx" 

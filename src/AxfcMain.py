@@ -48,39 +48,40 @@ def __main(params):
 
     fc = AxfcFrontendCompiler()
     
-    # read a machine description file
+    # # read a machine description file
     err = fc.read_md_file(md_path)
     if err is not AxfcError.SUCCESS:
         logging.error("Error] Read machine description: %s", err)
         return err
 
-    # read a calibration data file
+    # # read a calibration data file
     err = fc.read_calib_file(cal_path)
     if err is not AxfcError.SUCCESS:
         logging.error("Error] Read calibration data: %s", err)
         return err
 
-    # perform the compilation
+    # # perform the compilation
     err, aix_graphs = fc.compile(in_path)
     if err is not AxfcError.SUCCESS:
         logging.error("Error] Compile TF graph to AXIGraph: %s", err)
         return err
 
-    # set the default output path if the path was not given
-    if out_path is None:
-        out_path = os.path.dirname(in_path) + "/aix_graph.out"
+    # # set the default output path if the path was not given
+    # if out_path is None:
+    #     out_path = os.path.dirname(in_path) + "/aix_graph.out"
 
-    # AIX graph out
-    err = fc.dump_aix_graphs(out_path, aix_graphs, aix_graph_format)
-    if err is not AxfcError.SUCCESS:
-        logging.error("Error] Dump out AIXGraphs: %s", err)
-        return err
+    # # AIX graph out
+    # err = fc.dump_aix_graphs(out_path, aix_graphs, aix_graph_format)
+    # if err is not AxfcError.SUCCESS:
+    #     logging.error("Error] Dump out AIXGraphs: %s", err)
+    #     return err
 
     # AIX custom model
     dir = os.path.dirname(os.path.realpath('__file__'))
     tst_path = dir + '/tst'
     aix_graph_path = tst_path + '/aix_graph.out.'
     print(aix_graph_path)
+    
     err, custom_model_path = fc.dump_custom_model(path=in_path,
                                kernel_path=kernel_path,
                                aix_graph_path=aix_graph_path,

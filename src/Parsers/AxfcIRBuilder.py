@@ -10,9 +10,12 @@
 #   High Performance Computing Laboratory (hpcl.pknu.ac.kr)
 #######################################################################
 
+import sys
+sys.path.append('/home/sanghyeon/repos/aix-project/skt-aix-frontend-compiler/src')
+
 from typing import List, Tuple
 from AxfcIRGraph import *
-from AxfcMachineDesc import *
+from AxfcMachineDesc import AxfcMachineDesc
 from AxfcError import AxfcError
 
 
@@ -115,7 +118,9 @@ class AxfcIRBuilder:
 
         for ir_node in supported_nodes:
 
-            # ignore nodes that are already evaluated
+            # When the first ir_node pass the perform_block_eval, find_block_input_node,
+            # eval_flag of other nodes is set into True
+            # Therefore, ignore if ir_node is already evaluated
             if ir_node.eval_flag:
                 continue
 
@@ -163,7 +168,7 @@ class AxfcIRBuilder:
         return AxfcError.SUCCESS
     
     
-    ## This method is used to perform the block evaluation by by checking all nodes
+    ## This method is used to perform the block evaluation by checking all nodes
     #  and remove any node that fall under the block constraints and effect 
     #  the transformation of the block to aix graph
     #
@@ -244,12 +249,14 @@ class AxfcIRBuilder:
     def __find_block_input_node(self, ir_block: AxfcIRBlock, set_inout = False) -> list:
 
         # **Leanghok - using eval_flag here might cause error on finding block
+        # Temporary set evaluation flag as False
         for node in ir_block.nodes:
             node.eval_flag = False
         
         input_node_list = []
         for node in ir_block.nodes:
             
+            # Find the input node of current ir_node to check whether it is out/inside from block
             err, pred_nodes = self.__find_node_input(node, ir_block)
             if err is AxfcError.SUCCESS:
                 input_node_list += pred_nodes
@@ -281,6 +288,11 @@ class AxfcIRBuilder:
             #skip Const
             if pred_node.op == "Const":
                 continue
+
+            # from collections.abc import Iterable
+            # if isinstance(pred_node, Iterable) is False:
+            #     pred_node_inputs.append(pred_node)
+            #     continue
             
             #if pred_node is in ir_block then its preds can not be the block input
             if pred_node not in ir_block.nodes and "Pad" not in pred_node.name:
@@ -319,7 +331,7 @@ class AxfcIRBuilder:
         if ir_node.is_aixh_support:
             ir_node.layer_id = ir_node.temp_id
             ir_node.block_ref = ir_block
-            ir_block.nodes.append(ir_node)
+            ir_block.nodes.append(ir_node) # append ir_node into nodes of ir_block
         else:
             return AxfcError.SUCCESS
         
