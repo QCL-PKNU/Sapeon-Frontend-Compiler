@@ -1,3 +1,17 @@
+#######################################################################
+#   AxfcIRTranslator
+#
+#   Created: 2020. 08. 03
+#
+#   Authors:
+#      Youngsun Han (youngsun@pknu.ac.kr)
+#      Heng Sengthai (sengthai37@gmail.com)
+#      Sanghyeon Lee (sanghyeon@pukyong.ac.kr)
+#      Pov Kimsay (povkimsay@gmail.com)
+#
+#   Quantum Computing Labaratory (qcl.pknu.ac.kr)
+#######################################################################
+
 import logging
 import os
 
@@ -20,16 +34,28 @@ def torch_randn(shape):
 #######################################################################
 # AxfcPTBuilder class
 #######################################################################
+
 class AxfcPTBuilder(AxfcIRBuilder):
+
+    ## @var _pt_model
+    # input pytorch model
+    
+    ## @var _pt_graph
+    # input pytorch graph
+
 
     #The constructure
     def __init__(self, md):
         super().__init__(md)
-        self.__pt_model = None
-        self.__pt_graph = None
-        self.model_input = None
+        self.__pt_model = None  
+        self.__pt_graph = None  
 
 
+    ## This method is used to find a matched operator from a node of pytorch graph.
+    #
+    # @param self this object
+    # @param node_name node name of pytorch graph
+    # @return op matched operator
     def __find_matched_op(self, node_name) -> torch.nn:
         # operator list used in ResNet50
         op_list = ['conv', 'relu', 'bn', 'add', 'downsample', 'maxpool', 'avgpool', 'flatten', 'fc']
@@ -41,10 +67,12 @@ class AxfcPTBuilder(AxfcIRBuilder):
                 return op
 
 
-    #This function is used to read out the PyTorch mode;
-    #You may use PyTorch generic library to perform it.
+    ## This method is used to read out the PyTorch model.
+    #
+    # @param self this object
+    # @param model_path pytorch model path
+    # @return error info
     def _read_model_graph(self, model_path: str) -> AxfcError:
-        
         #write log
         logging.info("AxfcPyTorchBuilder:read_model_graph - path: %s", model_path)
 
@@ -53,7 +81,6 @@ class AxfcPTBuilder(AxfcIRBuilder):
 
         #create input placeholders for the graph
         input_tensor = torch_randn((1, 3, 244, 244))
-        # input_tensor = torch.ones(1, 3, 244, 244)
         
         #generate graph_module by applying symblolic trace
         graph_module = torch.fx.symbolic_trace(pt_model, (input_tensor, ))
@@ -64,8 +91,11 @@ class AxfcPTBuilder(AxfcIRBuilder):
         return AxfcError.SUCCESS
     
 
-    ## This function is used to map the readout ir to AIX IR node
-    # as well as building the computation AIX IR graph
+    ## This method is used to construct a navie AIXIR using a pytorch graph.
+    #
+    # @param self this object
+    # @param model_path pytorch model path
+    # @return error info
     def _build_naive_ir(self, model_path: str) -> AxfcError:
 
         #read pytorch graph
@@ -118,7 +148,12 @@ class AxfcPTBuilder(AxfcIRBuilder):
 
         return AxfcError.SUCCESS
 
-    ## This method is used to make the symbolic table for the pt node definition
+    ## This method is used to append ir_node into ir symbolic table.
+    #
+    # @param self this object
+    # @param pt_node_def node definition of pytorch model
+    # @param op operator
+    # @return error info
     def __append_node_sym_ir(self, pt_node_def, op = None) -> AxfcError:
 
         #initializing ir node
@@ -135,7 +170,11 @@ class AxfcPTBuilder(AxfcIRBuilder):
 
         return AxfcError.SUCCESS
     
-    ## This method is used to append the info of pt node definition to ir_node
+    ## This method is used to create a nw IR node from pt_node_def and append it to the IR graph.
+    #
+    # @param self this object
+    # @pt_node_def node definition of pytorch model
+    # @return error info
     def __append_node_def(self, pt_node_def) -> AxfcError:
 
         # Get ir node
@@ -158,7 +197,11 @@ class AxfcPTBuilder(AxfcIRBuilder):
 
         return AxfcError.SUCCESS
     
-    ## This function is used to connect all nodes each other
+    ## This method is used to connect the IR node considering their successors and predecessors.
+    #
+    # @param self this object
+    # @param pt_node_def node_definition of pytorch model
+    # @return error info
     def __connect_node_def(self, pt_node_def) -> AxfcError:
 
         #get ir node

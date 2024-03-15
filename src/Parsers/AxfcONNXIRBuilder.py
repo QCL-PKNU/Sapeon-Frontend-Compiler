@@ -24,7 +24,17 @@ import util.AxfcUtil as _util
 #######################################################################
 # AxfcONNXIRBuilder class
 #######################################################################
+
 class AxfcONNXIRBuilder(AxfcIRBuilder):
+
+    ## @var _onnx_graph
+    # input onnx graph
+
+    ## @var _ir_symtab
+    # symbolic table for IR graph
+
+    ## @var model_input
+    # input onnx model
 
     ##The constructor
     def __init__(self, md):
@@ -32,10 +42,14 @@ class AxfcONNXIRBuilder(AxfcIRBuilder):
 
         self.__onnx_graph = None
         self.__initializer_dict = dict()
-        self._ir_symtab_cnt = dict()
+        self._ir_symtab = dict()
         self.model_input = None
 
-    #Implement abstract method from AxfcIRBuilder
+    ## This method is used to read a onnx graph from an input file in the given path.
+    #
+    # @param self this object
+    # @param path file path of input neural network model
+    # @return error info
     def _read_model_graph(self, path: str):
 
         #write log
@@ -58,7 +72,11 @@ class AxfcONNXIRBuilder(AxfcIRBuilder):
         return AxfcError.SUCCESS
 
 
-    #Implement abstract method from AxfcIRBuilder
+    ## This method is used to construct a navie AIXIR using a onnx graph.
+    #
+    # @param self this object
+    # @param path file path of input network model
+    # @return error info
     def _build_naive_ir(self, path: str) -> AxfcError:
         
         #read onnx graph
@@ -134,7 +152,12 @@ class AxfcONNXIRBuilder(AxfcIRBuilder):
                     
         return AxfcError.SUCCESS
 
-    
+    ## This method is used to append ir_node into ir symbolic table.
+    #
+    # @param self this object
+    # @param onnx_node_def node definition of onnx model
+    # @param op operator
+    # @return error info
     def __append_node_sym_ir(self, onnx_node_def, op = None) -> AxfcError:
         #initializing ir node 
         ir_node         = AxfcIRNode(onnx_node_def)
@@ -149,6 +172,12 @@ class AxfcONNXIRBuilder(AxfcIRBuilder):
 
         return AxfcError.SUCCESS
     
+    ## This method is used to create a new IR node from onnx_node_def and append it to the IR graph.
+    # The successors and predecessors of the IR node is found using the symbolic table.
+    #
+    # @param self this object
+    # @param onnx_node_def node definition of onnx model
+    # @return erro info
     def __append_node_def(self, onnx_node_def) -> AxfcError:
         
         #get ir node
@@ -170,6 +199,11 @@ class AxfcONNXIRBuilder(AxfcIRBuilder):
         
         return AxfcError.SUCCESS
 
+    ## This method is used to connect the IR node considering their successors and predecessors.
+    #
+    # @param self this object
+    # @onnx_node_def node definition of onnx model
+    # @return error info
     def __connect_node_def(self, onnx_node_def) -> AxfcError:
 
         #get ir node

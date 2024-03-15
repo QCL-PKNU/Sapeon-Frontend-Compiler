@@ -314,7 +314,7 @@ class AxfcFrontendCompiler:
 
             pt_writer = AxfcPTWriter(frozen_model_path=path,
                                      aix_graph_path=aix_graph_path,
-                                     kernel_op_path=kernel_path,
+                                    #  kernel_op_path=kernel_path,
                                      ir_graph=self.get_ir_graph(),
                                      md=self.__md)
 

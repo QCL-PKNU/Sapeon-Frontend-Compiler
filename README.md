@@ -77,6 +77,17 @@ This release contains the following issue that needs to be addressed:
 
 * AxfcTFIRBuilder
 * AxfcTFIRTranslator
+* AxfcTFWriter
+
+### **ONNX**
+* AxfcONNXBuilder
+* AxfcONNXIRTranslator
+* AxfcONNXWriter
+
+### **PyTorch**
+* AxfcPTBuilder
+* AxfcPTTranslator
+* AxfcPTWriter
 
 ### **SKT-AIX**
 
@@ -186,6 +197,11 @@ Sanghyeon Lee (sanghyeon@pukyong.ac.kr)
 * Department of AI Convergence, Pukyong National University
 
 Myeongseong Go (gms3089@pukyong.ac.kr)
+
+* Graduated Student
+* Department of AI Convergence, Pukyong National University
+
+Kimsay Pov (povkimsay@gmail.com)
 
 * Graduated Student
 * Department of AI Convergence, Pukyong National University
