@@ -20,34 +20,30 @@ from AxfcGraphWriter import *
 
 class AxfcIRGraph:
 
-    ## @var nodes
-    # a list of nodes consisting this graph
+    """
+    Represents an IR graph with nodes, blocks, and a root node, alongside a symbol table.
+    
+    Attributes:
+        nodes (List): A list of nodes in this graph.
+        blocks (List): A list of blocks contained in this graph.
+        root_node: The output root node of this graph, if any.
+        symtab (Dict): A reference to an IR symbol table for node names.
+    """
 
-    ## @var blocks
-    # a list of blocks that are contained this graph
 
-    ## @var root_node
-    # output root node of this graph
-
-    ## @var symtab
-    # a reference to an IR symbol table
-
-    ## The constructor
-    # @param self this object
-    # @param symtab a symbol table for referring to an IR node using its name
     def __init__(self, symtab: dict):
         self.root_node = None
-
-        # initialize as an empty list
         self.nodes = list()
         self.blocks = list()
         self.symtab = symtab
 
-    ## This method is used to append the given IR node into the graph
-    #
-    # @param self this object
-    # @param ir_node an IR node to be appended
+    
     def append_node(self, ir_node: AxfcIRNode):
+        """Appends the given IR node into the graph.
+
+        Args:
+            ir_node: An IR node to be appended.
+        """
 
         # update the id of the given IR node
         ir_node.id = len(self.nodes)
@@ -58,21 +54,25 @@ class AxfcIRGraph:
 
         self.nodes.append(ir_node)
 
-    ## This method is used to append the given IR block into the graph
-    #
-    # @param self this object
-    # @param ir_block an IR block to be appended
+
     def append_block(self, ir_block: AxfcIRBlock):
+        """Appends the given IR block into the graph.
+
+        Args:
+            ir_block: An IR block to be appended.
+        """
 
         # update the id of the given IR block
         ir_block.id = len(self.blocks)
         self.blocks.append(ir_block)
 
-    ## This method is used to perform the liveness analysis of this graph
-    #
-    # @param self this object
-    # @return error info
+
     def analyse_liveness(self) -> AxfcError:
+        """Performs liveness analysis on the graph.
+
+        Returns:
+            An error code indicating the success or failure of the analysis.
+        """
 
         # perform local liveness analysis for each of the blocks
         for block in self._blocks:
@@ -82,13 +82,20 @@ class AxfcIRGraph:
 
         return AxfcError.SUCCESS
 
-    ## This method is used to visualize the IR graph using Sigma js.
-    # @param self this object
-    # @param file_path a file path to dump out the IR graph
-    # @param ignore_ops a list of operations to be ignored
-    # @return error info
-    def dump_to_file(self, file_path: str, ignore_ops: list) -> AxfcError:
 
+    def dump_to_file(self, file_path: str, ignore_ops: list) -> AxfcError:
+        """Visualizes the IR graph using Sigma js and dumps it to a specified file.
+
+        This method iterates over all nodes and their successors in the graph, adding them
+        to the graph representation unless they are specified to be ignored.
+
+        Args:
+            file_path: The path where the IR graph visualization will be saved.
+            ignore_ops: A list of operation names to be ignored during the graph construction.
+
+        Returns:
+            An error code indicating the success or failure of the operation.
+        """
         graph_writer = AxfcGraphWriter()
 
         # Nested function to ignore edges from a constant node
@@ -116,16 +123,11 @@ class AxfcIRGraph:
 
         return graph_writer.write_file(file_path)
 
-    ## For debugging
+
     def __str__(self):
-        str_buf = ">> IRGraph: \n\n"
+        """Returns a string representation of the AIXIRGraph instance."""
 
-        str_buf += ">> Blocks of IRGraph: \n"
-        for block in self.blocks:
-            str_buf += str(block) + "\n"
+        blocks_str = '\n'.join(str(block) for block in self.blocks)
+        nodes_str = '\n'.join(str(node) for node in self.nodes)
 
-        str_buf += ">> Nodes of IRGraph: \n"
-        for node in self.nodes:
-            str_buf += str(node) + "\n"
-
-        return str_buf
+        return f">> IRGraph: \n\n>> Blocks of IRGraph: \n{blocks_str}\n\n>> Nodes of IRGraph: \n{nodes_str}\n"

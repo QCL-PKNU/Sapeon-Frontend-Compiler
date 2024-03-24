@@ -18,29 +18,20 @@ from AxfcError import *
 #######################################################################
 
 class AxfcIRBlock:
+    """Represents an IR block with various attributes.
 
-    ## @var id
-    # block ID
-
-    ## @var nodes
-    # a list of nodes that make up this block
-
-    ## @var live_in
-    # a list of live-in node IDs
-
-    ## @var live_out
-    # a list of live-out node IDs
-
-    ## @var is_aixh_support
-    # indicate whether this node can be executed in hardware-manner
-
-    ## @var aixh_profit
-    # specify the profit to be obtained by using AIXH
-
-    ## @var aix_graph
-    # an AIX graph emitted from this IR block
-
-    ## The constructor
+    Attributes:
+        id (int): Block ID.
+        node`s (list): A list of nodes that make up this block.
+        live_in (set): A set of live-in node IDs.
+        live_out (set): A set of live-out node IDs.
+        is_aixh_support (bool): Indicates whether this node can be executed in a hardware manner.
+        aixh_profit (int): Specifies the profit to be obtained by using AIXH.
+        aix_graph: An AIX graph emitted from this IR block.
+        input_nodes (list): Input node of the IR block; can be multiple.
+        output_node: Outpu`t node of the IR block; must be only one.
+    """
+    
     def __init__(self):
         self.id = 0
         self.nodes = list()
@@ -91,11 +82,13 @@ class AxfcIRBlock:
 
         return AxfcError.SUCCESS
 
-    ## This method is used to find the input and output nodes of this block.
-    #
-    # @param self this object
-    # @return error info.
+    
     def __analyse_inout(self) -> AxfcError:
+        """Find the input and output nodes of this block.
+
+        Returns:
+            AxfcError: Error code indicating the success or failure of the operation.
+        """
         # logging.info("AxfcIRBlock:analyse_inout")
 
         # check if the block is ready to be analyzed
@@ -104,12 +97,15 @@ class AxfcIRBlock:
 
         return AxfcError.SUCCESS
 
-    ## This method is used to calculate the profit that we can achieve by
-    #  accelerating this block in hardware-manner.
-    #
-    # @param self this object
-    # @return error info
+
     def analyze_profit(self) -> AxfcError:
+        """
+        Calculates the potential profit of accelerating this block with hardware support. 
+        Profit is defined as the cumulative benefit of executing nodes within this block on hardware.
+
+        Returns:
+            AxfcError: Error code indicating the success or failure of the operation.
+        """
         # logging.info("AxfcIRBlock:analyze_profit")
 
         # total profit
@@ -132,31 +128,22 @@ class AxfcIRBlock:
         self.aixh_profit = profit
         return AxfcError.SUCCESS
 
-    ## For debugging
+
     def __str__(self):
-        str_buf = ">> IR Block: " + str(self.id)
-        str_buf += "( # of nodes: " + str(len(self.nodes)) + ")\n"
+        """Returns a string representation of the AIXIRBlock instance."""
 
-        str_buf += ">> Nodes: ["
-        for node in self.nodes:
-            if node.is_input:
-                str_buf += "*"
-            if node.is_output:
-                str_buf += "+"
-            str_buf += str(node.op) + "(" + str(node.id) + "), "
-        str_buf += "]\n"
+        nodes_str = ", ".join(
+            f"{'*' if node.is_input else ''}{'+' if node.is_output else ''}{node.op}({node.id})"
+            for node in self.nodes
+        )
 
-        str_buf += ">> Live-in: ["
-        for live_in in self.live_in:
-            str_buf += str(live_in) + ", "
-        str_buf += "]\n"
+        live_in_str = ", ".join(str(live_in) for live_in in self.live_in)
+        live_out_str = ", ".join(str(live_out) for live_out in self.live_out)
 
-        str_buf += ">> Live-out: ["
-        for live_out in self.live_out:
-            str_buf += str(live_out) + ", "
-        str_buf += "]\n"
-
-        str_buf += ">> Attributes [aixh_profit: " + str(self.aixh_profit)
-        str_buf += ", aixh_support: " + str(self.is_aixh_support) + "]\n"
-
-        return str_buf
+        return (
+            f">> IR Block: {self.id} ( # of nodes: {len(self.nodes)})\n"
+            f">> Nodes: [{nodes_str}]\n"
+            f">> Live-in: [{live_in_str}]\n"
+            f">> Live-out: [{live_out_str}]\n"
+            f">> Attributes [aixh_profit: {self.aixh_profit}, aixh_support: {self.is_aixh_support}]\n"
+        )

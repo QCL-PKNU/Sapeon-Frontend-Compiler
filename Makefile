@@ -46,8 +46,8 @@ OPTS=-O0 -ggdb3 -g3
 endif
 
 ifeq ($(MODEL_TYPE), 1)
-	MODEL= $(ASSETS)/mobilenet_v1_1.0_224_frozen.pb
-	MD= $(ASSETS)/retinanet_v1_aix_tf.md
+	MODEL= tst/mobilenet_v1_1.0_224_frozen.pb
+	MD= tst/retinanet_v1_aix_tf.md
 else
 	MODEL = tst/resnet50.pt
 	MD= tst/torch_sample.md

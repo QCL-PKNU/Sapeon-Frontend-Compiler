@@ -13,6 +13,7 @@
 import sys
 sys.path.append('/home/sanghyeon/repos/aix-project/skt-aix-frontend-compiler/src')
 
+from abc import ABC, abstractmethod
 from typing import List, Tuple
 from AxfcIRGraph import *
 from AxfcMachineDesc import AxfcMachineDesc
@@ -23,38 +24,37 @@ from AxfcError import AxfcError
 # AxfcIRBuilder class
 #######################################################################
 
-class AxfcIRBuilder:
+class AxfcIRBuilder(ABC):
+    """
+    A builder class for creating an Intermediate Representation (IR) graph
+    from a given machine description.
 
-    ## @var _md
-    # AIX machine description
+    Attributes:
+        _md: A reference to the AIX machine description.
+        _ir_graph: The resulting AIXIR graph built from the input.
+        _ir_symtab: A symbol table for the IR graph.
+    """
 
-    ## @var _tf_graph
-    # input Tensorflow graph
 
-    ## @var _ir_graph
-    # output AIXIR graph
-
-    ## @var _ir_symtab
-    # symbol table for IR graph
-
-    ## The constructor
     def __init__(self, md):
         self._md = md
-        #remove _tf_graph from AxfcIRBuilder
-        #self._tf_graph = None 
         self._ir_graph = None
         self._ir_symtab = None
 
-    ## This method is used to build AXI IR.
-    #  1) it builds a naive IR using the given input model.
-    #  2) it checks the IR nodes to be executed in hardware-manner.
-    #  3) it finds AIXH IR blocks. each block consist of several AIXH IR nodes.
-    #  4) it performs the liveness analysis for resolving the input and output of the blocks.
-    #
-    #  @param self this object
-    #  @param path input path of a frozen model
-    #  @return error info and an AxfcIRGraph object
+
     def build_ir(self, path: str) -> {AxfcError, AxfcIRGraph}:
+        """
+        Builds the AIX IR from a frozen model located at the specified path.
+        It follows several steps including creating a naive IR, identifying hardware-supported blocks,
+        and performing liveness analysis to resolve inputs and outputs.
+
+        Args:
+            path (str): The path to the frozen model file.
+
+        Returns:
+            Tuple[AxfcError, AxfcIRGraph]: A tuple containing an error code and the resulting IR graph.
+                                           The IR graph will be None if an error occurred.
+        """
         logging.info("AxfcIRBuilder:build_ir - path: %s", path)
 
         # create a new symbol table and IR graph
@@ -92,16 +92,19 @@ class AxfcIRBuilder:
 
         return AxfcError.SUCCESS, self._ir_graph
 
-    ## This method is used to find AIXH blocks comprised of AIXH-supported nodes.
-    #  We employ a maximal munching scheme to find the longest successive AIXH-supported nodes and
-    #  build up a block with the nodes.
-    #
-    #  @param self this object
-    #  @return error info
+
     def __find_aixh_blocks(self) -> AxfcError:
+        """
+        This method is used to find AIXH blocks comprised of AIXH-supported nodes. We employ a maximal munching 
+        scheme to find the longest successive AIXH-supported nodes and build up a block with the nodes.
+
+        Returns:
+            AxfcError: An error code indicating the success of the block evaluation.
+        """
         logging.info("AxfcIRBuilder:find_aixh_blocks")
 
         if self._ir_graph is None:
+            logging.warning("IR graph is invalid or not initialized.")
             return AxfcError.INVALID_IR_GRAPH
 
         # **Leanghok - The warning sections has been implemented
@@ -168,16 +171,19 @@ class AxfcIRBuilder:
         return AxfcError.SUCCESS
     
     
-    ## This method is used to perform the block evaluation by checking all nodes
-    #  and remove any node that fall under the block constraints and effect 
-    #  the transformation of the block to aix graph
-    #
-    #  @param self this object
-    #  @param ir_block AxfcIRBlock type
-    #  @return error info
     def __perform_block_eval(self, ir_block: AxfcIRBlock) -> AxfcError:
-        
+        """
+        Performs block evaluation by identifying and removing nodes that fall under block constraints,
+        affecting the transformation of the block into an AIX graph.
 
+        Args:
+            ir_block (AxfcIRBlock): The IR block to be evaluated.
+
+        Returns:
+            AxfcError: An error code indicating the success of the block evaluation.
+        """
+
+        # Find the input nodes of the block
         input_nodes = self.__find_block_input_node(ir_block)
 
         node_to_remove = []
@@ -192,36 +198,37 @@ class AxfcIRBuilder:
         
         return AxfcError.SUCCESS
 
-    ## This method is used to perform successors removing of a specific node
-    #  that successor must be a node of the block 
-    #
-    #  @param self this object
-    #  @param ir_node AxfcIRNode type
-    #  @param ir_block AxfcIRBlock type
+    
     def __remove_succ_from_block(self, ir_node: AxfcIRNode, ir_block: AxfcIRBlock):
+        """Recursively removes a node and its successors from the specified block if they belong to that block.
+
+        Args:
+            ir_node (AxfcIRNode): The node to start removal from.
+            ir_block (AxfcIRBlock): The block from which nodes will be removed.
+            visited (set): Set of already visited nodes to prevent infinite recursion in cyclic graphs.
+        """
         
-        #remove node if it exists in block
+        # Remove node if it exists in block
         if ir_node in ir_block.nodes:
-            #Set eval flag to fail so can revaluate for another block
-            ir_node.eval_flag = False
+            ir_node.eval_flag = False # For reevaluation
             ir_block.nodes.remove(ir_node)
         
         for succ_node in ir_node.succs:
             if succ_node in ir_block.nodes:
                 self.__remove_succ_from_block(succ_node, ir_block)
 
-    ## This method is used to get the output nodes of the block as a list
-    #  the output is defined by if the node is connected to another node outside 
-    #  then it is define as the output of the block since the another node outside 
-    #  of the block requires that node as an input
-    #
-    #  @param self this object
-    #  @param ir_block AxfcIRBlock type
-    #  @param set_input Boolean type is used as conditonal operation whether or not to 
-    #  set the node as an output node
-    #  @return list of AxfcIRNode which refers block's output nodes
-    def __get_block_output_node_list(self, ir_block: AxfcIRBlock, set_inout = False):
 
+    def __get_block_output_node_list(self, ir_block: AxfcIRBlock, set_inout = False):
+        """Retrieves a list of output nodes from the specified IR block. An output node is defined as a node
+        whose successor is outside the block or requires the node as an input.
+
+        Args:
+            ir_block (AxfcIRBlock): The IR block from which to retrieve output nodes.
+            set_output (bool): If True, marks each node identified as an output node. Defaults to False.
+
+        Returns:
+            List[AxfcIRNode]: A list of nodes that are considered outputs of the block.
+        """
         output_node_list = []
 
         for node in reversed(ir_block.nodes):
@@ -237,16 +244,19 @@ class AxfcIRBuilder:
         
         return output_node_list
     
-    ## This method is used to get the input nodes of the the block as a list
-    #  the input node is defined by if the node in the block has any predecessor
-    #  outside of the block.
-    #
-    #  @param self this object
-    #  @param ir_block AxfcIRBlock type
-    #  @param set_input Boolean type is used as conditonal operation whether or not to 
-    #  set the node as an input node
-    #  @return list of AxfcIRNode which refers block's input nodes
+    
     def __find_block_input_node(self, ir_block: AxfcIRBlock, set_inout = False) -> list:
+        """
+        Identifies the input nodes of the given block. An input node is defined as a node
+        within the block that has at least one predecessor outside of the block.
+
+        Args:
+            ir_block (AxfcIRBlock): The block to analyze.
+            mark_as_input (bool): If True, marks identified nodes as input nodes.
+
+        Returns:
+            list: A list of AxfcIRNode instances representing the block's input nodes.
+        """
 
         # **Leanghok - using eval_flag here might cause error on finding block
         # Temporary set evaluation flag as False
@@ -266,14 +276,21 @@ class AxfcIRBuilder:
         
         return input_node_list
     
-    ## This method is used to identify the node inputs/preds as if 
-    #  it is in the block or outside of the block
-    #
-    #  @param self this object
-    #  @param ir_node AxfcIRNode type
-    #  @param ir_block AxfcIRBlock type
-    #  @return error info, list of AxfcIRNode which refers node's input
+
     def __find_node_input(self, ir_node:AxfcIRNode, ir_block: AxfcIRBlock):
+        """
+        Identifies the predecessors of a given node to determine if they are
+        inside or outside of the specified block. Preds outside the block
+        are considered inputs to the block.
+
+        Args:
+            ir_node (AxfcIRNode): The node whose predecessors are to be checked.
+            ir_block (AxfcIRBlock): The block against which the predecessors are checked.
+
+        Returns:
+            (AxfcError, list of AxfcIRNode): Tuple containing an error code and a list
+            of nodes that are predecessors of `ir_node` and outside of `ir_block`.
+        """
         
         if not ir_node.eval_flag:
             ir_node.eval_flag = True
@@ -304,15 +321,19 @@ class AxfcIRBuilder:
         return AxfcError.SUCCESS, pred_node_inputs
             
     
-    ## This method performs maximal munch algorithm to
-    #  recursively find the longest successive AIXH-supported nodes.
-    #
-    # @param self this object
-    # @param ir_node a start node to perform maximal munching
-    # @param an IR block of the successive IR nodes supported by the AIX hardware
-    # @return error info
     def __perform_maximal_munch(self, ir_node: AxfcIRNode, ir_block: AxfcIRBlock) -> AxfcError:
-        # logging.info("AxfcIRBuilder:perform_maximal_munch")
+        """
+        Performs maximal munch algorithm to recursively find and group the longest sequence of 
+        successive AIXH-supported nodes starting from a given node.
+
+        Args:
+            ir_node (AxfcIRNode): The start node to perform maximal munching from.
+            ir_block (AxfcIRBlock): The IR block to which successive AIXH-supported nodes are added.
+
+        Returns:
+            AxfcError: Status of the maximal munching operation.
+        """
+        logging.info("AxfcIRBuilder:perform_maximal_munch")
 
         if ir_node is None or ir_block is None:
             return AxfcError.INVALID_PARAMETER
@@ -349,27 +370,20 @@ class AxfcIRBuilder:
             self.__perform_maximal_munch(succ, ir_block)
 
         return AxfcError.SUCCESS
+    
+    
+    @abstractmethod
+    def _read_model_graph(self, path: str):
+        """Read a grpah from input file of given path."""
+        return NotImplementedError()
+    
+
+    @abstractmethod
+    def _build_naive_ir(self, path: str):
+        """Constructs a naive Intermediate Representation (IR) using graph from AI model."""
+        return NotImplementedError()
+    
 
     ## For debugging
     def __str__(self):
         pass
-
-    #######################################################################
-    ## Abstract methods
-    #######################################################################
-
-    ## This method is used to read a tensorflow graph from an input file in the given path.
-    #
-    # @param self this object
-    # @param path file path of input network model
-    # @return error info
-    def _read_model_graph(self, path: str):
-        return NotImplementedError()
-
-    ## This method is used to construct a naive AIXIR using a tensorflow graph.
-    #
-    # @param self this object
-    # @param path file path of input network model
-    # @return error info
-    def _build_naive_ir(self, path: str):
-        return NotImplementedError()

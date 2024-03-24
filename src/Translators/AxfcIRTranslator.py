@@ -13,11 +13,10 @@
 import sys
 sys.path.append("/home/sanghyeon/repos/aix-project/skt-aix-frontend-compiler/src/")
 
+from abc import ABC, abstractmethod
 from aixh_pb2 import *
 from AxfcIRGraph import *
 from AxfcMachineDesc import *
-
-
 
 #######################################################################
 # AIXInputType enum class
@@ -38,26 +37,18 @@ class AIXTensorType(enum.Enum):
 #######################################################################
 
 class AxfcIRTranslator:
+    """
+    A class for translating input models into AIXGraphs based on AIX machine descriptions.
 
-    ## @var _md
-    # AIX machine description
+    Attributes:
+        _md: AIX machine description.
+        _calib_data: Calibration data for the translation process.
+        aix_graphs: A list of AIXGraphs translated from an input model.
+        _aix_graph: The current AIX graph being translated.
+        _ir_symtab: A symbol table of pairs of an IR node's name and itself.
+        __emit_aix_layer_tbl: A dictionary of pairs of AIXLayerType and its AIX layer emission method.
+    """
 
-    ## @var _calib_data
-    # calibration data
-
-    ## @var aix_graphs
-    # a list of AIXGraphs translated from an input model
-
-    ## @var _aix_graph
-    # the current AIX graph being translated
-
-    ## @var _ir_symtab
-    # a symbol table of pairs of an IR node's name and itself
-
-    ## @var __emit_aix_layer_tbl
-    # a dictionary of pairs of AIXLayerType and its AIX layer emission method
-
-    ## The constructor
     def __init__(self, md):
         self._md = md
         self.aix_graphs = None
@@ -78,28 +69,26 @@ class AxfcIRTranslator:
         }
 
 
-    ## This method translates IR blocks of the given IR graph into AIXGraphs and
-    #  return them.
-    #
-    # @param self this object
-    # @param ir_graph input IR graph
-    # @param calib_data external calibration data
-    # @return error info and a list of AIXGraphs
     def emit_aixh_graphs(self, ir_graph: AxfcIRGraph, calib_data: dict) -> {AxfcError, list}:
+        """Translates IR blocks into AIXGraphs using provided calibration data.
+
+        Args:
+            ir_graph (AxfcIRGraph): The input IR graph containing blocks to be translated.
+            calib_data (dict): External calibration data for optimizing the translation.
+
+        Returns:
+            Tuple[AxfcError, List[AIXGraph]]: An error code and a list of generated AIXGraphs.
+        """
         logging.info("AxfcIRTranslator:emit_aixh_graph")
 
-        # get the symbol table
+        # Get symbol table and calibration data
         self._ir_symtab = ir_graph.symtab
-
-        # set the calibration data
         self._calib_data = calib_data
-
-        # create a new list of AIX graphs to output
+        
         self.aix_graphs = list()
         
-        # translate all the blocks into AIX graphs
+        # Iterate over IR block and translate them into AIXGraphs
         for ir_block in ir_graph.blocks:
-            # ignore blocks not supported by hardware
             if not ir_block.is_aixh_support:
                 continue
 
@@ -120,11 +109,16 @@ class AxfcIRTranslator:
 
         return AxfcError.SUCCESS, self.aix_graphs
 
-    ## This method is used to translate an IR block into an AIXGraph.
-    # @param self this object
-    # @param ir_block input IR block
-    # @return error info and an output AIXGraph
+
     def __emit_aixh_block(self, ir_block: AxfcIRBlock) -> {AxfcError, AIXGraph}:
+        """Translates an IR block into an AIXGraph.
+
+        Args:
+            ir_block (AxfcIRBlock): The IR block to be translated.
+
+        Returns:
+            Tuple[AxfcError, AIXGraph]: Error code and the resulting AIXGraph object.
+        """
         logging.info("AxfcIRTranslator:__emit_aixh_block - block %d", ir_block.id)
 
         # create a new AIX graph to output
@@ -156,23 +150,25 @@ class AxfcIRTranslator:
 
         return AxfcError.SUCCESS, self._aix_graph
 
-    ## This method is used to translate an IR node into an AIXLayer object.
-    #
-    # @param self this object
-    # @param ir_node input IR node to be translated
-    # @return error info and an output AIXLayer object
+
     def __emit_aixh_node(self, ir_node: AxfcIRNode, ir_block: AxfcIRBlock) -> {AxfcError, AIXLayer}:
+        """Translates an IR node into an AIXLayer object.
+
+        Args:
+            ir_node (AxfcIRNode): The IR node to be translated.
+            ir_block (AxfcIRBlock): The IR block containing the node.
+
+        Returns:
+            Tuple[AxfcError, AIXLayer]: Error code and the resulting AIXLayer object.
+        """
+
         # logging.info("AxfcTFIRTranslator:_emit_aixh_node - node %d", ir_node.layer_id)
 
-        # get the operation information specified in the machine description
         layer_info = self._md.get_layer_info(ir_node.op)
-
-        # create a new AIX layer
         aix_layer = AIXLayer()
-
-        # layer ID
         aix_layer.id = ir_node.layer_id
         aix_layer.name = ir_node.name
+
 
         # layer types
         if not layer_info.is_conv:
@@ -251,39 +247,42 @@ class AxfcIRTranslator:
 
         return AxfcError.SUCCESS, aix_layer
 
-    ## This method is used to return a list of already emitted input nodes.
-    #  If there are input nodes that have not translated yet,
-    #  we perform __emit_aixh_node method repeatedly to emit them all.
-    #
-    # @param self this object
-    # @param ir_node current node to emit its input nodes
-    # @return a list of emitted input nodes
+
     def _get_emitted_input_nodes(self, ir_node: AxfcIRNode) -> {AxfcError, list}:
+        """
+        Retrieves a list of already emitted input nodes of a given IR node. If there are input nodes 
+        that haven't been translated yet, they are emitted using the __emit_aixh_node method.
+
+        Args:
+            ir_node (AxfcIRNode): The IR node whose input nodes are to be emitted.
+
+        Returns:
+            Tuple[AxfcError, List[AxfcIRNode]]: Error code and a list of emitted input nodes.
+        """
         # logging.info("AxfcTFIRTranslator:_get_emitted_input_nodes - node %d", ir_node.layer_id)
 
-        # input nodes
         input_nodes = list()
 
         for input_node in ir_node.preds:
-
+            # Skip nodes not supported by AIX hardware
             if not input_node.is_aixh_support:
                 input_nodes.append(input_node)
                 continue
 
-            # emit the nodes that have not emitted yet
+            # Emits the nodes that haven't been translated yet
             if input_node.aix_layer is None:
                 err, aix_layer = self.__emit_aixh_node(input_node)
-
                 if err != AxfcError.SUCCESS:
                     logging.warning("AxfcIRTranslator: _get_input_aix_layers - %s", err)
                     return err, None
 
                 self._aix_graph.layer.append(aix_layer)
 
-            # append the emitted node into a list
+            # Includes the emitted node into a list
             input_nodes.append(input_node)
 
         return AxfcError.SUCCESS, input_nodes
+
 
     ## For debugging
     def __str__(self):

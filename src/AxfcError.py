@@ -59,3 +59,6 @@ class AxfcError(enum.Enum):
     
     # Valdation
     INVALID_NODE = 30
+
+    # I/O
+    READ_FILE_ERROR = 31

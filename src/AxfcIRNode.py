@@ -4,49 +4,26 @@
 
 class AxfcIRNode:
 
-    ## @var id
-    # node ID
+    """
+    Represents a node within an Axfc Intermediate Representation (IR) Graph.
 
-    ## @var name
-    # node name
+    Attributes:
+        id (int): ID of the node.
+        name (str): Name of the node.
+        layer_id (int): ID of the layer.
+        op (str): Opteration of the node.
+        succs (List[AxfcIRNode]): List of successor nodes.
+        preds (List[AxfcIRNode]): List of predecessor nodes.
+        node_def: Reference to the input node object definition.
+        is_aixh_support (bool): Indicates if the node can be executed in hardware.
+        is_input (bool): Indicates if the node is an input node.
+        is_output (bool): Indicates if the node is an output node.
+        aixh_profit (int): Profit obtained by using hardware acceleration (AIXH).
+        block_ref: Reference to the IR block that contains this node.
+        eval_flag (bool): Indicates if the node has been evaluated for maximal munching.
+        aix_layer: Reference to the AIX layer derived from this node.
+    """
 
-    ## @var layer_id
-    # node layer ID
-
-    ## @var op
-    # operation of this node
-
-    ## @var succs
-    # node a list of successor nodes
-
-    ## @var preds
-    # node a list of predecessor nodes
-
-    ## @var node_def
-    # node a reference to an input node object
-
-    ## @var is_aixh_support
-    # indicate whether this node can be executed in hardware-manner
-
-    ## @var is_input
-    # indicate whether this node is an input node or not
-
-    ## @var is_output
-    # indicate whether this node is an output node or not
-
-    ## @var aixh_profit
-    # specify the profit to be obtained by using AIXH
-
-    ## @var block_ref
-    # reference to the IR block that contains this node
-
-    ## @var eval_flag
-    # indicate whether this node has been already evaluated or not for maximal munching
-
-    ## @var aix_layer
-    # reference to the AIX layer derived from this node
-
-    ## The constructor
     def __init__(self, node_def):
         self.id = 0
         self.name = ""
@@ -66,12 +43,13 @@ class AxfcIRNode:
         self.aix_layer = None
         self.op        = None
 
-    ## This method is used to calculate and return the profit that we can get
-    #  by accelerating the operation of this node in hardware-manner.
-    #
-    # @param self this object
-    # @return the calculated profit
+
     def analyze_profit(self) -> int:
+        """Calculates and returns the profit of accelerating this node's operation in hardware.
+
+        Returns:
+            The calculated profit for hardware acceleration.
+        """
 
         if self.node_def is None:
             return 0
@@ -82,17 +60,25 @@ class AxfcIRNode:
 
         return self.aixh_profit
 
-    ## This methods is used to compare id with equal (==) for using Set
-    # 
-    # @param self this object
-    # @param other another AxfcIRNode object
-    def __eq__(self, other):
 
-        # check other and self type 
+
+    def __eq__(self, other):
+        """Check equality based on the 'id' attribute of two AxfcIRNode instances.
+
+        This mothod check if other has the same type of AIXIRNode as current object.
+
+        Args:
+            other (AIXIRNode): Another object of AIXIRNode.
+
+        Returns:
+            value (bool): True if the instances have the same 'id', False otherwise. 
+        """
+
         if not isinstance(other, type(self)):
             return NotImplemented
 
         return self.id == other.id
+    
 
     ## This methods make this object become hasable by id
     # 
@@ -109,24 +95,19 @@ class AxfcIRNode:
         self.succs.clear()
         self.node_def = None
 
-    ## For debugging
+
     def __str__(self):
-        str_buf = ">> IR Node: " + str(self.id) + ", " + self.op + "\n"
-        str_buf += ">> Name: " + self.name + "\n"
-        str_buf += ">> Pred: ["
-        for pred in self.preds:
-            str_buf += str(pred.id) + ", "
-        str_buf += "]\n"
+        """Returns a string representation of the AIXIRNode instance."""
+        
+        pred_ids = ', '.join(str(pred.id) for pred in self.preds)
+        succ_ids = ', '.join(str(succ.id) for succ in self.succs)
 
-        str_buf += ">> Succ: ["
-        for succ in self.succs:
-            str_buf += str(succ.id) + ", "
-        str_buf += "]\n"
-
-        str_buf += ">> Attributes ["
-        str_buf += "is_input: " + str(self.is_input)
-        str_buf += ", is_output: " + str(self.is_output)
-        str_buf += ", aixh_profit: " + str(self.aixh_profit)
-        str_buf += ", aixh_support: " + str(self.is_aixh_support) + "]\n"
-
-        return str_buf
+        return (f">> IR Node: {self.id}, {self.op}\n"
+                f">> Name: {self.name}\n"
+                f">> Pred: [{pred_ids}]\n"
+                f">> Succ: [{succ_ids}]\n"
+                f">> Attributes ["
+                f"is_input: {self.is_input}, "
+                f"is_output: {self.is_output}, "
+                f"aixh_profit: {self.aixh_profit}, "
+                f"aixh_support: {self.is_aixh_support}]")

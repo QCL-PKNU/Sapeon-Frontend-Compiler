@@ -35,20 +35,22 @@ def torch_randn(shape):
 # AxfcPTBuilder class
 #######################################################################
 
-class AxfcPTBuilder(AxfcIRBuilder):
+class AxfcPTIRBuilder(AxfcIRBuilder):
+    """
+    Extends the AxfcIRBuilder to provide functionality for building an Intermediate Representation (IR)
+    specifically from a PyTorch model. This class encapsulates the process of parsing PyTorch models
+    and translating them into a format suitable for AIX hardware acceleration.
 
-    ## @var _pt_model
-    # input pytorch model
-    
-    ## @var _pt_graph
-    # input pytorch graph
+    Attributes:
+        _pt_model: A Pytorch model.
+        _pt_graph: A pytorch graph.
+    """
 
 
-    #The constructure
     def __init__(self, md):
         super().__init__(md)
         self.__pt_model = None  
-        self.__pt_graph = None  
+        self.__pt_graph = None 
 
 
     ## This method is used to find a matched operator from a node of pytorch graph.
@@ -73,7 +75,6 @@ class AxfcPTBuilder(AxfcIRBuilder):
     # @param model_path pytorch model path
     # @return error info
     def _read_model_graph(self, model_path: str) -> AxfcError:
-        #write log
         logging.info("AxfcPyTorchBuilder:read_model_graph - path: %s", model_path)
 
         #load pytorch model
@@ -91,35 +92,29 @@ class AxfcPTBuilder(AxfcIRBuilder):
         return AxfcError.SUCCESS
     
 
-    ## This method is used to construct a navie AIXIR using a pytorch graph.
-    #
-    # @param self this object
-    # @param model_path pytorch model path
-    # @return error info
     def _build_naive_ir(self, model_path: str) -> AxfcError:
+        """Construct a naive AIX IR from a Pytorch Graph
 
-        #read pytorch graph
+        Args:
+            model_path (str): A path to pytorch model.
+        """
+
+        # Read model graph
         err = self._read_model_graph(model_path)
-
         if err is not AxfcError.SUCCESS:
             return err
         
-        #translate from PyTorch graph to AIXIR
-        pt_graph_def: torch.fx.graph = self.__pt_graph
-
-        if pt_graph_def is None:
-            #sholud respond INVALID_PT_GRAPH
+        graph_def: torch.fx.graph = self.__pt_graph
+        if graph_def is None:
             return AxfcError.INVALID_IR_GRAPH
         
         # Build ir node symbolic table
-        for pt_node_def in pt_graph_def.nodes:
+        for pt_node_def in graph_def.nodes:
             if pt_node_def.op == "placeholder" or pt_node_def.op == "get_attr":
                 # append placeholder nodes into ir_sym
                 # placeholder is the input of model
                 
                 # NOTE 'placeholder' is real input
-                err = self.__append_node_sym_ir(pt_node_def, op = "Input")
-
                 err = self.__append_node_sym_ir(pt_node_def, op = "Input")
 
             elif pt_node_def.op == "output":
@@ -141,12 +136,14 @@ class AxfcPTBuilder(AxfcIRBuilder):
             
         ## Connect node pred/succ
         # Pred includes the input (weight, biase, etc) and previous node
-        for pt_node_def in pt_graph_def.nodes:
+        for pt_node_def in graph_def.nodes:
             err = self.__connect_node_def(pt_node_def)
             if err is not AxfcError.SUCCESS: 
                 return err
 
         return AxfcError.SUCCESS
+    
+
 
     ## This method is used to append ir_node into ir symbolic table.
     #
@@ -197,35 +194,38 @@ class AxfcPTBuilder(AxfcIRBuilder):
 
         return AxfcError.SUCCESS
     
-    ## This method is used to connect the IR node considering their successors and predecessors.
-    #
-    # @param self this object
-    # @param pt_node_def node_definition of pytorch model
-    # @return error info
-    def __connect_node_def(self, pt_node_def) -> AxfcError:
+    
+    def __connect_node_def(self, node_def) -> AxfcError:
+        """
+        Connects an IR node to its predecessors and successors. Nodes of types 'Const', 'Input',
+        and 'Output' do not require connections.
 
-        #get ir node
-        ir_node = self._ir_symtab.get(pt_node_def.name)
+        Args:
+            node_def: The definition of the node from the PyTorch model.
+        Returns:
+            AxfcError: Error code indicating the success or failure of the operation.
+        """
 
-        if not ir_node:
-            logging.error("AxfcPyTorchIRBuilder:_connect_node_def ir_node: %s not found", pt_node_def.name)
+        # Attempt to retrieve the corresponding IR node
+        ir_node = self._ir_symtab.get(node_def.name)
+        if ir_node is None:
+            logging.error("AxfcPyTorchIRBuilder:_connect_node_def ir_node: %s not found", node_def.name)            
 
-        #Const and input are not required to connect
+        # Connect the current node with its predecessors and successors
+        # Skip connection logic for 'Const', 'Input', and 'Output' nodes
         if ir_node.op != None and ir_node.op not in ["Input", "Output", "Const"]:
-            for pred_name in pt_node_def.all_input_nodes:
-                #get ir node
+            for pred_name in node_def.all_input_nodes:
+                # Get IR node
                 pred_node = self._ir_symtab.get(pred_name.name)
                 if not pred_node:
-                    logging.error("AxfcPyTorchIRBuilder:_connect_node_def ir_node: %s pred not found", pt_node_def.name)
+                    logging.error("AxfcPyTorchIRBuilder:_connect_node_def ir_node: %s pred not found", node_def.name)
                     return AxfcError.PRED_NODE_NOT_FOUND
                 
-                # Succs denotes the next node
+                # Establish connections
                 pred_node.succs.append(ir_node)
-
-                # Preds denotes the previous node
                 ir_node.preds.append(pred_node)
 
-        #add node to ir graph
+        # Successfully add the node to the IR graph
         self._ir_graph.append_node(ir_node)
                     
         return AxfcError.SUCCESS

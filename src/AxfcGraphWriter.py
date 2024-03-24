@@ -22,22 +22,18 @@ from AxfcIRNode import *
 #######################################################################
 class AxfcGraphWriter:
 
-    ## @var __edge_id
-    # Edge's ID (auto increase)
+    """
+    Manages the construction and representation of a graph, tracking nodes, edges, 
+    and their respective positions.
 
-    ## @var __graph
-    # dictionary of edges and nodes
+    Attributes:
+        __edge_id (int): Auto-incrementing identifier for each edge.
+        __graph (dict): Stores 'edges' and 'nodes' in separate lists.
+        __nodes (set): A set of unique nodes in the graph.
+        __x_axis (int): Tracks the x-axis position for node placement.
+        __y_axis (int): Tracks the y-axis position for node placement.
+    """
 
-    ## @var __nodes
-    # set of nodes
-
-    ## @var __x_axis
-    # x axis of edges
-
-    ## @var __y_axis
-    # y axis of edges
-
-    ## The constructor
     def __init__(self):
         self.__edge_id = 0
         self.__graph = {'edges': [], 'nodes': []}
@@ -45,27 +41,28 @@ class AxfcGraphWriter:
         self.__x_axis = 0
         self.__y_axis = 0
 
-    ## This method is used insert the edges of node
-    #
-    # @param self this object
-    # @param source_node_id node's id for source 
-    # @param target_node_id node's id for target
-    def add_edge(self, source_node_id, target_node_id):
 
-        # append to source and target id to __graph
+    def add_edge(self, source_node_id, target_node_id):
+        """Inserts an edge between two nodes in the graph.
+
+        Args:
+            source_node_id: The ID of the source node.
+            target_node_id: The ID of the target node.
+        """
         self.__graph["edges"].append({
             'id': self.__edge_id,
             'source': source_node_id,
             'target': target_node_id
         })
-
         self.__edge_id += 1
 
-    ## This method is used insert the node
-    #
-    # @param self this object
-    # @param ir_node AxfcIRNode node
+
     def add_node(self, ir_node: AxfcIRNode):
+        """Inserts a node into the graph if it's not already present.
+
+        Args:
+            ir_node: An instance of AxfcIRNode to be added to the graph.
+        """
 
         # check if new node is not dubplicate
         # then add this node into __graph
@@ -87,17 +84,22 @@ class AxfcGraphWriter:
 
             self.__nodes.add(ir_node)
 
-    ## This method is used to write the edges and nodes to Sigma js json format
-    #
-    # @param self this object
-    # @param file_path file path for dumping the IR graph
-    # @return error info
+
     def write_file(self, file_path: str) -> AxfcError:
+        """Writes the edges and nodes to a file in Sigma.js JSON format.
+
+        Args:
+            file_path: The path to the file where the IR graph should be dumped.
+
+        Returns:
+            AxfcError: Error code indicating the success or failure of the operation.
+        """
         try:
             with open(file_path, 'w') as fd:
-                json.dump(self.__graph, fd)
+                json.dump(self.__graph, fd, indent=4)
         except IOError as e:
             logging.warning("AxfcGraphWriter: dump_graph - %s", str(e))
             return AxfcError.DUMP_IR_GRAPH_ERROR
-
+        
+        logging.info("IR graph successfully dumped to %s", file_path)
         return AxfcError.SUCCESS
