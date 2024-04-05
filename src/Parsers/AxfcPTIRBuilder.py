@@ -36,10 +36,10 @@ def torch_randn(shape):
 #######################################################################
 
 class AxfcPTIRBuilder(AxfcIRBuilder):
-    """
-    Extends the AxfcIRBuilder to provide functionality for building an Intermediate Representation (IR)
-    specifically from a PyTorch model. This class encapsulates the process of parsing PyTorch models
-    and translating them into a format suitable for AIX hardware acceleration.
+    """Pytorch IR building class.
+
+    In this class, computation graph is retrieved from the Pytorch model
+    and being used for building Intermedaite Representation.
 
     Attributes:
         _pt_model: A Pytorch model.
@@ -53,14 +53,18 @@ class AxfcPTIRBuilder(AxfcIRBuilder):
         self.__pt_graph = None 
 
 
-    ## This method is used to find a matched operator from a node of pytorch graph.
-    #
-    # @param self this object
-    # @param node_name node name of pytorch graph
-    # @return op matched operator
     def __find_matched_op(self, node_name) -> torch.nn:
-        # operator list used in ResNet50
-        op_list = ['conv', 'relu', 'bn', 'add', 'downsample', 'maxpool', 'avgpool', 'flatten', 'fc']
+        """Find a matched operation from a node of PyTorch graph.
+        
+        Args:
+            node_name: The name of the node in the computational graph.
+        """
+
+        # ResNet50 operations
+        op_list = [
+            'conv', 'relu', 'bn', 'add', 'downsample', 
+            'maxpool', 'avgpool', 'flatten', 'fc'
+        ]
 
         # if op is in target name, return op
         # For example, op is 'conv' and target is 'layer1.0.conv1'
@@ -69,39 +73,32 @@ class AxfcPTIRBuilder(AxfcIRBuilder):
                 return op
 
 
-    ## This method is used to read out the PyTorch model.
-    #
-    # @param self this object
-    # @param model_path pytorch model path
-    # @return error info
     def _read_model_graph(self, model_path: str) -> AxfcError:
+        """Read the PyTorch model.
+        
+        Args:
+            model_path: The path to Pytorch model.
+        """
         logging.info("AxfcPyTorchBuilder:read_model_graph - path: %s", model_path)
 
-        #load pytorch model
-        pt_model: torch.nn.Module = torch.load(model_path)
+        model: torch.nn.Module = torch.load(model_path)
+        input_tensor = torch_randn((1, 3, 224, 224))
+        graph_module = torch.fx.symbolic_trace(model, (input_tensor, ))
 
-        #create input placeholders for the graph
-        input_tensor = torch_randn((1, 3, 244, 244))
-        
-        #generate graph_module by applying symblolic trace
-        graph_module = torch.fx.symbolic_trace(pt_model, (input_tensor, ))
-
-        #extract graph from graph_module
+        # Extract graph from graph_module
         self.__pt_graph = graph_module.graph
 
         return AxfcError.SUCCESS
     
 
     def _build_naive_ir(self, model_path: str) -> AxfcError:
-        """Construct a naive AIX IR from a Pytorch Graph
+        """Construct a naive AIX IR from a Pytorch Graph.
 
         Args:
             model_path (str): A path to pytorch model.
         """
-
         # Read model graph
-        err = self._read_model_graph(model_path)
-        if err is not AxfcError.SUCCESS:
+        if (err := self._read_model_graph(model_path)) != AxfcError.SUCCESS:
             return err
         
         graph_def: torch.fx.graph = self.__pt_graph
@@ -109,27 +106,21 @@ class AxfcPTIRBuilder(AxfcIRBuilder):
             return AxfcError.INVALID_IR_GRAPH
         
         # Build ir node symbolic table
-        for pt_node_def in graph_def.nodes:
-            if pt_node_def.op == "placeholder" or pt_node_def.op == "get_attr":
-                # append placeholder nodes into ir_sym
-                # placeholder is the input of model
-                
-                # NOTE 'placeholder' is real input
-                err = self.__append_node_sym_ir(pt_node_def, op = "Input")
-
-            elif pt_node_def.op == "output":
-                #append output node into ir_sym
-                err = self.__append_node_sym_ir(pt_node_def, op = "Output")
+        for node_def in graph_def.nodes:
+            if node_def.op in ["placeholder", "get_attr"]:
+                err = self.__append_node_sym_ir(node_def, op = "Input")
+            elif node_def.op == "output":
+                err = self.__append_node_sym_ir(node_def, op = "Output")
             else:
                 # Since, the pt_node.op is function for calling module and method and so on
                 # extract the operator from the pt_node definition like 'conv', 'bn'
-                node_op = self.__find_matched_op(pt_node_def.name)
+                node_op = self.__find_matched_op(node_def.name)
 
                 # Make the symbolic table for pt_node_def
-                err = self.__append_node_sym_ir(pt_node_def, op = node_op)
+                err = self.__append_node_sym_ir(node_def, op = node_op)
 
                 # Append info to ir_node
-                err = self.__append_node_def(pt_node_def)
+                err = self.__append_node_def(node_def)
 
             if err is not AxfcError.SUCCESS:
                 return err
@@ -144,42 +135,33 @@ class AxfcPTIRBuilder(AxfcIRBuilder):
         return AxfcError.SUCCESS
     
 
-
-    ## This method is used to append ir_node into ir symbolic table.
-    #
-    # @param self this object
-    # @param pt_node_def node definition of pytorch model
-    # @param op operator
-    # @return error info
-    def __append_node_sym_ir(self, pt_node_def, op = None) -> AxfcError:
-
-        #initializing ir node
-        ir_node         = AxfcIRNode(pt_node_def)
-
-        ir_node.name    = pt_node_def.name     
-
+    def __append_node_sym_ir(self, node_def, op = None) -> AxfcError:
+        """Append IR Node into IR symbolic table
+        
+        Args:
+            node_def: Node definition of PyTorch model.
+            op: 
+        """
+        ir_node = AxfcIRNode(node_def)
+        ir_node.name = node_def.name
         if op:
             ir_node.op = op
 
-        # Make symbolic table
-        # table consists of {'node_name': node_definition}
-        self._ir_symtab[pt_node_def.name] = ir_node
+        self._ir_symtab[node_def.name] = ir_node
 
         return AxfcError.SUCCESS
     
-    ## This method is used to create a nw IR node from pt_node_def and append it to the IR graph.
-    #
-    # @param self this object
-    # @pt_node_def node definition of pytorch model
-    # @return error info
-    def __append_node_def(self, pt_node_def) -> AxfcError:
 
-        # Get ir node
-        ir_node = self._ir_symtab.get(pt_node_def.name)
+    def __append_node_def(self, node_def) -> AxfcError:
+        """Create a new IR node from the node_def and append to IR graph.
 
-        # Set ir node operation
+        Args:
+            node_def: Node definition of PyTorch model.
+        """
+
+        ir_node = self._ir_symtab.get(node_def.name)
         if ir_node.op is None:
-            ir_node.op = self.__find_matched_op(pt_node_def.name)
+            ir_node.op = self.__find_matched_op(node_def.name)
 
         # Check the node is supported by AIXH hardware
         layer_info = self._md.get_layer_info(ir_node.op)
