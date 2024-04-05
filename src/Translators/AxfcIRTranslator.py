@@ -13,10 +13,10 @@
 import sys
 sys.path.append("/home/sanghyeon/repos/aix-project/skt-aix-frontend-compiler/src/")
 
-from abc import ABC, abstractmethod
 from aixh_pb2 import *
 from AxfcIRGraph import *
 from AxfcMachineDesc import *
+from concurrent.futures import ProcessPoolExecutor
 
 #######################################################################
 # AIXInputType enum class
@@ -35,6 +35,7 @@ class AIXTensorType(enum.Enum):
 #######################################################################
 # AxfcIRTranslator class
 #######################################################################
+
 
 class AxfcIRTranslator:
     """
@@ -69,7 +70,7 @@ class AxfcIRTranslator:
         }
 
 
-    def emit_aixh_graphs(self, ir_graph: AxfcIRGraph, calib_data: dict) -> {AxfcError, list}:
+    def emit_aixh_graphs(self, ir_graph: AxfcIRGraph, calib_data: dict):
         """Translates IR blocks into AIXGraphs using provided calibration data.
 
         Args:
@@ -110,6 +111,18 @@ class AxfcIRTranslator:
         return AxfcError.SUCCESS, self.aix_graphs
 
 
+    def process_node_batch(self, batch, ir_block):
+        """Process a batch of nodes
+        """
+        results = []
+        for node in batch:
+            if node.aix_layer is None or node.op == "Const":
+                continue
+            err, aix_layer = self.__emit_aixh_node(node, ir_block)
+            results.append((err, aix_layer))
+        return results
+
+
     def __emit_aixh_block(self, ir_block: AxfcIRBlock) -> {AxfcError, AIXGraph}:
         """Translates an IR block into an AIXGraph.
 
@@ -121,32 +134,30 @@ class AxfcIRTranslator:
         """
         logging.info("AxfcIRTranslator:__emit_aixh_block - block %d", ir_block.id)
 
-        # create a new AIX graph to output
         self._aix_graph = AIXGraph()
 
-        # translate all the nodes into AIX layers
-        for ir_node in ir_block.nodes:
+        nodes = []
+        for node in ir_block.nodes:
+            if node.aix_layer is None or node.op != "Const":
+                nodes.append(node)
 
-            # skip already emitted nodes and Const
-            if ir_node.aix_layer is not None or ir_node.op == "Const":
-                continue
+        batch_size = 10
+        batches = [nodes[i:i + batch_size] for i in range(0, len(nodes), batch_size)]
 
-            # emit the current node into an AIX layer and append it to the AIXGraph
-            err, aix_layer = self.__emit_aixh_node(ir_node, ir_block)
-            if err is not AxfcError.SUCCESS:
-                return err, None
+        with ProcessPoolExecutor() as executor:
+            # Create tasks for processing batches in parallel
+            tasks = []
+            for batch in batches:
+                # Submit a task for processing a node batch and append it to the tasks list
+                task = executor.submit(self.process_node_batch, batch, ir_block)
+                tasks.append(task)
 
-            self._aix_graph.layer.append(aix_layer)
-
-            # SENGTHAI: we can omit input_layers / output_layers
-            # because after merge, the merger will generate it automatically.
-            # # update AIXGraph.input_layers
-            # if ir_node.is_input:
-            #     self._aix_graph.input_layers.append(aix_layer.id)
-            #
-            # # update AIXGraph.output_layers
-            # if ir_node.is_output:
-            #     self._aix_graph.output_layers.append(aix_layer.id)
+            for task in tasks:
+                results = task.result()
+                for err, aix_layer in results:
+                    if err is not AxfcError.SUCCESS:
+                        return err, None
+                    self._aix_graph.layer.append(aix_layer)
 
         return AxfcError.SUCCESS, self._aix_graph
 
