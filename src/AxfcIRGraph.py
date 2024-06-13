@@ -75,7 +75,7 @@ class AxfcIRGraph:
         """
 
         # perform local liveness analysis for each of the blocks
-        for block in self._blocks:
+        for block in self.blocks:
             err = block.analyse_liveness()
             if err is not AxfcError.SUCCESS:
                 return err
