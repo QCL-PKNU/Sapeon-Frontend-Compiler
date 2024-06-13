@@ -66,8 +66,14 @@ class AxfcMachineDesc:
             logging.warning("read_file2: %s", str(e))
             return AxfcError.INVALID_MD_FORMAT
 
-        # Process AIX Layers(operations) information
-        # Then, append to dictionary.
+        # Check for required keys in the loaded JSON
+        required_keys = ["AIX_MODEL_TYPE", "AIX_LAYER"]
+        for key in required_keys:
+            if key not in self.__aix_model_info_tbl:
+                logging.warning("read_file3: Missing required key: %s", key)
+                return AxfcError.INVALID_MD_FORMAT
+
+        # Process AIX Layers (operations) information
         try:
             self.__aix_layer_info_tbl = dict()
 
@@ -81,8 +87,8 @@ class AxfcMachineDesc:
 
                 self.__aix_layer_info_tbl[layer_type] = aix_layer_info
 
-        except ValueError as e:
-            logging.warning("read_file3: %s", str(e))
+        except (ValueError, KeyError) as e:
+            logging.warning("read_file4: %s", str(e))
             return AxfcError.INVALID_MD_FORMAT
 
         return AxfcError.SUCCESS

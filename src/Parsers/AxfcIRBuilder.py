@@ -43,20 +43,7 @@ class AxfcIRBuilder(ABC):
 
 
     def build_ir(self, path: str) -> {AxfcError, AxfcIRGraph}:
-        """
-        Builds the AIX IR from a frozen model located at the specified path.
-        It follows several steps including creating a naive IR, identifying hardware-supported blocks,
-        and performing liveness analysis to resolve inputs and outputs.
-
-        Args:
-            path (str): The path to the frozen model file.
-
-        Returns:
-            Tuple[AxfcError, AxfcIRGraph]: A tuple containing an error code and the resulting IR graph.
-                                           The IR graph will be None if an error occurred.
-        """
-        logging.info("AxfcIRBuilder:build_ir - path: %s", path)
-
+        
         # create a new symbol table and IR graph
         self._ir_symtab = dict()
         self._ir_graph = AxfcIRGraph(self._ir_symtab)
