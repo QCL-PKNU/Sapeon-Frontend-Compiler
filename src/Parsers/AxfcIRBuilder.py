@@ -10,15 +10,11 @@
 #   High Performance Computing Laboratory (hpcl.pknu.ac.kr)
 #######################################################################
 
-import sys
-sys.path.append('/home/sanghyeon/repos/aix-project/skt-aix-frontend-compiler/src')
-
 from abc import ABC, abstractmethod
 from typing import List, Tuple
 from AxfcIRGraph import *
 from AxfcMachineDesc import AxfcMachineDesc
 from AxfcError import AxfcError
-
 
 #######################################################################
 # AxfcIRBuilder class
@@ -42,35 +38,30 @@ class AxfcIRBuilder(ABC):
         self._ir_symtab = None
 
 
-    def build_ir(self, path: str) -> {AxfcError, AxfcIRGraph}:
-        
-        # create a new symbol table and IR graph
-        self._ir_symtab = dict()
-        self._ir_graph = AxfcIRGraph(self._ir_symtab)
+    def build_ir(self, model_path: str) -> {AxfcError, AxfcIRGraph}:
+        self._ir_symtab = {}
+        self._ir_graph = AxfcIRGraph(self._ir_graph)
 
-        # build a naive IR using the IR builder of a specific type
-        err = self._build_naive_ir(path)
+        # Generates naive IR from dl model
+        err = self._build_naive_ir(model_path)
         if err is not AxfcError.SUCCESS:
-            logging.warning("build naive IR error: %s", err)
+            logging.warning(f"AxfcIRBuilder: Failed to generate a naive IR with error: {err}")
             return err, None
-
-        # find AIXH blocks to be translated into AIXGraphs
+        
+        # Finds AIXH blocks, then convert each block into AIXGraph
         err = self.__find_aixh_blocks()
         if err is not AxfcError.SUCCESS:
-            logging.warning("find AIXH blocks: %s", err)
+            logging(f"AxfcIRBuilder: Failed to find AIXH blocks with error: {err}")
             return err, None
-
-        # for all the blocks of the IR graph
+        
         for ir_block in self._ir_graph.blocks:
-            # ignore blocks not supported by hardware
             if not ir_block.is_aixh_support:
                 continue
 
-            # perform the local liveness analysis for all the AIXH blocks
-            # to resolve the input and output of them
+            # Analyze local liveness of the AIXH blocks
             err = ir_block.analyse_liveness()
             if err is not AxfcError.SUCCESS:
-                logging.warning("analyse liveness: block %d", ir_block.id)
+                logging.warning(f"AxfcIRBuilder: Failed to analyze local liveness of the block ({ir_block.id}) with error: {err}")
                 return err, None
 
             # just for debugging - YOUNGSUN
