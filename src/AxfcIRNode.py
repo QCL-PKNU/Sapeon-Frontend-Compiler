@@ -27,6 +27,7 @@ class AxfcIRNode:
     def __init__(self, node_def):
         self.id = 0
         self.name = ""
+        self.output_name = ""
         self.layer_id = 0
         self.succs = list()
         self.preds = list()

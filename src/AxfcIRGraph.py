@@ -10,6 +10,7 @@
 #   High Performance Computing Laboratory (hpcl.pknu.ac.kr)
 #######################################################################
 
+from typing import List
 from AxfcIRBlock import *
 from AxfcGraphWriter import *
 
@@ -32,9 +33,9 @@ class AxfcIRGraph:
 
 
     def __init__(self, symtab: dict):
-        self.root_node = None
-        self.nodes = list()
-        self.blocks = list()
+        self.root_node: AxfcIRNode = None
+        self.nodes: List[AxfcIRNode] = []
+        self.blocks: List[AxfcIRBlock] = []
         self.symtab = symtab
 
     

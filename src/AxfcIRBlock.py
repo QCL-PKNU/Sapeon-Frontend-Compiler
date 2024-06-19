@@ -10,7 +10,9 @@
 #   High Performance Computing Laboratory (hpcl.pknu.ac.kr)
 #######################################################################
 
+from typing import List
 from AxfcError import *
+from AxfcIRNode import AxfcIRNode
 
 
 #######################################################################
@@ -34,14 +36,18 @@ class AxfcIRBlock:
     
     def __init__(self):
         self.id = 0
-        self.nodes = list()
+        self.nodes: List[AxfcIRNode] = []
         self.live_in = set()
         self.live_out = set()
         self.is_aixh_support = False
         self.aixh_profit = 0
         self.aix_graph = None
-        self.input_nodes = list() #input node of the ir block can be multiple
-        self.output_node = None #output node of the ir block must be only one
+
+        # Input nodes can be multiple, including variable and constants.
+        self.input_nodes: List[AxfcIRNode] = []
+
+        # Output node is only one
+        self.output_node: AxfcIRNode = None
 
     ## This method is used to perform the local liveness analysis in the scope of an IR block.
     #  We employ a simple heuristic scheme to find live-ins and live-outs of a block without
