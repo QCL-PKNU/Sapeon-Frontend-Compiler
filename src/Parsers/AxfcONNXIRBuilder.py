@@ -15,7 +15,7 @@ import onnx
 
 from onnx import shape_inference
 from AxfcError import AxfcError
-from AxfcIRBuilder import AxfcIRBuilder
+from .AxfcIRBuilder import AxfcIRBuilder
 from AxfcIRNode     import AxfcIRNode
 
 #######################################################################

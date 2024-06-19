@@ -166,9 +166,9 @@ class AxfcFrontendCompiler:
             return err, None
 
         return AxfcError.SUCCESS, aix_graphs
+    
 
-
-    def dump_aix_graphs(self, out_path: str, aix_graphs: list, aix_graph_format:str) -> AxfcError:
+    def dump_aix_graphs(self, out_path: str, aix_graphs: list, aix_graph_format: str) -> AxfcError:
         """Dump the generated AIXGraphs to the specified output path.
 
         Args:
@@ -179,50 +179,78 @@ class AxfcFrontendCompiler:
         Returns:
             AxfcError: Error code indicating the success or failure of the operation.
         """
-        logging.info("AxfcIRTranslator:dump_aix_graphs - %s", out_path)
-        if aix_graphs is None:
-            logging.warning("No AIXGraphs found")
-            return AxfcError.INVALID_AIX_GRAPH
-        
-        jobs = []
-        for i, aix_graph in enumerate(aix_graphs):
-            tmp_path = f"{out_path}.{i}.{aix_graph_format}"
+        for idx, aix_graph in enumerate(aix_graphs):
+            tmp_path = f"{out_path}.{idx}"
+            serialized_aix_graph = str(aix_graph)
 
-            p = Process(target=self.write_aix_graph, args=(tmp_path, aix_graph, aix_graph_format,))
-            jobs.append(p)
-            p.start()
+            assert(isinstance(serialized_aix_graph, str))
 
-        for j in jobs:
-            j.join()
+            try:
+                with open(tmp_path, "wt") as f:
+                    f.write(serialized_aix_graph)
+            except Exception as e:
+                logging.error("Failed to write AIXGraph to file: %s", e)
+                return AxfcError.WRITE_ERROR
 
-        logging.info("Successfully dumped all AIXGraphs.")
+        logging.info("AxfcFrontendCompiler: Successfully dumped all AIXGraphs.")
         return AxfcError.SUCCESS
 
 
-    def write_aix_graph(self, out_path: str, aix_graph: AIXGraph, data_mode:str) -> AxfcError:
-        """Writes the given AIXGraph to a file to a file in the specified data mode (either BINARY or TEXT)
+    # def dump_aix_graphs(self, out_path: str, aix_graphs: list, aix_graph_format:str) -> AxfcError:
+    #     """Dump the generated AIXGraphs to the specified output path.
 
-        Args:
-            out_path: The file path to output the AIXGraphs.
-            aix_graphs: A list of AIXGraphs to be dumped.
-            aix_graph_format: The format to dump the AIXGraphs in.
-        """
+    #     Args:
+    #         out_path: The file path to output the AIXGraphs.
+    #         aix_graphs: A list of AIXGraphs to be dumped.
+    #         aix_graph_format: The format to dump the AIXGraphs in.
+
+    #     Returns:
+    #         AxfcError: Error code indicating the success or failure of the operation.
+    #     """
+    #     logging.info("AxfcIRTranslator:dump_aix_graphs - %s", out_path)
+    #     if aix_graphs is None:
+    #         logging.warning("No AIXGraphs found")
+    #         return AxfcError.INVALID_AIX_GRAPH
         
-        if not data_mode:
-            data_mode = "BINARY"
+    #     jobs = []
+    #     for i, aix_graph in enumerate(aix_graphs):
+    #         tmp_path = f"{out_path}.{i}.{aix_graph_format}"
 
-        if data_mode.upper() == "BINARY":
-            f = open(out_path, "wb")
-            f.write(aix_graph.SerializeToString())
-            f.close()
-        elif data_mode.upper() == "TEXT":
-            f = open(out_path, "wt")
-            f.write(str(aix_graph))
-            f.close()
-        else:
-            return AxfcError.INVALID_PARAMETER
+    #         p = Process(target=self.write_aix_graph, args=(tmp_path, aix_graph, aix_graph_format,))
+    #         jobs.append(p)
+    #         p.start()
 
-        return  AxfcError.SUCCESS
+    #     for j in jobs:
+    #         j.join()
+
+    #     logging.info("Successfully dumped all AIXGraphs.")
+    #     return AxfcError.SUCCESS
+
+
+    # def write_aix_graph(self, out_path: str, aix_graph: AIXGraph, data_mode:str) -> AxfcError:
+    #     """Writes the given AIXGraph to a file to a file in the specified data mode (either BINARY or TEXT)
+
+    #     Args:
+    #         out_path: The file path to output the AIXGraphs.
+    #         aix_graphs: A list of AIXGraphs to be dumped.
+    #         aix_graph_format: The format to dump the AIXGraphs in.
+    #     """
+        
+    #     if not data_mode:
+    #         data_mode = "BINARY"
+
+    #     if data_mode.upper() == "BINARY":
+    #         f = open(out_path, "wb")
+    #         f.write(aix_graph.SerializeToString())
+    #         f.close()
+    #     elif data_mode.upper() == "TEXT":
+    #         f = open(out_path, "wt")
+    #         f.write(str(aix_graph))
+    #         f.close()
+    #     else:
+    #         return AxfcError.INVALID_PARAMETER
+
+    #     return  AxfcError.SUCCESS
 
 
     def load_images_from_folder(folder_path: str, target_size=(224, 224)) -> np.ndarray:

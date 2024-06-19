@@ -51,7 +51,6 @@ class AxfcONNXWriter:
     #     self.__md = md
     #     self.__ir_graph = ir_graph
 
-    ## The constructor
     def __init__(self, frozen_model_path: str,
                  aix_graph_path: str,
                  kernel_op_path: str,
@@ -60,19 +59,16 @@ class AxfcONNXWriter:
         self.__ir_graph = ir_graph
         self.__frozen_model_path = frozen_model_path
         self.__aix_graph_path = aix_graph_path
-        self.__kernel_op_path = kernel_op_path
-        self.__md = md
+
 
     # This method is used to build the custom graph
     # @return custom_graph the custom graph from the custom kernel library
     def get_custom_graph(self):
-        onnx_model = onnx.load(self.__frozen_model_path)
-
-        inferred_model = shape_inference.infer_shapes(onnx_model)
-
+        model = onnx.load(self.__frozen_model_path)
+        inferred_model = shape_inference.infer_shapes(model)
         gs_graph = gs.import_onnx(inferred_model)
-
         gs_tensors = gs_graph.tensors()
+
 
         #Custom op inline function for graph surgeon
         @gs.Graph.register()
@@ -88,17 +84,17 @@ class AxfcONNXWriter:
                                 inputs= inputs,
                                 outputs = outputs,
                                 attrs=dict(aix_graph_path=path))
-
-
-        for count, block in enumerate(self.__ir_graph.blocks):
-
+        
+        for idx, block in enumerate(self.__ir_graph.blocks):
             if not block.is_aixh_support:
                 continue
-            
-            inputs = [gs_tensors[node.name] for node in block.input_nodes]
-            outputs = [gs_tensors[node.name] for node in block.output_nodes]
 
-            gs_graph.replace_with_aixop(inputs, outputs, self.__aix_graph_path+str(count))
+            inputs = [gs_tensors[node.name] for node in block.input_nodes]
+            outputs = [gs_tensors[node.output_name[0]] for node in block.output_nodes]
+
+            outputs = []
+
+            gs_graph.replace_with_aixop(inputs, outputs, self.__aix_graph_path + str(idx))
             # Since, after replace, the nodes lose their connection, need to be topologically sorted
             gs_graph.cleanup().toposort()
 

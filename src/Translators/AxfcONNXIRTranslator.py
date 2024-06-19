@@ -10,15 +10,13 @@
 #   Quantum Computing Laboratory (quantum.pknu.ac.kr)
 #######################################################################
 
+import numpy as np
+
 import onnx
 import onnx_graphsurgeon as gs
 from onnx import shape_inference
 
-import tensorflow as tf
-import numpy as np
-
 from .AxfcIRTranslator import *
-from util import loadFrozenModel, print_tensor_content
 
 #######################################################################
 # Global tables for AIXDataType and AIXTensorFormat
@@ -34,7 +32,6 @@ aix_data_type_tbl = {
     'uint8': AIXLayer.AIXDataType.AIX_DATA_UINT8,
     'int8': AIXLayer.AIXDataType.AIX_DATA_SINT8,
     'int16': AIXLayer.AIXDataType.AIX_DATA_SINT16
-
 }
 
 ## AIXTensorFormat table
@@ -104,19 +101,60 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
     # @param ir_node an IR node to be emitted as an AIX tensor
     # @return an AIX tensor of an output type
     def _emit_aix_tensor_input(self, ir_node: AxfcIRNode, **kwargs) -> AIXLayer.AIXTensor:
-        # return super()._emit_aix_tensor_input(ir_node, **kwargs)
-
-        #get input tensor
-        input_nodes = list(filter(lambda x: x.op != "Const" or x.name in self._input_names, ir_node.preds))
-        input_tensors = [self.tensors[node.name] for node in input_nodes]
-
+        input_nodes = []
+        input_tensors = []
         aix_tensors = []
+        aix_tensor = None
+
+        for pred in ir_node.preds:
+            if pred.op != "Const" or pred.name in self._input_names:
+                input_nodes.append(pred)
+
+        for pred_node in input_nodes:
+            if pred_node.name in self.tensors:
+                input_tensors.append(self.tensors[pred_node.name])
+            else:
+                key = pred_node.output_name[0]
+                input_tensors.append(self.tensors[key])
+
         for input_tensor in input_tensors:
-            aix_tensor = self.__emit_aix_tensor(input_tensor, is_inout_tensor=True)
+            aix_tensor = AIXLayer.AIXTensor()
+            dtype = input_tensor.dtype
+
+            if not dtype:
+                dtype = DEFAULT_DTYPE
+
+            if not isinstance(dtype, np.dtype):
+                dtype = np.dtype(dtype)
+
+            aix_tensor.dtype = aix_data_type_tbl.get(dtype.name)
+
+            if dtype is None:
+                data_format = DEFAULT_TYPE.encode()
+            elif len(input_tensor.shape) == 1:
+                data_format = b'VECTOR'
+            else:
+                data_format = DEFAULT_TYPE.encode()
+            
+            aix_tensor.format = aix_tensor_format_tbl[data_format]
+
+            # If tensor is a constant, then the fval need to be set
+            if type(input_tensor) is gs.ir.tensor.Constant:
+                tensor_values = input_tensor.values.flatten()
+                for fval in tensor_values:
+                    aix_tensor.fval.append(fval)
+
+            # Set aix tensor dims
+            if input_tensor.shape:
+                shape = list(map(lambda x: 1 if not x else x, input_tensor.shape))
+                shape.reverse() # AIXGraph shape is using NCHW format, in reversed order
+                aix_tensor.dims.extend(shape)
+
+            aix_tensor.size = int(np.prod(aix_tensor.dims))
             aix_tensors.append(aix_tensor)
 
         return aix_tensor
-
+    
 
     ## This method is used to emit an AIX Tensors of an output type from the given IR node.
     #
@@ -124,8 +162,6 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
     # @param ir_node an IR node to be emitted as an AIX tensor
     # @return an AIX tensor of an output type
     def _emit_aix_tensor_output(self, ir_node: AxfcIRNode, **kwargs) -> AIXLayer.AIXTensor:
-        # return super()._emit_aix_tensor_output(ir_node, **kwargs)
-
         aix_tensor = self.__emit_aix_tensor(ir_node)
         return aix_tensor
 
@@ -139,8 +175,10 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
     def __emit_aix_tensor(self, ir_node, is_inout_tensor=False, **kwargs) -> AIXLayer.AIXTensor:
         aix_tensor = AIXLayer.AIXTensor()
         
-        #get tensor
-        tensor = self.tensors[ir_node.name]
+        if ir_node.name in self.tensors:
+            tensor = self.tensors[ir_node.name]
+        else:
+            tensor = self.tensors[ir_node.output_name[0]]
 
         dtype = tensor.dtype
 
@@ -160,17 +198,16 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
         else:
             data_format = DEFAULT_TYPE.encode()
         
-        #set format
+        # Set format
         aix_tensor.format = aix_tensor_format_tbl[data_format]
 
-        #set aix tensor fval
-        #if tensor is a constant then fval need to be set
+        # If tensor is a constant, then the fval need to be set
         if type(tensor) is gs.ir.tensor.Constant:
             tensor_values = tensor.values.flatten()
             for fval in tensor_values:
                 aix_tensor.fval.append(fval)
 
-        #set aix tensor dims
+        # Set aix tensor dims
         if tensor.shape:
             shape = list(map(lambda x: 1 if not x else x, tensor.shape))
             
@@ -181,11 +218,11 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
         else:
             logging.warning(f"AxfcONNXIRTranslator: {ir_node.name} shape is invalid.")
 
-        #set aix tensor size
         aix_tensor.size = int(np.prod(aix_tensor.dims))
 
         return aix_tensor
     
+
     ###################################################################
     # protected methods
     ###################################################################
@@ -203,7 +240,7 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
 
         aix_layer = ir_node.aix_layer
 
-        tensor = self.tensors[ir_node.name]
+        tensor = self.tensors[ir_node.output_name[0]]
         onnx_node = self._symtab[ir_node.name]
 
         #filter
@@ -220,6 +257,7 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
 
         return AxfcError.SUCCESS
 
+
     ## This method emits an AIX tensor of an filter type from the given IR node.
     #
     # @param self this object
@@ -227,8 +265,6 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
     # @param kwargs keyword arguments used for pass the 'tensor'
     # @return an AIX tensor of an filter type
     def _emit_aix_tensor_filter(self, ir_node: AxfcIRNode, **kwargs) -> AIXLayer.AIXTensor:
-        # return super()._emit_aix_tensor_filter(ir_node, **kwargs)
-
         node_inputs = ir_node.preds
 
         aix_tensor = None
@@ -253,6 +289,7 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
         
         return aix_tensor
     
+
     ##  This method get aixtensor dims from format as dictionary
     #
     # @param self this object
@@ -282,6 +319,7 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
         # map the data format with its value
         return dict(zip(data_format, reverse_values))
 
+
     ##  This method emits an AIX tensor of an scale type from the given IR node.
     #
     # @param self this object
@@ -305,6 +343,7 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
 
         return aix_tensor
     
+
     ## This method is used to set the default hyperparameters: scale, mean, variance
     #
     # @param self this object
@@ -437,17 +476,17 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
         
         aix_layer = ir_node.aix_layer
 
-        tensor = self.tensors[ir_node.name]
-        onnx_node = self._symtab[ir_node.name]
+        # tensor = self.tensors[ir_node.name]
+        # onnx_node = self._symtab[ir_node.name]
 
-        # filter
-        aix_layer.filter.CopyFrom(self._emit_aix_tensor_filter(ir_node, tensor=tensor))
+        # # filter
+        # aix_layer.filter.CopyFrom(self._emit_aix_tensor_filter(ir_node, tensor=tensor))
 
-        # convolution desc
-        aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node, tensor=tensor))
+        # # convolution desc
+        # aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node, tensor=tensor))
 
-        if 'epsilon' in onnx_node.attrs:
-            aix_layer.epsilon = onnx_node.attrs['epsilon']
+        # if 'epsilon' in onnx_node.attrs:
+        #     aix_layer.epsilon = onnx_node.attrs['epsilon']
         
         return AxfcError.SUCCESS
 
@@ -463,7 +502,7 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
 
         aix_layer = ir_node.aix_layer
 
-        tensor = self.tensors[ir_node.name]
+        tensor = self.tensors[ir_node.output_name[0]]
         onnx_node = self._symtab[ir_node.name]
 
         # filter 
@@ -481,6 +520,7 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
         
         return AxfcError.SUCCESS
     
+    
     ##  This method emits some onnx-specific information of the given IR node
     # into the given AIX avgpool layer object. The information includes layer inputs,
     # layer outputs, and so on.
@@ -493,7 +533,7 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
 
         aix_layer = ir_node.aix_layer
 
-        tensor = self.tensors[ir_node.name]
+        tensor = self.tensors[ir_node.output_name[0]]
         onnx_node = self._symtab[ir_node.name]
 
         # filter
@@ -590,7 +630,7 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
 
         aix_layer = ir_node.aix_layer
 
-        tensor = self.tensors[ir_node.name]
+        tensor = self.tensors[ir_node.output_name[0]]
         onnx_node = self._symtab[ir_node.name]
 
         # # filter
@@ -657,8 +697,3 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
             convolution_desc.groups = 1
         
         return convolution_desc
-
-
-
-
-

@@ -10,13 +10,9 @@
 #   High Performance Computing Laboratory (hpcl.pknu.ac.kr)
 #######################################################################
 
-import sys
-sys.path.append("/home/sanghyeon/repos/aix-project/skt-aix-frontend-compiler/src/")
-
 from aixh_pb2 import *
 from AxfcIRGraph import *
 from AxfcMachineDesc import *
-from concurrent.futures import ProcessPoolExecutor
 
 #######################################################################
 # AIXInputType enum class
@@ -82,45 +78,30 @@ class AxfcIRTranslator:
         """
         logging.info("AxfcIRTranslator:emit_aixh_graph")
 
-        # Get symbol table and calibration data
         self._ir_symtab = ir_graph.symtab
         self._calib_data = calib_data
-        
         self.aix_graphs = list()
-        
-        # Iterate over IR block and translate them into AIXGraphs
-        for ir_block in ir_graph.blocks:
-            if not ir_block.is_aixh_support:
+
+        for block in ir_graph.blocks:
+            if not block.is_aixh_support:
                 continue
 
-            err, aix_graph = self.__emit_aixh_block(ir_block)
+            err, aix_graph = self.__emit_aixh_block(block)
             if err is AxfcError.SUCCESS:
                 
-                #set input/output to the graph
-                for node in ir_block.nodes:
+                # todo: set input and output to the graph
+                for node in block.nodes:
                     if node.is_input:
                         aix_graph.input_layers.append(node.layer_id)
-                    elif node.is_output:
+                    elif node.is_output:   
                         aix_graph.output_layers.append(node.layer_id)
 
                 self.aix_graphs.append(aix_graph)
-                ir_block.aix_graph = aix_graph
+                block.aix_graph = aix_graph
             else:
                 return err, None
-
+            
         return AxfcError.SUCCESS, self.aix_graphs
-
-
-    def process_node_batch(self, batch, ir_block):
-        """Process a batch of nodes
-        """
-        results = []
-        for node in batch:
-            if node.aix_layer is None or node.op == "Const":
-                continue
-            err, aix_layer = self.__emit_aixh_node(node, ir_block)
-            results.append((err, aix_layer))
-        return results
 
 
     def __emit_aixh_block(self, ir_block: AxfcIRBlock) -> {AxfcError, AIXGraph}:
@@ -132,32 +113,28 @@ class AxfcIRTranslator:
         Returns:
             Tuple[AxfcError, AIXGraph]: Error code and the resulting AIXGraph object.
         """
-        logging.info("AxfcIRTranslator:__emit_aixh_block - block %d", ir_block.id)
-
+        logging.info(f'AxfcIRTranslator:__emit_aixh_block from block with id: {ir_block.id}')
         self._aix_graph = AIXGraph()
 
-        nodes = []
         for node in ir_block.nodes:
-            if node.aix_layer is None or node.op != "Const":
-                nodes.append(node)
+            if node.aix_layer is not None or node.op == 'Const':
+                continue
 
-        batch_size = 10
-        batches = [nodes[i:i + batch_size] for i in range(0, len(nodes), batch_size)]
+            err, aix_layer = self.__emit_aixh_node(node, ir_block)
+            if err is not AxfcError.SUCCESS:
+                return err, None
 
-        with ProcessPoolExecutor() as executor:
-            # Create tasks for processing batches in parallel
-            tasks = []
-            for batch in batches:
-                # Submit a task for processing a node batch and append it to the tasks list
-                task = executor.submit(self.process_node_batch, batch, ir_block)
-                tasks.append(task)
+            self._aix_graph.layer.append(aix_layer)
 
-            for task in tasks:
-                results = task.result()
-                for err, aix_layer in results:
-                    if err is not AxfcError.SUCCESS:
-                        return err, None
-                    self._aix_graph.layer.append(aix_layer)
+            # SENGTHAI: we can omit input_layers / output_layers
+            # because after merge, the merger will generate it automatically.
+            # # update AIXGraph.input_layers
+            # if ir_node.is_input:
+            #     self._aix_graph.input_layers.append(aix_layer.id)
+            #
+            # # update AIXGraph.output_layers
+            # if ir_node.is_output:
+            #     self._aix_graph.output_layers.append(aix_layer.id)
 
         return AxfcError.SUCCESS, self._aix_graph
 
@@ -175,19 +152,20 @@ class AxfcIRTranslator:
 
         # logging.info("AxfcTFIRTranslator:_emit_aixh_node - node %d", ir_node.layer_id)
 
+        logging.info(f'AxfcIRTranslator:__emit_aixh_node - node {ir_node.layer_id}')
+
         layer_info = self._md.get_layer_info(ir_node.op)
         aix_layer = AIXLayer()
         aix_layer.id = ir_node.layer_id
         aix_layer.name = ir_node.name
 
-
-        # layer types
+        # Layer types
         if not layer_info.is_conv:
             aix_layer.type.append(AIXLayer.AIX_LAYER_SKIP_CONV)
         layer_type = AIXLayer.AIXLayerType.Value(layer_info.layer)
         aix_layer.type.append(layer_type)
-        
-        #check if ir_node is the block input & output
+
+        # Check if the node is the block's input & output
         if ir_node.is_input:
             input_layer = AIXLayer.AIXLayerType.Value("AIX_LAYER_INPUT")
             aix_layer.type.append(input_layer)
@@ -195,45 +173,42 @@ class AxfcIRTranslator:
             output_layer = AIXLayer.AIXLayerType.Value("AIX_LAYER_OUTPUT")
             aix_layer.type.append(output_layer)
 
-        # Emit the input tensor of node, not the block input
+        # todo: emit the input and output tensor of the node
         aix_layer.input.CopyFrom(self._emit_aix_tensor_input(ir_node))
-
-        # Emit the output tensor of node, not the block output
-        # logging.warning("AxfcIRTranslator: AIXLayer output can be multiple layers.")
         aix_layer.output.CopyFrom(self._emit_aix_tensor_output(ir_node))
 
-        # emit the output specific to each AIX layer type
+
+        # todo: emit the output based on each layer type
         try:
             emit_aix_layer = self.__emit_aix_layer_tbl[layer_type]
-        except KeyError:
-            logging.warning("__emit_aixh_node: unsupported layer type - %s, %s", ir_node.op, layer_type)
+        except:
+            logging.warning(f"__emit_aixh_node: unsupported layer type - {ir_node.op}, {layer_type}")
             return AxfcError.UNSUPPORTED_AIX_LAYER_EMIT, None
 
-        # register the generated AIX layer
+
+        # Register aix_layer into the IRNode object
         ir_node.aix_layer = aix_layer
 
-        # perform the emission of AIX layers
         err = emit_aix_layer(ir_node)
-
         if err is not AxfcError.SUCCESS:
             logging.warning("AxfcIRTranslator:__emit_aixh_node - %s", err)
             return err, None
-
-        # predecessors & successors
+        
         for pred in ir_node.preds:
             if pred.is_aixh_support and pred in ir_block.nodes:
                 aix_layer.preds.append(pred.layer_id)
-
+        
         for succ in ir_node.succs:
             if succ.is_aixh_support and succ in ir_block.nodes:
                 aix_layer.succs.append(succ.layer_id)
 
-        # activation
+        # Activation
         activation = layer_info.activation
         if activation is not None:
             aix_layer.activation = AIXLayer.AIXActivationMode.Value(activation)
+        
 
-        # # calibration
+        # todo: perform calibration
         # if self._calib_data is not None:
         #     # get calibration data of this layer
         #     postfix_name = ir_node.name.split('/')[-1]
