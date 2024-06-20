@@ -237,3 +237,9 @@ dmypy.json
 ### VisualStudioCode Patch ###
 # Ignore all local history of files
 .history
+
+# Data
+data/**/*.onnx
+data/**/*.pt
+data/**/*.pth
+data/**/*.h5
