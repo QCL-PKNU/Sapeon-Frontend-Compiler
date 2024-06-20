@@ -1,0 +1,1956 @@
+layer {
+  id: 0
+  name: "Conv_0"
+  type: AIX_LAYER_CONVOLUTION
+  type: AIX_LAYER_INPUT
+  succs: 1
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 224
+    dims: 224
+    dims: 3
+    dims: 1
+    size: 150528
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 112
+    dims: 112
+    dims: 64
+    dims: 1
+    size: 802816
+  }
+  filter {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 1
+    dims: 1
+    dims: 3
+    dims: 64
+  }
+  output_threshold: 0.0
+  convdesc {
+    dtype: AIX_DATA_FLOAT
+    padding: 3
+    padding: 3
+    padding: 3
+    padding: 3
+    stride: 2
+    stride: 2
+    stride: 0
+    stride: 0
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    groups: 1
+  }
+  activation: AIX_ACTIVATION_IDENTITY
+}
+layer {
+  id: 1
+  name: "Relu_1"
+  type: AIX_LAYER_SKIP_CONV
+  type: AIX_LAYER_ACTIVATION
+  preds: 0
+  succs: 2
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 112
+    dims: 112
+    dims: 64
+    dims: 1
+    size: 802816
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 112
+    dims: 112
+    dims: 64
+    dims: 1
+    size: 802816
+  }
+  output_threshold: 0.0
+  activation: AIX_ACTIVATION_RELU
+}
+layer {
+  id: 2
+  name: "MaxPool_2"
+  type: AIX_LAYER_SKIP_CONV
+  type: AIX_LAYER_MAXPOOL
+  preds: 1
+  succs: 3
+  succs: 6
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 112
+    dims: 112
+    dims: 64
+    dims: 1
+    size: 802816
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 56
+    dims: 56
+    dims: 64
+    dims: 1
+    size: 200704
+  }
+  filter {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 3
+    dims: 3
+    dims: 64
+    dims: 64
+  }
+  output_threshold: 0.0
+  convdesc {
+    dtype: AIX_DATA_FLOAT
+    padding: 1
+    padding: 1
+    padding: 1
+    padding: 1
+    stride: 2
+    stride: 2
+    stride: 0
+    stride: 0
+    dilation: 0
+    dilation: 0
+    dilation: 0
+    dilation: 0
+    groups: 1
+  }
+  samplingdesc {
+    mode: AIX_POOLING_MAX
+    padding: 1
+    padding: 1
+    padding: 1
+    padding: 1
+    stride: 2
+    stride: 2
+    stride: 0
+    stride: 0
+    window: 3
+    window: 3
+    window: 0
+    window: 0
+  }
+}
+layer {
+  id: 3
+  name: "Conv_3"
+  type: AIX_LAYER_CONVOLUTION
+  preds: 2
+  succs: 4
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 56
+    dims: 56
+    dims: 64
+    dims: 1
+    size: 200704
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 56
+    dims: 56
+    dims: 64
+    dims: 1
+    size: 200704
+  }
+  filter {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 1
+    dims: 1
+    dims: 64
+    dims: 64
+  }
+  output_threshold: 0.0
+  convdesc {
+    dtype: AIX_DATA_FLOAT
+    padding: 1
+    padding: 1
+    padding: 1
+    padding: 1
+    stride: 1
+    stride: 1
+    stride: 0
+    stride: 0
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    groups: 1
+  }
+  activation: AIX_ACTIVATION_IDENTITY
+}
+layer {
+  id: 4
+  name: "Relu_4"
+  type: AIX_LAYER_SKIP_CONV
+  type: AIX_LAYER_ACTIVATION
+  preds: 3
+  succs: 5
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 56
+    dims: 56
+    dims: 64
+    dims: 1
+    size: 200704
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 56
+    dims: 56
+    dims: 64
+    dims: 1
+    size: 200704
+  }
+  output_threshold: 0.0
+  activation: AIX_ACTIVATION_RELU
+}
+layer {
+  id: 5
+  name: "Conv_5"
+  type: AIX_LAYER_CONVOLUTION
+  preds: 4
+  succs: 6
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 56
+    dims: 56
+    dims: 64
+    dims: 1
+    size: 200704
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 56
+    dims: 56
+    dims: 64
+    dims: 1
+    size: 200704
+  }
+  filter {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 1
+    dims: 1
+    dims: 64
+    dims: 64
+  }
+  output_threshold: 0.0
+  convdesc {
+    dtype: AIX_DATA_FLOAT
+    padding: 1
+    padding: 1
+    padding: 1
+    padding: 1
+    stride: 1
+    stride: 1
+    stride: 0
+    stride: 0
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    groups: 1
+  }
+  activation: AIX_ACTIVATION_IDENTITY
+}
+layer {
+  id: 6
+  name: "Add_6"
+  type: AIX_LAYER_SKIP_CONV
+  type: AIX_LAYER_EWADD
+  preds: 5
+  preds: 2
+  succs: 7
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 56
+    dims: 56
+    dims: 64
+    dims: 1
+    size: 200704
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 56
+    dims: 56
+    dims: 64
+    dims: 1
+    size: 200704
+  }
+  output_threshold: 0.0
+  convdesc {
+    dtype: AIX_DATA_FLOAT
+    padding: 0
+    padding: 0
+    padding: 0
+    padding: 0
+    stride: 1
+    stride: 1
+    stride: 0
+    stride: 0
+    dilation: 0
+    dilation: 0
+    dilation: 0
+    dilation: 0
+    groups: 1
+  }
+  ewadddesc {
+    scale: 1.0
+    scale: 1.0
+  }
+}
+layer {
+  id: 7
+  name: "Relu_7"
+  type: AIX_LAYER_SKIP_CONV
+  type: AIX_LAYER_ACTIVATION
+  preds: 6
+  succs: 8
+  succs: 11
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 56
+    dims: 56
+    dims: 64
+    dims: 1
+    size: 200704
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 56
+    dims: 56
+    dims: 64
+    dims: 1
+    size: 200704
+  }
+  output_threshold: 0.0
+  activation: AIX_ACTIVATION_RELU
+}
+layer {
+  id: 8
+  name: "Conv_8"
+  type: AIX_LAYER_CONVOLUTION
+  preds: 7
+  succs: 9
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 56
+    dims: 56
+    dims: 64
+    dims: 1
+    size: 200704
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 56
+    dims: 56
+    dims: 64
+    dims: 1
+    size: 200704
+  }
+  filter {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 1
+    dims: 1
+    dims: 64
+    dims: 64
+  }
+  output_threshold: 0.0
+  convdesc {
+    dtype: AIX_DATA_FLOAT
+    padding: 1
+    padding: 1
+    padding: 1
+    padding: 1
+    stride: 1
+    stride: 1
+    stride: 0
+    stride: 0
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    groups: 1
+  }
+  activation: AIX_ACTIVATION_IDENTITY
+}
+layer {
+  id: 9
+  name: "Relu_9"
+  type: AIX_LAYER_SKIP_CONV
+  type: AIX_LAYER_ACTIVATION
+  preds: 8
+  succs: 10
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 56
+    dims: 56
+    dims: 64
+    dims: 1
+    size: 200704
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 56
+    dims: 56
+    dims: 64
+    dims: 1
+    size: 200704
+  }
+  output_threshold: 0.0
+  activation: AIX_ACTIVATION_RELU
+}
+layer {
+  id: 10
+  name: "Conv_10"
+  type: AIX_LAYER_CONVOLUTION
+  preds: 9
+  succs: 11
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 56
+    dims: 56
+    dims: 64
+    dims: 1
+    size: 200704
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 56
+    dims: 56
+    dims: 64
+    dims: 1
+    size: 200704
+  }
+  filter {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 1
+    dims: 1
+    dims: 64
+    dims: 64
+  }
+  output_threshold: 0.0
+  convdesc {
+    dtype: AIX_DATA_FLOAT
+    padding: 1
+    padding: 1
+    padding: 1
+    padding: 1
+    stride: 1
+    stride: 1
+    stride: 0
+    stride: 0
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    groups: 1
+  }
+  activation: AIX_ACTIVATION_IDENTITY
+}
+layer {
+  id: 11
+  name: "Add_11"
+  type: AIX_LAYER_SKIP_CONV
+  type: AIX_LAYER_EWADD
+  preds: 10
+  preds: 7
+  succs: 12
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 56
+    dims: 56
+    dims: 64
+    dims: 1
+    size: 200704
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 56
+    dims: 56
+    dims: 64
+    dims: 1
+    size: 200704
+  }
+  output_threshold: 0.0
+  convdesc {
+    dtype: AIX_DATA_FLOAT
+    padding: 0
+    padding: 0
+    padding: 0
+    padding: 0
+    stride: 1
+    stride: 1
+    stride: 0
+    stride: 0
+    dilation: 0
+    dilation: 0
+    dilation: 0
+    dilation: 0
+    groups: 1
+  }
+  ewadddesc {
+    scale: 1.0
+    scale: 1.0
+  }
+}
+layer {
+  id: 12
+  name: "Relu_12"
+  type: AIX_LAYER_SKIP_CONV
+  type: AIX_LAYER_ACTIVATION
+  preds: 11
+  succs: 13
+  succs: 16
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 56
+    dims: 56
+    dims: 64
+    dims: 1
+    size: 200704
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 56
+    dims: 56
+    dims: 64
+    dims: 1
+    size: 200704
+  }
+  output_threshold: 0.0
+  activation: AIX_ACTIVATION_RELU
+}
+layer {
+  id: 13
+  name: "Conv_13"
+  type: AIX_LAYER_CONVOLUTION
+  preds: 12
+  succs: 14
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 56
+    dims: 56
+    dims: 64
+    dims: 1
+    size: 200704
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 28
+    dims: 28
+    dims: 128
+    dims: 1
+    size: 100352
+  }
+  filter {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 1
+    dims: 1
+    dims: 64
+    dims: 128
+  }
+  output_threshold: 0.0
+  convdesc {
+    dtype: AIX_DATA_FLOAT
+    padding: 1
+    padding: 1
+    padding: 1
+    padding: 1
+    stride: 2
+    stride: 2
+    stride: 0
+    stride: 0
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    groups: 1
+  }
+  activation: AIX_ACTIVATION_IDENTITY
+}
+layer {
+  id: 14
+  name: "Relu_14"
+  type: AIX_LAYER_SKIP_CONV
+  type: AIX_LAYER_ACTIVATION
+  preds: 13
+  succs: 15
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 28
+    dims: 28
+    dims: 128
+    dims: 1
+    size: 100352
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 28
+    dims: 28
+    dims: 128
+    dims: 1
+    size: 100352
+  }
+  output_threshold: 0.0
+  activation: AIX_ACTIVATION_RELU
+}
+layer {
+  id: 15
+  name: "Conv_15"
+  type: AIX_LAYER_CONVOLUTION
+  preds: 14
+  succs: 17
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 28
+    dims: 28
+    dims: 128
+    dims: 1
+    size: 100352
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 28
+    dims: 28
+    dims: 128
+    dims: 1
+    size: 100352
+  }
+  filter {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 1
+    dims: 1
+    dims: 128
+    dims: 128
+  }
+  output_threshold: 0.0
+  convdesc {
+    dtype: AIX_DATA_FLOAT
+    padding: 1
+    padding: 1
+    padding: 1
+    padding: 1
+    stride: 1
+    stride: 1
+    stride: 0
+    stride: 0
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    groups: 1
+  }
+  activation: AIX_ACTIVATION_IDENTITY
+}
+layer {
+  id: 16
+  name: "Conv_16"
+  type: AIX_LAYER_CONVOLUTION
+  preds: 12
+  succs: 17
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 56
+    dims: 56
+    dims: 64
+    dims: 1
+    size: 200704
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 28
+    dims: 28
+    dims: 128
+    dims: 1
+    size: 100352
+  }
+  filter {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 1
+    dims: 1
+    dims: 64
+    dims: 128
+  }
+  output_threshold: 0.0
+  convdesc {
+    dtype: AIX_DATA_FLOAT
+    padding: 0
+    padding: 0
+    padding: 0
+    padding: 0
+    stride: 2
+    stride: 2
+    stride: 0
+    stride: 0
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    groups: 1
+  }
+  activation: AIX_ACTIVATION_IDENTITY
+}
+layer {
+  id: 17
+  name: "Add_17"
+  type: AIX_LAYER_SKIP_CONV
+  type: AIX_LAYER_EWADD
+  preds: 15
+  preds: 16
+  succs: 18
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 28
+    dims: 28
+    dims: 128
+    dims: 1
+    size: 100352
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 28
+    dims: 28
+    dims: 128
+    dims: 1
+    size: 100352
+  }
+  output_threshold: 0.0
+  convdesc {
+    dtype: AIX_DATA_FLOAT
+    padding: 0
+    padding: 0
+    padding: 0
+    padding: 0
+    stride: 1
+    stride: 1
+    stride: 0
+    stride: 0
+    dilation: 0
+    dilation: 0
+    dilation: 0
+    dilation: 0
+    groups: 1
+  }
+  ewadddesc {
+    scale: 1.0
+    scale: 1.0
+  }
+}
+layer {
+  id: 18
+  name: "Relu_18"
+  type: AIX_LAYER_SKIP_CONV
+  type: AIX_LAYER_ACTIVATION
+  preds: 17
+  succs: 19
+  succs: 22
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 28
+    dims: 28
+    dims: 128
+    dims: 1
+    size: 100352
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 28
+    dims: 28
+    dims: 128
+    dims: 1
+    size: 100352
+  }
+  output_threshold: 0.0
+  activation: AIX_ACTIVATION_RELU
+}
+layer {
+  id: 19
+  name: "Conv_19"
+  type: AIX_LAYER_CONVOLUTION
+  preds: 18
+  succs: 20
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 28
+    dims: 28
+    dims: 128
+    dims: 1
+    size: 100352
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 28
+    dims: 28
+    dims: 128
+    dims: 1
+    size: 100352
+  }
+  filter {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 1
+    dims: 1
+    dims: 128
+    dims: 128
+  }
+  output_threshold: 0.0
+  convdesc {
+    dtype: AIX_DATA_FLOAT
+    padding: 1
+    padding: 1
+    padding: 1
+    padding: 1
+    stride: 1
+    stride: 1
+    stride: 0
+    stride: 0
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    groups: 1
+  }
+  activation: AIX_ACTIVATION_IDENTITY
+}
+layer {
+  id: 20
+  name: "Relu_20"
+  type: AIX_LAYER_SKIP_CONV
+  type: AIX_LAYER_ACTIVATION
+  preds: 19
+  succs: 21
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 28
+    dims: 28
+    dims: 128
+    dims: 1
+    size: 100352
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 28
+    dims: 28
+    dims: 128
+    dims: 1
+    size: 100352
+  }
+  output_threshold: 0.0
+  activation: AIX_ACTIVATION_RELU
+}
+layer {
+  id: 21
+  name: "Conv_21"
+  type: AIX_LAYER_CONVOLUTION
+  preds: 20
+  succs: 22
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 28
+    dims: 28
+    dims: 128
+    dims: 1
+    size: 100352
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 28
+    dims: 28
+    dims: 128
+    dims: 1
+    size: 100352
+  }
+  filter {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 1
+    dims: 1
+    dims: 128
+    dims: 128
+  }
+  output_threshold: 0.0
+  convdesc {
+    dtype: AIX_DATA_FLOAT
+    padding: 1
+    padding: 1
+    padding: 1
+    padding: 1
+    stride: 1
+    stride: 1
+    stride: 0
+    stride: 0
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    groups: 1
+  }
+  activation: AIX_ACTIVATION_IDENTITY
+}
+layer {
+  id: 22
+  name: "Add_22"
+  type: AIX_LAYER_SKIP_CONV
+  type: AIX_LAYER_EWADD
+  preds: 21
+  preds: 18
+  succs: 23
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 28
+    dims: 28
+    dims: 128
+    dims: 1
+    size: 100352
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 28
+    dims: 28
+    dims: 128
+    dims: 1
+    size: 100352
+  }
+  output_threshold: 0.0
+  convdesc {
+    dtype: AIX_DATA_FLOAT
+    padding: 0
+    padding: 0
+    padding: 0
+    padding: 0
+    stride: 1
+    stride: 1
+    stride: 0
+    stride: 0
+    dilation: 0
+    dilation: 0
+    dilation: 0
+    dilation: 0
+    groups: 1
+  }
+  ewadddesc {
+    scale: 1.0
+    scale: 1.0
+  }
+}
+layer {
+  id: 23
+  name: "Relu_23"
+  type: AIX_LAYER_SKIP_CONV
+  type: AIX_LAYER_ACTIVATION
+  preds: 22
+  succs: 24
+  succs: 27
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 28
+    dims: 28
+    dims: 128
+    dims: 1
+    size: 100352
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 28
+    dims: 28
+    dims: 128
+    dims: 1
+    size: 100352
+  }
+  output_threshold: 0.0
+  activation: AIX_ACTIVATION_RELU
+}
+layer {
+  id: 24
+  name: "Conv_24"
+  type: AIX_LAYER_CONVOLUTION
+  preds: 23
+  succs: 25
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 28
+    dims: 28
+    dims: 128
+    dims: 1
+    size: 100352
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 14
+    dims: 14
+    dims: 256
+    dims: 1
+    size: 50176
+  }
+  filter {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 1
+    dims: 1
+    dims: 128
+    dims: 256
+  }
+  output_threshold: 0.0
+  convdesc {
+    dtype: AIX_DATA_FLOAT
+    padding: 1
+    padding: 1
+    padding: 1
+    padding: 1
+    stride: 2
+    stride: 2
+    stride: 0
+    stride: 0
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    groups: 1
+  }
+  activation: AIX_ACTIVATION_IDENTITY
+}
+layer {
+  id: 25
+  name: "Relu_25"
+  type: AIX_LAYER_SKIP_CONV
+  type: AIX_LAYER_ACTIVATION
+  preds: 24
+  succs: 26
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 14
+    dims: 14
+    dims: 256
+    dims: 1
+    size: 50176
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 14
+    dims: 14
+    dims: 256
+    dims: 1
+    size: 50176
+  }
+  output_threshold: 0.0
+  activation: AIX_ACTIVATION_RELU
+}
+layer {
+  id: 26
+  name: "Conv_26"
+  type: AIX_LAYER_CONVOLUTION
+  preds: 25
+  succs: 28
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 14
+    dims: 14
+    dims: 256
+    dims: 1
+    size: 50176
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 14
+    dims: 14
+    dims: 256
+    dims: 1
+    size: 50176
+  }
+  filter {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 1
+    dims: 1
+    dims: 256
+    dims: 256
+  }
+  output_threshold: 0.0
+  convdesc {
+    dtype: AIX_DATA_FLOAT
+    padding: 1
+    padding: 1
+    padding: 1
+    padding: 1
+    stride: 1
+    stride: 1
+    stride: 0
+    stride: 0
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    groups: 1
+  }
+  activation: AIX_ACTIVATION_IDENTITY
+}
+layer {
+  id: 27
+  name: "Conv_27"
+  type: AIX_LAYER_CONVOLUTION
+  preds: 23
+  succs: 28
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 28
+    dims: 28
+    dims: 128
+    dims: 1
+    size: 100352
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 14
+    dims: 14
+    dims: 256
+    dims: 1
+    size: 50176
+  }
+  filter {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 1
+    dims: 1
+    dims: 128
+    dims: 256
+  }
+  output_threshold: 0.0
+  convdesc {
+    dtype: AIX_DATA_FLOAT
+    padding: 0
+    padding: 0
+    padding: 0
+    padding: 0
+    stride: 2
+    stride: 2
+    stride: 0
+    stride: 0
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    groups: 1
+  }
+  activation: AIX_ACTIVATION_IDENTITY
+}
+layer {
+  id: 28
+  name: "Add_28"
+  type: AIX_LAYER_SKIP_CONV
+  type: AIX_LAYER_EWADD
+  preds: 26
+  preds: 27
+  succs: 29
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 14
+    dims: 14
+    dims: 256
+    dims: 1
+    size: 50176
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 14
+    dims: 14
+    dims: 256
+    dims: 1
+    size: 50176
+  }
+  output_threshold: 0.0
+  convdesc {
+    dtype: AIX_DATA_FLOAT
+    padding: 0
+    padding: 0
+    padding: 0
+    padding: 0
+    stride: 1
+    stride: 1
+    stride: 0
+    stride: 0
+    dilation: 0
+    dilation: 0
+    dilation: 0
+    dilation: 0
+    groups: 1
+  }
+  ewadddesc {
+    scale: 1.0
+    scale: 1.0
+  }
+}
+layer {
+  id: 29
+  name: "Relu_29"
+  type: AIX_LAYER_SKIP_CONV
+  type: AIX_LAYER_ACTIVATION
+  preds: 28
+  succs: 30
+  succs: 33
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 14
+    dims: 14
+    dims: 256
+    dims: 1
+    size: 50176
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 14
+    dims: 14
+    dims: 256
+    dims: 1
+    size: 50176
+  }
+  output_threshold: 0.0
+  activation: AIX_ACTIVATION_RELU
+}
+layer {
+  id: 30
+  name: "Conv_30"
+  type: AIX_LAYER_CONVOLUTION
+  preds: 29
+  succs: 31
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 14
+    dims: 14
+    dims: 256
+    dims: 1
+    size: 50176
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 14
+    dims: 14
+    dims: 256
+    dims: 1
+    size: 50176
+  }
+  filter {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 1
+    dims: 1
+    dims: 256
+    dims: 256
+  }
+  output_threshold: 0.0
+  convdesc {
+    dtype: AIX_DATA_FLOAT
+    padding: 1
+    padding: 1
+    padding: 1
+    padding: 1
+    stride: 1
+    stride: 1
+    stride: 0
+    stride: 0
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    groups: 1
+  }
+  activation: AIX_ACTIVATION_IDENTITY
+}
+layer {
+  id: 31
+  name: "Relu_31"
+  type: AIX_LAYER_SKIP_CONV
+  type: AIX_LAYER_ACTIVATION
+  preds: 30
+  succs: 32
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 14
+    dims: 14
+    dims: 256
+    dims: 1
+    size: 50176
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 14
+    dims: 14
+    dims: 256
+    dims: 1
+    size: 50176
+  }
+  output_threshold: 0.0
+  activation: AIX_ACTIVATION_RELU
+}
+layer {
+  id: 32
+  name: "Conv_32"
+  type: AIX_LAYER_CONVOLUTION
+  preds: 31
+  succs: 33
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 14
+    dims: 14
+    dims: 256
+    dims: 1
+    size: 50176
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 14
+    dims: 14
+    dims: 256
+    dims: 1
+    size: 50176
+  }
+  filter {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 1
+    dims: 1
+    dims: 256
+    dims: 256
+  }
+  output_threshold: 0.0
+  convdesc {
+    dtype: AIX_DATA_FLOAT
+    padding: 1
+    padding: 1
+    padding: 1
+    padding: 1
+    stride: 1
+    stride: 1
+    stride: 0
+    stride: 0
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    groups: 1
+  }
+  activation: AIX_ACTIVATION_IDENTITY
+}
+layer {
+  id: 33
+  name: "Add_33"
+  type: AIX_LAYER_SKIP_CONV
+  type: AIX_LAYER_EWADD
+  preds: 32
+  preds: 29
+  succs: 34
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 14
+    dims: 14
+    dims: 256
+    dims: 1
+    size: 50176
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 14
+    dims: 14
+    dims: 256
+    dims: 1
+    size: 50176
+  }
+  output_threshold: 0.0
+  convdesc {
+    dtype: AIX_DATA_FLOAT
+    padding: 0
+    padding: 0
+    padding: 0
+    padding: 0
+    stride: 1
+    stride: 1
+    stride: 0
+    stride: 0
+    dilation: 0
+    dilation: 0
+    dilation: 0
+    dilation: 0
+    groups: 1
+  }
+  ewadddesc {
+    scale: 1.0
+    scale: 1.0
+  }
+}
+layer {
+  id: 34
+  name: "Relu_34"
+  type: AIX_LAYER_SKIP_CONV
+  type: AIX_LAYER_ACTIVATION
+  preds: 33
+  succs: 35
+  succs: 38
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 14
+    dims: 14
+    dims: 256
+    dims: 1
+    size: 50176
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 14
+    dims: 14
+    dims: 256
+    dims: 1
+    size: 50176
+  }
+  output_threshold: 0.0
+  activation: AIX_ACTIVATION_RELU
+}
+layer {
+  id: 35
+  name: "Conv_35"
+  type: AIX_LAYER_CONVOLUTION
+  preds: 34
+  succs: 36
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 14
+    dims: 14
+    dims: 256
+    dims: 1
+    size: 50176
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 7
+    dims: 7
+    dims: 512
+    dims: 1
+    size: 25088
+  }
+  filter {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 1
+    dims: 1
+    dims: 256
+    dims: 512
+  }
+  output_threshold: 0.0
+  convdesc {
+    dtype: AIX_DATA_FLOAT
+    padding: 1
+    padding: 1
+    padding: 1
+    padding: 1
+    stride: 2
+    stride: 2
+    stride: 0
+    stride: 0
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    groups: 1
+  }
+  activation: AIX_ACTIVATION_IDENTITY
+}
+layer {
+  id: 36
+  name: "Relu_36"
+  type: AIX_LAYER_SKIP_CONV
+  type: AIX_LAYER_ACTIVATION
+  preds: 35
+  succs: 37
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 7
+    dims: 7
+    dims: 512
+    dims: 1
+    size: 25088
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 7
+    dims: 7
+    dims: 512
+    dims: 1
+    size: 25088
+  }
+  output_threshold: 0.0
+  activation: AIX_ACTIVATION_RELU
+}
+layer {
+  id: 37
+  name: "Conv_37"
+  type: AIX_LAYER_CONVOLUTION
+  preds: 36
+  succs: 39
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 7
+    dims: 7
+    dims: 512
+    dims: 1
+    size: 25088
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 7
+    dims: 7
+    dims: 512
+    dims: 1
+    size: 25088
+  }
+  filter {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 1
+    dims: 1
+    dims: 512
+    dims: 512
+  }
+  output_threshold: 0.0
+  convdesc {
+    dtype: AIX_DATA_FLOAT
+    padding: 1
+    padding: 1
+    padding: 1
+    padding: 1
+    stride: 1
+    stride: 1
+    stride: 0
+    stride: 0
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    groups: 1
+  }
+  activation: AIX_ACTIVATION_IDENTITY
+}
+layer {
+  id: 38
+  name: "Conv_38"
+  type: AIX_LAYER_CONVOLUTION
+  preds: 34
+  succs: 39
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 14
+    dims: 14
+    dims: 256
+    dims: 1
+    size: 50176
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 7
+    dims: 7
+    dims: 512
+    dims: 1
+    size: 25088
+  }
+  filter {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 1
+    dims: 1
+    dims: 256
+    dims: 512
+  }
+  output_threshold: 0.0
+  convdesc {
+    dtype: AIX_DATA_FLOAT
+    padding: 0
+    padding: 0
+    padding: 0
+    padding: 0
+    stride: 2
+    stride: 2
+    stride: 0
+    stride: 0
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    groups: 1
+  }
+  activation: AIX_ACTIVATION_IDENTITY
+}
+layer {
+  id: 39
+  name: "Add_39"
+  type: AIX_LAYER_SKIP_CONV
+  type: AIX_LAYER_EWADD
+  preds: 37
+  preds: 38
+  succs: 40
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 7
+    dims: 7
+    dims: 512
+    dims: 1
+    size: 25088
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 7
+    dims: 7
+    dims: 512
+    dims: 1
+    size: 25088
+  }
+  output_threshold: 0.0
+  convdesc {
+    dtype: AIX_DATA_FLOAT
+    padding: 0
+    padding: 0
+    padding: 0
+    padding: 0
+    stride: 1
+    stride: 1
+    stride: 0
+    stride: 0
+    dilation: 0
+    dilation: 0
+    dilation: 0
+    dilation: 0
+    groups: 1
+  }
+  ewadddesc {
+    scale: 1.0
+    scale: 1.0
+  }
+}
+layer {
+  id: 40
+  name: "Relu_40"
+  type: AIX_LAYER_SKIP_CONV
+  type: AIX_LAYER_ACTIVATION
+  preds: 39
+  succs: 41
+  succs: 44
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 7
+    dims: 7
+    dims: 512
+    dims: 1
+    size: 25088
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 7
+    dims: 7
+    dims: 512
+    dims: 1
+    size: 25088
+  }
+  output_threshold: 0.0
+  activation: AIX_ACTIVATION_RELU
+}
+layer {
+  id: 41
+  name: "Conv_41"
+  type: AIX_LAYER_CONVOLUTION
+  preds: 40
+  succs: 42
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 7
+    dims: 7
+    dims: 512
+    dims: 1
+    size: 25088
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 7
+    dims: 7
+    dims: 512
+    dims: 1
+    size: 25088
+  }
+  filter {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 1
+    dims: 1
+    dims: 512
+    dims: 512
+  }
+  output_threshold: 0.0
+  convdesc {
+    dtype: AIX_DATA_FLOAT
+    padding: 1
+    padding: 1
+    padding: 1
+    padding: 1
+    stride: 1
+    stride: 1
+    stride: 0
+    stride: 0
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    groups: 1
+  }
+  activation: AIX_ACTIVATION_IDENTITY
+}
+layer {
+  id: 42
+  name: "Relu_42"
+  type: AIX_LAYER_SKIP_CONV
+  type: AIX_LAYER_ACTIVATION
+  preds: 41
+  succs: 43
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 7
+    dims: 7
+    dims: 512
+    dims: 1
+    size: 25088
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 7
+    dims: 7
+    dims: 512
+    dims: 1
+    size: 25088
+  }
+  output_threshold: 0.0
+  activation: AIX_ACTIVATION_RELU
+}
+layer {
+  id: 43
+  name: "Conv_43"
+  type: AIX_LAYER_CONVOLUTION
+  preds: 42
+  succs: 44
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 7
+    dims: 7
+    dims: 512
+    dims: 1
+    size: 25088
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 7
+    dims: 7
+    dims: 512
+    dims: 1
+    size: 25088
+  }
+  filter {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 1
+    dims: 1
+    dims: 512
+    dims: 512
+  }
+  output_threshold: 0.0
+  convdesc {
+    dtype: AIX_DATA_FLOAT
+    padding: 1
+    padding: 1
+    padding: 1
+    padding: 1
+    stride: 1
+    stride: 1
+    stride: 0
+    stride: 0
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    dilation: 1
+    groups: 1
+  }
+  activation: AIX_ACTIVATION_IDENTITY
+}
+layer {
+  id: 44
+  name: "Add_44"
+  type: AIX_LAYER_SKIP_CONV
+  type: AIX_LAYER_EWADD
+  preds: 43
+  preds: 40
+  succs: 45
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 7
+    dims: 7
+    dims: 512
+    dims: 1
+    size: 25088
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 7
+    dims: 7
+    dims: 512
+    dims: 1
+    size: 25088
+  }
+  output_threshold: 0.0
+  convdesc {
+    dtype: AIX_DATA_FLOAT
+    padding: 0
+    padding: 0
+    padding: 0
+    padding: 0
+    stride: 1
+    stride: 1
+    stride: 0
+    stride: 0
+    dilation: 0
+    dilation: 0
+    dilation: 0
+    dilation: 0
+    groups: 1
+  }
+  ewadddesc {
+    scale: 1.0
+    scale: 1.0
+  }
+}
+layer {
+  id: 45
+  name: "Relu_45"
+  type: AIX_LAYER_SKIP_CONV
+  type: AIX_LAYER_ACTIVATION
+  type: AIX_LAYER_OUTPUT
+  preds: 44
+  input {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 7
+    dims: 7
+    dims: 512
+    dims: 1
+    size: 25088
+  }
+  output {
+    dtype: AIX_DATA_FLOAT
+    format: AIX_FORMAT_NCHW
+    dims: 7
+    dims: 7
+    dims: 512
+    dims: 1
+    size: 25088
+  }
+  output_threshold: 0.0
+  activation: AIX_ACTIVATION_RELU
+}
+input_layers: 0
+output_layers: 45
