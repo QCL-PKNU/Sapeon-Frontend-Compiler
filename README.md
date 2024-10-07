@@ -224,10 +224,6 @@ You can find sample model description files for ONNX models (`onnx_sample.md`) a
   - Graduate Student
   - Department of AI Convergence, Pukyong National University
 
-- **Sanghyeon Lee (sanghyeon@pukyong.ac.kr)**
-  - Graduate Student
-  - Department of AI Convergence, Pukyong National University
-
 - **Myeongseong Go (gms3089@pukyong.ac.kr)**
   - Graduate Student
   - Department of AI Convergence, Pukyong National University

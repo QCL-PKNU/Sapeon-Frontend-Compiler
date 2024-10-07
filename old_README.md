@@ -191,11 +191,6 @@ Leanghok Hour (leanghok@pukyong.ac.kr)
 * Graduated Student
 * Department of AI Convergence, Pukyong National University
 
-Sanghyeon Lee (sanghyeon@pukyong.ac.kr)
-
-* Graduated Student
-* Department of AI Convergence, Pukyong National University
-
 Myeongseong Go (gms3089@pukyong.ac.kr)
 
 * Graduated Student
