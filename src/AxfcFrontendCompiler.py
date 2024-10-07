@@ -11,6 +11,7 @@
 #######################################################################
 from multiprocessing import Process
 import os
+from google.protobuf import text_format
 from pathlib import Path
 from CustomGraphs.AxfcONNXWriter import AxfcONNXWriter
 from CustomGraphs.AxfcPTWriter import AxfcPTWriter
@@ -181,19 +182,70 @@ class AxfcFrontendCompiler:
         """
         for idx, aix_graph in enumerate(aix_graphs):
             tmp_path = f"{out_path}.{idx}"
-            serialized_aix_graph = str(aix_graph)
-
-            assert(isinstance(serialized_aix_graph, str))
-
             try:
-                with open(tmp_path, "wt") as f:
-                    f.write(serialized_aix_graph)
+                # Check the format and save accordingly
+                if aix_graph_format == "text":
+                    # Save as .pbtxt format
+                    with open(f"{tmp_path}.pbtxt", "wt") as f:
+                        f.write(str(aix_graph))  # If `aix_graph` is already in string format
+                    logging.info(f"Successfully dumped AIXGraph {idx} in text format.")
+
+                elif aix_graph_format == "binary":
+                    # Save as .pb (binary format)
+                    binary_tmp_path = f"{tmp_path}.pb"
+                    with open(binary_tmp_path, "wb") as f:
+                        f.write(aix_graph.SerializeToString())
+                    logging.info(f"Successfully dumped AIXGraph {idx} in binary format.")
+
+                else:
+                    # Save in both text and binary formats if unspecified
+                    text_tmp_path = f"{tmp_path}.pbtxt"
+                    binary_tmp_path = f"{tmp_path}.pb"
+
+                    # Save as text format (.pbtxt)
+                    with open(text_tmp_path, "wt") as f:
+                        f.write(text_format.MessageToString(aix_graph))  # Use protobuf's `text_format`
+                    logging.info(f"Successfully dumped AIXGraph {idx} in text format.")
+
+                    # Save as binary format (.pb)
+                    with open(binary_tmp_path, "wb") as f:
+                        f.write(aix_graph.SerializeToString())
+                    logging.info(f"Successfully dumped AIXGraph {idx} in binary format.")
+
             except Exception as e:
                 logging.error("Failed to write AIXGraph to file: %s", e)
                 return AxfcError.WRITE_ERROR
 
         logging.info("AxfcFrontendCompiler: Successfully dumped all AIXGraphs.")
         return AxfcError.SUCCESS
+    
+
+    # def dump_aix_graphs(self, out_path: str, aix_graphs: list, aix_graph_format: str) -> AxfcError:
+    #     """Dump the generated AIXGraphs to the specified output path.
+
+    #     Args:
+    #         out_path: The file path to output the AIXGraphs.
+    #         aix_graphs: A list of AIXGraphs to be dumped.
+    #         aix_graph_format: The format to dump the AIXGraphs in.
+
+    #     Returns:
+    #         AxfcError: Error code indicating the success or failure of the operation.
+    #     """
+    #     for idx, aix_graph in enumerate(aix_graphs):
+    #         tmp_path = f"{out_path}.{idx}"
+    #         serialized_aix_graph = str(aix_graph)
+
+    #         assert(isinstance(serialized_aix_graph, str))
+
+    #         try:
+    #             with open(tmp_path, "wt") as f:
+    #                 f.write(serialized_aix_graph)
+    #         except Exception as e:
+    #             logging.error("Failed to write AIXGraph to file: %s", e)
+    #             return AxfcError.WRITE_ERROR
+
+    #     logging.info("AxfcFrontendCompiler: Successfully dumped all AIXGraphs.")
+    #     return AxfcError.SUCCESS
 
 
     # def dump_aix_graphs(self, out_path: str, aix_graphs: list, aix_graph_format:str) -> AxfcError:
