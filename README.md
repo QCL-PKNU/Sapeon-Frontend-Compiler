@@ -1,3 +1,8 @@
+
+Here's the updated README with the explanation of the output file generated after running `make run`:
+
+---
+
 # SKT AIX Frontend Compiler
 
 This README describes the organization and usage of the SKT AIX Frontend Compiler.
@@ -8,200 +13,227 @@ This README describes the organization and usage of the SKT AIX Frontend Compile
 
 This release includes features:
 
-1. Enable to compile PyTorch-to-AIXGraph  
+1. Enable to compile PyTorch-to-AIXGraph
 
-    We have implemented parser and translator for PyTorch model, the following files were added for the purpose of this implementation:  
+We have implemented a parser and translator for PyTorch models. The following files were added for this implementation:
 
-    * src/AxfcPyTorchIRBuilder: parser for PyTorch graph
-    * src/AxfcPyTorchIRTranslator: translator for PyTorch graph   
-    * src/AxfcPyTorchWriter: custom model generator for PyTorch model 
+- `src/AxfcPyTorchIRBuilder`: Parser for PyTorch graph
+- `src/AxfcPyTorchIRTranslator`: Translator for PyTorch graph
+- `src/AxfcPyTorchWriter`: Generates `AIXGraph` from a PyTorch model
 
-2. Enable to generate PyTorch custom graph.  
+2. Support multiple AIXGraphs or AIXOps for TensorFlow, ONNX, and PyTorch
 
-    The custom model replaces AIXGraph with arbitarily operator (custom domain) on PyTorch model.
-    
-    ![Scheme](doc/images/ex_torch_model.png)
-        
-    * Example of an PyTorch model and compiled PyTorch model  
-
-3. Support multiple AIXGraphs or/and AIXOps for TensorFlow, ONNX, and PyTorch
-
-    Like shown in No.2 multiple AIXGraphs can be generated from a model and supported model includes, TensorFlow, ONNX, and PyTorch.
+Multiple `AIXGraphs` can be generated from a model, with supported frameworks including TensorFlow, ONNX, and PyTorch.
 
 ### **Open Issues**
 
 This release contains the following issue that needs to be addressed:
 
-1. Generated AIXGraph only contains input information (type, dims, size) but does not contain input value (fval) for AIX_LAYER_INPUT.    
+1. Generated `AIXGraph` only contains input information (type, dims, size) but does not contain input value (`fval`) for `AIX_LAYER_INPUT`.
 
-    Generated AIXGraph only contains input information:
+The generated `AIXGraph` only contains input information:
 
-      * Generated AIXGraph get the input from the previous node in the model so it only contains input information like type, dims and size.  
-      It doesn’t contain the input value (fval) for the AIX_LAYER_INPUT node. Due to this reason, when testing with AIXGraph simulator, the input value (fval) needs to be manually inserted.
-      
-      ![Scheme](doc/images/ex_gen_aixgraph.png)
+- The generated `AIXGraph` gets the input from the previous node in the model, so it only contains input information like type, dims, and size.
+- It doesn’t contain the input value (`fval`) for the `AIX_LAYER_INPUT` node. For this reason, when testing with the `AIXGraph` simulator, the input value (`fval`) needs to be manually inserted.
 
-2. TensorFlow custom model cannot be generated due to the required re-implementation of the custom operation kernel to change support from Darknet to AIXGraph simulator.
-
-    TensorFlow custom model cannot be generated:
-
-    * In this release, the compiler can generate AIXGraph, includes multiple AIXGraph from a model.  
-     However, the custom model that contains AIXOp cannot be generated. Because to generate a custom operation like AIXOp on TensorFlow, it is required to have a custom kernel for that specific operation.  
-     Previously, we implemented the custom kernel using Darknet but now we have shifted to use on AIXGraph simulator. Thus, the custom kernel needs to be rewritten to support on AIXGraph simulator.
+![Scheme](doc/images/ex_gen_aixgraph.png)
 
 ## **Source Organization**
 
 ### **Common**
 
-* AxfcFrontendCompiler
-* AxfcIRBuilder
-* AxfcIRTranslator
-* AxfcMachineDesc
-* AxfcGraphWriter
-* AxfcLauncherWriter
-* AxfcLauncher  
-* AxfcIRGraph
-* AxfcIRBlock
-* AxfcIRNode
-* AxfcError
-* AxfcMain
+- `AxfcFrontendCompiler`
+- `AxfcIRBuilder`
+- `AxfcIRTranslator`
+- `AxfcMachineDesc`
+- `AxfcGraphWriter`
+- `AxfcLauncherWriter`
+- `AxfcLauncher`
+- `AxfcIRGraph`
+- `AxfcIRBlock`
+- `AxfcIRNode`
+- `AxfcError`
+- `AxfcMain`
 
 ### **Util**
 
-* AxfcAIXLayerView
-* AxfcCustomGraph
-* AxfcTFGraphUtil
-* AxfcUtil
+- `AxfcAIXLayerView`
+- `AxfcCustomGraph`
+- `AxfcTFGraphUtil`
+- `AxfcUtil`
 
-### **Tensorflow**
+### **TensorFlow**
 
-* AxfcTFIRBuilder
-* AxfcTFIRTranslator
-* AxfcTFWriter
+- `AxfcTFIRBuilder`
+- `AxfcTFIRTranslator`
+- `AxfcTFWriter`
 
 ### **ONNX**
-* AxfcONNXBuilder
-* AxfcONNXIRTranslator
-* AxfcONNXWriter
+
+- `AxfcONNXBuilder`
+- `AxfcONNXIRTranslator`
+- `AxfcONNXWriter`
 
 ### **PyTorch**
-* AxfcPTBuilder
-* AxfcPTTranslator
-* AxfcPTWriter
+
+- `AxfcPTBuilder`
+- `AxfcPTTranslator`
+- `AxfcPTWriter`
 
 ### **SKT-AIX**
 
-* aixh_pb2
+- `aixh_pb2`
 
 ## **Prerequisites**
+
 Install Dependencies (Ubuntu 20.04~)
 
-To prohibit the module confilit, recomend creating a virtual environment.
+To avoid module conflicts, we recommend creating a virtual environment. The `Makefile` automatically creates and configures a virtual environment (`venv`) when you run `make all`. It sets up the necessary environment and installs the required packages.
 
-```
+If you need to set up the virtual environment manually for any reason, you can follow these steps:
+
+```bash
 $ python3 -m venv {virtual_env_name}
 
-1.Ubuntu
-  $ cd {virtual_env_name}
-  $ source bin/activate
+1. Ubuntu
+$ cd {virtual_env_name}
+$ source bin/activate
 
-2.Window
-  $ cd {virtual_env_name}/Scripts
-  $ activate.bat
+2. Windows
+$ cd {virtual_env_name}/Scripts
+$ activate.bat
 ```
 
-And install the requirement packages.
-```
+And install the required packages:
+
+```bash
 $ pip3 install -r requirements.txt
 ```
-If the `onnx_graphsurgeon` package is not be installed successfully, please check the latest version and installed it in latest version.
 
+If the `onnx_graphsurgeon` package is not installed successfully, please check the latest version and install it manually:
+
+```bash
+$ pip3 install onnx_graphsurgeon=={latest_version}
 ```
-pip3 install onnx_graphsurgeon={latest_version}
+
+## **Usage**
+
+Our frontend compiler currently provides 2 ways for execution: using a Makefile or the `python3` command line.
+
+### **Using Makefile**
+
+The `Makefile` simplifies the process of setting up the environment and running the compiler.
+
+To use the Makefile, please follow the steps below:
+
+1. Configure the Makefile by editing it at path `skt-aix-frontend-compiler/Makefile`.
+
+2. Fill in the required parameters:
+
+```makefile
+MODEL= ./tst/model_name.pb
+MD= ./tst/model_description.md
 ```
-## **Usage** 
-Our frontend compiler currently provides 2 ways for the executing, by using Makefile or python3 command line.
+
+3. On the terminal, navigate to the AIX frontend compiler directory:
+
+```bash
+$ cd skt-aix-frontend-compiler
+```
+
+4. Run the Makefile:
+
+```bash
+$ make all
+```
+
+This will:
+- Create and activate a virtual environment (`venv`).
+- Install the required Python packages.
+- Compile the specified model to generate an `AIXGraph`.
+
+5. To run the frontend compiler and generate the `AIXGraph`, execute:
+
+```bash
+$ make run
+```
+
+### **Output: AIXGraph**
+
+- The output of the frontend compiler is an `AIXGraph`, which is a serialized representation of the model suitable for execution on the AIX simulator.
+- After running `make run`, an output file named `aixgraph.out.0.pb` (for binary format) or `aixgraph.out.0.pbtxt` (for text format) will be created in the output directory specified in the Makefile.
+  - The format of the output depends on the `-f` argument specified (either `'binary'` or `'text'`).
+- This `AIXGraph` file serves as the input to the simulator for performing inference or other operations.
+
+### **Cleaning Up Files**
+
+To clean up build artifacts and temporary files generated during execution (such as `__pycache__`, `venv`, and `tst/aix_graph.out.*`), run the `make clean` command:
+
+```bash
+$ make clean
+```
+
+This will delete the specified files and directories according to the `clean` target in the Makefile.
 
 ### **Using Python3 Command Line**
-To use the python3 command line, we have to pass the required arguments listed below.
+
+Alternatively, you can manually execute the compiler through the command line with Python. Pass the required arguments listed below.
 
 **Required Arguments**
-    
-    -m: path to a machine description file 
-    -i: path to the protocol buffer of a frozen model
 
- **Optional Arguments**
+- `-m`: Path to a model description file
+- `-i`: Path to the protocol buffer of a frozen model
 
-    -c: Path to the calibration data of a frozen model (optional)
-    -o: Path to output the generated AIXGraph (optional)
-    -l: Path to log out (optional)
-    -g: Path to dump out an IR graph (optional)
-    -f: Configure output for aix graph format between 'binary' and 'text' (optional, default is binary)
-  Note:
+**Optional Arguments**
 
-* For -f argument, we recommend to use binary format as it is much faster for dumping the aix graph.
- 
- **Example**
+- `-c`: Path to the calibration data of a frozen model (optional)
+- `-o`: Path to output the generated `AIXGraph` (optional)
+- `-l`: Path to log out (optional)
+- `-g`: Path to dump out an IR graph (optional)
+- `-f`: Configure output for `AIXGraph` format between 'binary' and 'text' (optional, default is binary)
 
-1. On terminal, go to aix frontend compiler directory
-    ```    
-    $ cd skt-aix-frontend-compiler
-    ```
-2. Run aix compiler
-   ```
-   $ python3 src/AxfcMain.py -m=tst/machine_description.md -i=tst/model_name.pb -f=text
-   ```
+**Note**: For the `-f` argument, we recommend using the binary format as it is much faster for dumping the `AIXGraph`.
 
-   Note: you can find sample machine description file for ONNX model (onnx_sample.md) and TensorFlow model (tf_sample.md) in the 'skt-aix-frontend-compiler/tst' directory.
+**Example**
 
-### **Using Makefile:**
-To use the makefile, please follow the following steps below:
+1. On the terminal, navigate to the AIX frontend compiler directory:
 
-1. Configure makefile, go to edit Makefile at path ``skt-aix-frontend-compiler/Makefile``
+```bash
+$ cd skt-aix-frontend-compiler
+```
 
+2. Run the AIX compiler:
 
-2. Fill in the required parameter belows:
-   ```
-   MODEL= ./tst/model_name.pb 
-   MD= ./tst/model_description.md
-   ```
-3. On terminal, go to aix frontend compiler directory:
-    ```    
-    $ cd skt-aix-frontend-compiler
-    ```
-4. Run Makefile
-    ```
-    $ make all
-    ```
+```bash
+$ python3 src/AxfcMain.py -m=tst/model_description.md -i=tst/model_name.pb -f=text
+```
+
+You can find sample model description files for ONNX models (`onnx_sample.md`) and TensorFlow models (`tf_sample.md`) in the `skt-aix-frontend-compiler/tst` directory.
 
 ## **Contact**
 
-Youngsun Han (youngsun@pknu.ac.kr)
+- **Youngsun Han (youngsun@pknu.ac.kr)**
+  - Associate Professor
+  - Department of Computer Engineering, Pukyong National University
 
-* Associate Professor
-* Department of Computer Engineering, Pukyong National University
+- **Sengthai Heng (sengthai37@gmail.com)**
+  - Graduate Student
+  - Department of AI Convergence, Pukyong National University
 
-Sengthai Heng (sengthai37@gmail.com)
+- **Leanghok Hour (leanghok@pukyong.ac.kr)**
+  - Graduate Student
+  - Department of AI Convergence, Pukyong National University
 
-* Graduated Student
-* Department of AI Convergence, Pukong National University
+- **Sanghyeon Lee (sanghyeon@pukyong.ac.kr)**
+  - Graduate Student
+  - Department of AI Convergence, Pukyong National University
 
-Leanghok Hour (leanghok@pukyong.ac.kr)
+- **Myeongseong Go (gms3089@pukyong.ac.kr)**
+  - Graduate Student
+  - Department of AI Convergence, Pukyong National University
 
-* Graduated Student
-* Department of AI Convergence, Pukyong National University
+- **Kimsay Pov (povkimsay@gmail.com)**
+  - Graduate Student
+  - Department of AI Convergence, Pukyong National University
 
-Sanghyeon Lee (sanghyeon@pukyong.ac.kr)
-
-* Graduated Student
-* Department of AI Convergence, Pukyong National University
-
-Myeongseong Go (gms3089@pukyong.ac.kr)
-
-* Graduated Student
-* Department of AI Convergence, Pukyong National University
-
-Kimsay Pov (povkimsay@gmail.com)
-
-* Graduated Student
-* Department of AI Convergence, Pukyong National University
+---
