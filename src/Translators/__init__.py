@@ -1,4 +1,0 @@
-from .AxfcIRTranslator import AxfcIRTranslator, AIXTensorType
-from .AxfcONNXIRTranslator import AxfcONNXIRTranslator
-from .AxfcTFIRTranslator import AxfcTFIRTranslator
-from .AxfcPTIRTranslator import AxfcPTIRTranslator
