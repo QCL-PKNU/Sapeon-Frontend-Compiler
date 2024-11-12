@@ -1,0 +1,24 @@
+# name: Docker CPU Image CI
+
+# on:
+#   pull_request:
+#     branches: [ "develop", "main" ]
+
+# jobs:
+#   build:
+#     name: build
+#     runs-on: ubuntu-latest
+#     steps:
+#     - uses: actions/checkout@v3
+#     - name: Build the Docker image
+#       working-directory: ./docker
+#       run: |
+#         ./docker_build_cpu.sh
+#     - name: Run the Docker image and build Simulator
+#       working-directory: ./docker
+#       run: |
+#         docker run \
+#         --name spgraph-simulator \
+#         -v ./..:/root/simulator \
+#         simulator-cpu \
+#         --entrypoint /bin/bash /root/simulator/entrypoint.sh

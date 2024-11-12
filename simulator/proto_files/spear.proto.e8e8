@@ -1,0 +1,153 @@
+// Copyright 2021 The Sapeon Inc. All rights reserved.
+
+syntax = "proto2";
+
+package sapeon.simulator;
+
+message SPLayer {
+  required int32 id = 1;
+  optional string name = 2;
+
+  // represent all types of merged layers
+  repeated string type = 3;
+
+  repeated int32 preds = 4;
+  repeated int32 succs = 5;
+
+  enum SPActivationMode {
+    SP_ACTIVATION_SIGMOID = 0;
+    SP_ACTIVATION_RELU = 1;
+    SP_ACTIVATION_LEAKY_RELU = 2;
+    SP_ACTIVATION_PRELU = 3;
+    SP_ACTIVATION_TANH = 4;
+    SP_ACTIVATION_IDENTITY = 5;
+    SP_ACTIVATION_MISH = 6;
+    SP_ACTIVATION_RELU6 = 7;
+    SP_ACTIVATION_SWISH = 8;
+  }
+
+  enum SPSamplingMode {
+    // down sampling
+    SP_POOLING_MAX = 0;
+    SP_POOLING_GLOBAL_AVERAGE = 1;
+    SP_POOLING_LOCAL_AVERAGE = 5;
+    SP_POOLING_REORG = 2;
+    // up sampling
+    SP_POOLING_UPSAMPLE = 3;
+    SP_POOLING_PIXELSHUFFLE = 4;
+  }
+
+  enum SPDataType {
+    SP_DATA_FLOAT = 0;
+    SP_DATA_DOUBLE = 1;
+    SP_DATA_HALF = 2;
+    SP_DATA_UINT8 = 3;
+    SP_DATA_SINT8 = 4;
+    SP_DATA_SINT16 = 5;
+  }
+
+  enum SPTensorFormat {
+    SP_FORMAT_NCHW = 0;
+    SP_FORMAT_NHWC = 1;
+    SP_FORMAT_NWHC = 2;
+    SP_FORMAT_VECTOR = 3;
+  }
+
+  message SPConvolutionDesc {
+    optional SPDataType dtype = 1;
+    repeated int32 padding = 2;
+    repeated int32 stride = 3;
+    repeated int32 dilation = 4;
+    // depthwise separable convolution parameter
+    required int32 groups = 5;
+  }
+
+  message SPSamplingDesc {
+    required SPSamplingMode mode = 1;
+    repeated int32 padding = 2;
+    repeated int32 stride = 3;
+    repeated int32 window = 4;
+  }
+
+  message SPEWAddDesc {
+    repeated float scale =  1;
+  }
+
+  message SPEWMulDesc {
+    repeated float scale =  1;
+  }
+
+  message SPTensor {
+    required SPDataType dtype = 1;
+    required SPTensorFormat format = 2;
+    repeated int32 dims = 3;
+    repeated float fval = 4;
+    // packed removes upper zero elements
+    repeated int32 bval = 5 [packed=true];
+    optional int32 size = 6;
+    // FIXME : tensor pointer passed
+    // google protobuffer is not allowed to pass pointer parameter
+    // However, value passing makes additional copy overhead
+    // Temporarily, pass input/output tensor address pointer with ptr parameter
+    optional int64 ptr = 7;
+  }
+
+  message Attribute {
+    enum AttributeType {
+      UNDEFINED = 0;
+      FLOAT = 1;
+      INT = 2;
+      STRING = 3;
+      FLOATS = 6;
+      INTS = 7;
+      STRINGS = 8;
+    }
+    optional string name = 21;
+
+    optional AttributeType type = 20;   // discriminator that indicates which field below is in use
+
+    optional float f = 2;               // float
+    optional int64 i = 3;               // int
+    optional bytes s = 4;               // UTF-8 string
+
+    repeated float floats = 7;          // list of floats
+    repeated int64 ints = 8;            // list of ints
+    repeated bytes strings = 9;         // list of UTF-8 strings
+  }
+
+  repeated SPTensor input = 6;
+  optional SPTensor output = 7;
+  optional SPTensor filter = 8;
+
+  /// SP_FORMAT_VECTOR (bias/batch normalization factors)
+  optional SPTensor bias = 9;
+  optional SPTensor scale = 10;
+  optional SPTensor mean = 11;
+  optional SPTensor variance = 12;
+  optional float epsilon = 16;
+
+  repeated float input_threshold = 13;
+  optional float output_threshold = 14;
+  repeated float filter_threshold = 15;
+
+  optional SPConvolutionDesc convdesc = 20;
+  optional SPSamplingDesc samplingdesc = 21;
+  optional SPEWAddDesc ewadddesc = 22;
+  optional SPEWMulDesc ewmuldesc = 23;
+
+  optional SPActivationMode activation = 30;
+
+  // Attribute is a kind of simple map
+  // e.g.) for leaky or prelu layer, negative slope is expressed as
+  // attribute.name = "leaky_slope", attribute.f = 0.25
+  repeated Attribute attributes = 31;
+}
+
+message SPGraph {
+  repeated SPLayer layer = 1;
+  repeated int32 input_layers = 2;
+  repeated int32 output_layers = 3;
+  optional int64 ir_version = 4 [default = 2]; // ir version
+  // If true, this graph is optimized by the graph optimizer
+  optional bool is_optimized = 5 [default = false];
+}

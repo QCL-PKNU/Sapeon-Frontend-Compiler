@@ -1,0 +1,179 @@
+syntax = "proto2";
+
+package aixh;
+
+message AIXLayer {
+  required int32 id = 1;
+  optional string name = 2;
+
+  enum AIXLayerType {
+    AIX_LAYER_CONVOLUTION = 0;
+    AIX_LAYER_CONNECTED = 1;
+    AIX_LAYER_MAXPOOL = 2;
+    AIX_LAYER_AVGPOOL = 3;    
+    AIX_LAYER_ROUTE = 6;
+    AIX_LAYER_REORG = 7;
+    AIX_LAYER_EWADD = 8;
+    AIX_LAYER_UPSAMPLE = 9;
+    AIX_LAYER_PIXELSHUFFLE = 10;
+    // Deprecated : FAKE_CONV is used to emulate maxpooling in mxc
+    // maxpooling = 1x1 bypass convolution + maxpooling
+    // maxpooling is handled in NVP kernel
+    //AIX_LAYER_FAKE_CONV = 11;
+
+    // GROUP_CONV is used for DWS convolution & other group convolution
+    AIX_LAYER_GROUP_CONV = 11;
+    AIX_LAYER_SKIP_CONV = 12;
+    AIX_LAYER_ACTIVATION = 13;
+    AIX_LAYER_BATCHNORM = 14;
+    AIX_LAYER_BIASADD = 15;
+    AIX_LAYER_OUTPUT = 16; // output layer
+    AIX_LAYER_INPUT = 17; // input layer
+    AIX_LAYER_WILDCARD = 18; // including all layers
+    AIX_LAYER_ADD = 19; // add
+    AIX_LAYER_MUL = 20; // mul
+    AIX_LAYER_SUB = 21; // sub    
+    AIX_LAYER_SUM = 22; // sum    
+    AIX_LAYER_INSTANCE_NORM = 23; // instance norm
+    AIX_LAYER_MATMUL = 24; // MatMul
+    AIX_LAYER_LAYER_NORM = 25; // layer norm
+  }
+  // represent all types of merged layers
+  repeated AIXLayerType type = 3;
+
+  repeated int32 preds = 4;
+  repeated int32 succs = 5;
+
+  enum AIXActivationMode {
+    AIX_ACTIVATION_SIGMOID = 0;
+    AIX_ACTIVATION_RELU = 1;
+    AIX_ACTIVATION_LEAKY_RELU = 2;
+    AIX_ACTIVATION_PRELU = 3;
+    AIX_ACTIVATION_TANH = 4;
+    AIX_ACTIVATION_IDENTITY = 5;
+    AIX_ACTIVATION_MISH = 6;
+    AIX_ACTIVATION_CELU = 7;
+    AIX_ACTIVATION_SELU = 8;
+    AIX_ACTIVATION_SOFTMAX = 9;
+  }
+
+  enum AIXSamplingMode {
+    // down sampling
+    AIX_POOLING_MAX			= 0;
+    AIX_POOLING_AVERAGE = 1;
+    AIX_POOLING_REORG		= 2;
+    // up sampling
+    AIX_POOLING_UPSAMPLE = 3;
+    AIX_POOLING_PIXELSHUFFLE = 4;
+  }
+
+  enum AIXDataType {
+    AIX_DATA_FLOAT = 0;
+    AIX_DATA_DOUBLE = 1;
+    AIX_DATA_HALF = 2;
+    AIX_DATA_UINT8 = 3;
+    AIX_DATA_SINT8 = 4;
+    AIX_DATA_SINT16 = 5;
+  }
+
+  enum AIXTensorFormat {
+    AIX_FORMAT_NCHW = 0;
+    AIX_FORMAT_NHWC = 1;
+    AIX_FORMAT_NWHC = 2;
+    AIX_FORMAT_VECTOR = 3;
+  }
+
+  message AIXConvolutionDesc {
+    required AIXDataType dtype = 1;
+    repeated int32 padding = 2;
+    repeated int32 stride = 3;
+    repeated int32 dilation = 4;
+    // depthwise separable convolution parameter
+    required int32 groups = 5;
+  }
+
+  message AIXSamplingDesc {
+    required AIXSamplingMode mode = 1;
+    repeated int32 padding = 2;
+    repeated int32 stride = 3;
+    repeated int32 window = 4;
+  }
+
+  message AIXEWAddDesc {
+    repeated float scale =  1;
+  }
+
+  message AIXTensor {
+    required AIXDataType dtype = 1;
+    required AIXTensorFormat format = 2;
+    repeated int32 dims = 3;
+    repeated float fval = 4;
+    // packed removes upper zero elements
+    repeated int32 bval = 5 [packed=true];
+    optional int32 size = 6;
+    // FIXME : tensor pointer passed
+    // google protobuffer is not allowed to pass pointer parameter
+    // However, value passing makes additional copy overhead
+    // Temporarily, pass input/output tensor address pointer with ptr parameter
+    optional int64 ptr = 7;
+  }
+
+  optional AIXTensor input = 6;
+  optional AIXTensor output = 7;
+  optional AIXTensor filter = 8;
+
+  /// AIX_FORMAT_VECTOR (bias/batch normalization factors)
+  optional AIXTensor bias = 9;
+  optional AIXTensor scale = 10;
+  optional AIXTensor mean = 11;
+  optional AIXTensor variance = 12;
+  optional float epsilon = 16;
+  
+  optional float alpha = 17;
+  optional float gamma = 18;
+
+  optional int32 axis = 23;
+  optional int32 stash_type = 24;  
+
+  optional float beta = 25;
+  optional int64 transA = 26;
+  optional int64 transB = 27;
+
+  optional int64 keepdims = 28;
+  optional int64 noop_with_empty_axes = 29;
+  optional int64 select_last_index = 31;
+  repeated int64 axes = 32;
+  
+  optional string mode = 33;
+  repeated float scales = 34;
+  optional float extrapolation_value = 35;
+  optional string coordinate_transformation_mode = 36;
+  optional string nearest_mode = 37;
+  optional float cubic_coeff_a = 38;
+  optional int64 exclude_outside = 39;
+
+  optional string auto_pad = 40;
+  repeated int64 dilations = 41;
+  optional int64 group = 42;
+  repeated int64 kernel_shape = 43;
+  repeated int64 output_padding = 44;
+  repeated int64 output_shape = 45;
+  repeated int64 pads = 46;
+  repeated int64 strides = 47;
+
+  optional float input_threshold = 13;
+  optional float output_threshold = 14;
+  repeated float filter_threshold = 15;
+
+  required AIXConvolutionDesc convdesc = 20;
+  optional AIXSamplingDesc samplingdesc = 21;
+  optional AIXEWAddDesc ewadddesc = 22;
+
+  optional AIXActivationMode activation = 30;
+}
+
+message AIXGraph {
+	repeated AIXLayer layer = 1;
+	repeated int32 input_layers = 2;
+	repeated int32 output_layers = 3;
+}

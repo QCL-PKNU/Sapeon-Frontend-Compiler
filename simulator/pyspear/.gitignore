@@ -1,0 +1,4 @@
+__pycache__/
+/.vscode
+*_pb2.py
+*.sp

@@ -1,0 +1,1459 @@
+INFO:root:##########################
+INFO:root:# Start Compilation
+INFO:root:##########################
+INFO:root:AxfcFrontendCompiler:read_md_file - path: frontend/assets/md/tensorflow_sample.md
+INFO:root:AxfcMachineDesc:read_file - path: frontend/assets/md/tensorflow_sample.md
+INFO:root:AxfcFrontendCompiler:read_calib_file - path: frontend/assets/calibs/resnet50_v1_imagenet_calib.tbl
+INFO:root:Calibration data read successfully from: frontend/assets/calibs/resnet50_v1_imagenet_calib.tbl
+INFO:root:AxfcFrontendCompiler:compile - path: frontend/assets/models/resnet50.pb
+INFO:root:AxfcTFIRBuilder:build_naive_ir - path: frontend/assets/models/resnet50.pb
+INFO:root:AxfcTFIRBuilder:read_model_graph - path: frontend/assets/models/resnet50.pb
+WARNING:tensorflow:From /home/povkimsay/projects/deep-learning-compiler/frontend/src/Parsers/AxfcTFIRBuilder.py:48: remove_training_nodes (from tensorflow.python.framework.graph_util_impl) is deprecated and will be removed in a future version.
+Instructions for updating:
+This API was designed for TensorFlow v1. See https://www.tensorflow.org/guide/migrate for instructions on how to migrate your code to TensorFlow v2.
+INFO:root:AxfcIRBuilder:find_aixh_blocks
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcMachineDesc:get_profit_threshold
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcIRBuilder:perform_maximal_munch
+INFO:root:AxfcMachineDesc:get_profit_threshold
+INFO:root:AxfcIRTranslator:emit_aixh_graph
+INFO:root:AxfcIRTranslator:__emit_aixh_block from block with id: 0
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 0
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 0
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 1
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 1
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 2
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 2
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 3
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 3, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 4
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_maxpool - node 4
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 5
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 5
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 6
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 6
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 7
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 7
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 8
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 8
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 9
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 9
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 10
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 10
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 11
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 11, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 12
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 12
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 13
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 13
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 14
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 14
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 15
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 15, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 16
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 16
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 17
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 17
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 18
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 18
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 19
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_ewadd - node 19
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 20
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 20, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 21
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 21
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 22
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 22
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 23
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 23
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 24
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 24, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 25
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 25
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 26
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 26
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 27
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 27
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 28
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 28, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 29
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 29
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 30
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 30
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 31
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 31
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 32
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_ewadd - node 32
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 33
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 33, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 34
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 34
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 35
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 35
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 36
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 36
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 37
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 37, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 38
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 38
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 39
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 39
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 40
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 40
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 41
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 41, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 42
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 42
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 43
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 43
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 44
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 44
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 45
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_ewadd - node 45
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 46
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 46, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 47
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 47
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 48
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 48
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 49
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 49
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 50
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 50
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 51
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 51
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 52
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 52
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 53
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 53, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 54
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 54
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 55
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 55
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 56
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 56
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 57
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 57, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 58
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 58
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 59
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 59
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 60
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 60
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 61
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_ewadd - node 61
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 62
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 62, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 63
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 63
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 64
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 64
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 65
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 65
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 66
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 66, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 67
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 67
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 68
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 68
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 69
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 69
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 70
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 70, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 71
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 71
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 72
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 72
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 73
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 73
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 74
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_ewadd - node 74
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 75
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 75, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 76
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 76
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 77
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 77
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 78
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 78
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 79
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 79, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 80
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 80
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 81
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 81
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 82
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 82
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 83
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 83, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 84
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 84
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 85
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 85
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 86
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 86
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 87
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_ewadd - node 87
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 88
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 88, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 89
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 89
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 90
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 90
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 91
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 91
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 92
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 92, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 93
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 93
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 94
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 94
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 95
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 95
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 96
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 96, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 97
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 97
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 98
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 98
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 99
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 99
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 100
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_ewadd - node 100
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 101
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 101, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 102
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 102
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 103
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 103
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 104
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 104
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 105
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 105
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 106
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 106
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 107
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 107
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 108
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 108, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 109
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 109
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 110
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 110
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 111
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 111
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 112
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 112, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 113
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 113
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 114
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 114
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 115
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 115
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 116
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_ewadd - node 116
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 117
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 117, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 118
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 118
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 119
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 119
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 120
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 120
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 121
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 121, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 122
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 122
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 123
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 123
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 124
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 124
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 125
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 125, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 126
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 126
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 127
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 127
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 128
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 128
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 129
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_ewadd - node 129
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 130
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 130, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 131
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 131
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 132
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 132
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 133
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 133
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 134
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 134, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 135
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 135
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 136
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 136
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 137
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 137
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 138
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 138, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 139
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 139
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 140
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 140
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 141
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 141
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 142
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_ewadd - node 142
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 143
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 143, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 144
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 144
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 145
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 145
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 146
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 146
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 147
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 147, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 148
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 148
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 149
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 149
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 150
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 150
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 151
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 151, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 152
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 152
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 153
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 153
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 154
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 154
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 155
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_ewadd - node 155
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 156
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 156, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 157
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 157
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 158
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 158
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 159
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 159
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 160
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 160, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 161
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 161
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 162
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 162
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 163
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 163
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 164
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 164, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 165
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 165
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 166
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 166
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 167
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 167
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 168
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_ewadd - node 168
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 169
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 169, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 170
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 170
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 171
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 171
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 172
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 172
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 173
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 173, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 174
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 174
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 175
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 175
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 176
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 176
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 177
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 177, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 178
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 178
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 179
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 179
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 180
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 180
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 181
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_ewadd - node 181
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 182
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 182, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 183
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 183
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 184
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 184
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 185
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 185
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 186
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 186
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 187
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 187
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 188
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 188
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 189
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 189, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 190
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 190
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 191
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 191
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 192
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 192
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 193
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 193, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 194
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 194
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 195
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 195
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 196
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 196
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 197
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_ewadd - node 197
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 198
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 198, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 199
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 199
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 200
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 200
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 201
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 201
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 202
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 202, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 203
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 203
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 204
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 204
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 205
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 205
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 206
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 206, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 207
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 207
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 208
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 208
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 209
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 209
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 210
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_ewadd - node 210
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 211
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 211, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 212
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 212
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 213
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 213
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 214
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 214
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 215
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 215, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 216
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 216
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 217
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 217
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 218
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 218
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 219
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 219, Relu
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 220
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_convolution - node 220
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 221
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_batchnorm - node 221
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 222
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_biasadd - node 222
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 223
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_ewadd - node 223
+INFO:root:AxfcIRTranslator:__emit_aixh_node - node 224
+WARNING:root:AxfcTFIRTranslator.py: Only 1 input tensor information is being emitted to aix graph
+INFO:root:AxfcTFIRTranslator:_emit_aix_layer_activation - node 224, Relu
+INFO:root:Attempting to write AIXGraph 0 in binary format to frontend/assets/aix_graph.out.0.pb
+INFO:root:Successfully dumped AIXGraph 0 in binary format.
+INFO:root:AxfcFrontendCompiler: Successfully dumped all AIXGraphs.
+INFO:root:##########################
+INFO:root:# Finished Compilation
+INFO:root:##########################

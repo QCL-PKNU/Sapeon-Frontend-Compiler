@@ -1,0 +1,21 @@
+  const std::string kCONVOLUTION = "convolution";
+  const std::string kCONNECTED = "connected";
+  const std::string kMAXPOOL = "maxpool";
+  const std::string kGAVGPOOL = "gavgpool";
+  const std::string kSOFTMAX = "softmax";
+  const std::string kROUTE = "route";
+  const std::string kREORG = "reorg";
+  const std::string kEWADD = "ewadd";
+  const std::string kUPSAMPLE = "upsample";
+  const std::string kPIXELSHUFFLE = "pixelshuffle";
+
+  const std::string kGROUPCONV = "groupconv";
+  const std::string kACTIVATION = "activation";
+  const std::string kBATCHNORM = "batchnorm";
+  const std::string kBIASADD = "biasadd";
+  const std::string kWILDCARD = "wildcard";  // including all layers
+
+  const std::string kLAVGPOOL = "lavgpool";
+  const std::string kEWMUL = "ewmul";
+  const std::string kMOVE = "move";
+
