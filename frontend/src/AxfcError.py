@@ -66,3 +66,4 @@ class AxfcError(enum.Enum):
 
     # I/O
     READ_FILE_ERROR = auto()
+    WRITE_ERROR = auto()
