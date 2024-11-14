@@ -33,11 +33,11 @@ pip install -r requirements.txt
 Deep learning compiler can be compiled into AIXGraph by using the following command line:
 ```bash
 python3 src/AxfcMain.py \
-		-m assets/md/tensorflow_sample.md \
-		-c tst/assets/calibs/resnet50_v1_imagenet_calib.tbl \
+		-m assets.md/tensorflow_sample.md \
+		-c assets/calibs/resnet50_v1_imagenet_calib.tbl \
 		-i assets/models/resnet50.pb \
 		-l assets/logging.log \
-		-0 aix_graph.out
+		-o aix_graph.out \
 		-f binary
 ```
 
