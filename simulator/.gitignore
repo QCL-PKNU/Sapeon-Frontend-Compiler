@@ -1,0 +1,66 @@
+# Developer managed directories
+/.vscode/
+/build/
+/calibration-table*
+/darknet/
+/dump*/
+/examples/
+/images/
+/logs/
+/models/
+/results*/
+/tests/test_data
+/network-outputs*
+/psnr*
+/quant_max*
+/quant.max*
+
+# lint result files
+lint_result*
+
+# Python generated files
+__pycache__/
+*/.ipynb_checkpoints
+dist
+*.egg-info
+
+# Temporary files
+*.swp
+
+# ctags
+tags
+
+# Protobuf generated files
+*.pb.h
+*.pb.cc
+*_pb2.py
+
+# Model files
+*.onnx
+*.pb
+*.pb.txt
+
+# Log files
+/output_log*
+/UNKNOWN.INFO
+/log.txt
+
+# Binary
+*.a
+*.o
+*.out
+
+# Executable
+/simulator
+/testaix
+/test_cpu
+/test_gpu
+
+# If needed, symbolic link for image source
+/images
+
+# Dev Container
+/.devcontainer/devcontainer.json
+
+# MacOS generate files
+.DS_Store
