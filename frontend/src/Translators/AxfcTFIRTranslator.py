@@ -365,6 +365,11 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
         # else:
         #     aix_layer.epsilon = 0
 
+        # bias
+        if 'FusedBatchNorm' in ir_node.op:
+            bias_tensor = self.__get_tensor_by_name(ir_node.name + '/BiasaddClone')
+            aix_layer.bias.CopyFrom(self._emit_aix_tensor_bias(ir_node, tensor=bias_tensor))
+
         return AxfcError.SUCCESS
 
     ##  This method emits some tensorflow-specific information of the given IR node
