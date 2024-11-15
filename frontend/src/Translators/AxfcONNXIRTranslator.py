@@ -437,6 +437,10 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
         if 'epsilon' in onnx_node.attrs:
             aix_layer.epsilon = onnx_node.attrs['epsilon']
 
+        # Bias
+        bias_tensor = self.__get_aix_tensor_bias(ir_node, onnx_node.attrs)
+        aix_layer.bias.CopyFrom(bias_tensor)
+
         return AxfcError.SUCCESS
 
     ##  This method emits an AIX tensor of an variance type from the given IR node.
