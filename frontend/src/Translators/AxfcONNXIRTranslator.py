@@ -278,7 +278,7 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
                 return self.__emit_aix_tensor(input)
 
         # Set default bias
-        return self.__emit_default_hyper_parameter(ir_node.aix_layer, 1)
+        return self.__emit_default_hyper_parameter(ir_node.aix_layer, 0)
 
     ## This method emits an AIX tensor of an filter type from the given IR node.
     #
