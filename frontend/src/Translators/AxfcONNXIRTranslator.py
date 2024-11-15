@@ -235,28 +235,50 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
     # @param ir_node an IR node to be emitted
     # @return an output AIX convolution layer
     def _emit_aix_layer_convolution(self, ir_node: AxfcIRNode, **kwargs) -> AxfcError:
-        # return super()._emit_aix_layer_convolution(ir_node, **kwargs)
         logging.info("AxfcONNXIRTranslator:_emit_aix_layer_convolution - node %d", ir_node.layer_id)
 
         aix_layer = ir_node.aix_layer
-
         tensor = self.tensors[ir_node.output_name[0]]
         onnx_node = self._symtab[ir_node.name]
 
-        #filter
+        # Handle filter
         aix_layer.filter.CopyFrom(self._emit_aix_tensor_filter(ir_node, tensor=tensor))
-        #bias
-        if "bias" in onnx_node.attrs:
-            aix_layer.bias.CopyFrom(self._emit_aix_tensor_bias(ir_node, tensor=tensor))
 
-        # # convolution desc
+        # Bias handling (moved to helper function)
+        bias_tensor = self.__get_aix_tensor_bias(ir_node, onnx_node.attrs)
+        aix_layer.bias.CopyFrom(bias_tensor)
+
+        # Handle convolution description
         aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node, tensor=tensor))
 
+        # Handle epsilon if present
         if 'epsilon' in onnx_node.attrs:
             aix_layer.epsilon = onnx_node.attrs['epsilon']
 
         return AxfcError.SUCCESS
 
+    ## This method emits an AIX tensor of bias type from the provided IR node.
+    #
+    # @param self The instance of the class.
+    # @param ir_node The IR node to be converted into an AIX tensor.
+    # @param onnx_node_attrs Additional attributes related to the ONNX node.
+    # @return An AIX tensor of bias type.
+    def __get_aix_tensor_bias(self, ir_node: AxfcIRNode, onnx_node_attrs: dict) -> AIXLayer.AIXTensor:
+        node_inputs = ir_node.preds
+
+        # Check if bias exists in attributes
+        if "bias" in onnx_node_attrs:
+            logging.info("Bias found in attributes, using the provided value.")
+            return self.__emit_aix_tensor(onnx_node_attrs['bias'])
+
+        # If no bias in attrs, check the node inputs (preds)
+        for input in node_inputs:
+            if 'bias' in input.name:
+                logging.info("Bias found in preds, using the corresponding tensor.")
+                return self.__emit_aix_tensor(input)
+
+        # Set default bias
+        return self.__emit_default_hyper_parameter(ir_node.aix_layer, 1)
 
     ## This method emits an AIX tensor of an filter type from the given IR node.
     #
@@ -380,29 +402,6 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
 
         for input in node_inputs:
             if 'running_mean' in input.name:
-                aix_tensor = self.__emit_aix_tensor(input)
-        
-        # set default
-        if aix_tensor is None:
-            aix_tensor = self.__emit_default_hyper_parameter(ir_node.aix_layer, 1)
-
-        return aix_tensor
-    
-    ##  This method emits an AIX tensor of an bias type from the given IR node.
-    #
-    # @param self this object
-    # @param ir_node an IR node to be emitted as an AIX tensor
-    # @param kwargs keyword arguments used for pass the 'tensor'
-    # @return an AIX tensor of an bias type
-    def _emit_aix_tensor_bias(self, ir_node: AxfcIRNode, **kwargs) -> AIXLayer.AIXTensor:
-        # return super()._emit_aix_tensor_scale(ir_node, **kwargs)
-
-        node_inputs = ir_node.preds
-
-        aix_tensor = None
-
-        for input in node_inputs:
-            if 'bias' in input.name:
                 aix_tensor = self.__emit_aix_tensor(input)
         
         # set default
