@@ -434,14 +434,51 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
         # # convolution desc
         aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node, tensor=tensor))
 
+        # Extract bias
+        aix_layer.bias.CopyFrom(self._emit_aix_tensor_bias(ir_node))
+
         if 'epsilon' in onnx_node.attrs:
             aix_layer.epsilon = onnx_node.attrs['epsilon']
 
-        # Bias
-        bias_tensor = self.__get_aix_tensor_bias(ir_node, onnx_node.attrs)
-        aix_layer.bias.CopyFrom(bias_tensor)
 
         return AxfcError.SUCCESS
+
+    ##  This method emits an AIX tensor of an bias type from the given IR node.
+    #
+    # @param self this object
+    # @param ir_node an IR node to be emitted as an AIX tensor
+    # @param kwargs keyword arguments used for pass the 'tensor'
+    # @return an AIX tensor of an bias type
+    def _emit_aix_tensor_bias(self, ir_node: AxfcIRNode) -> AIXLayer.AIXTensor:
+        aix_tensor = AIXLayer.AIXTensor()
+        onnx_node = self._symtab[ir_node.name]  # Get ONNX node
+        bias_input_name = onnx_node.inputs[2].name  # Bias is the third input (index 2)
+
+        # Check if the bias tensor is in the tensors dictionary
+        if bias_input_name in self.tensors:
+            bias_tensor = self.tensors[bias_input_name]
+
+            # Populate AIXTensor attributes
+            dtype = bias_tensor.dtype or DEFAULT_DTYPE
+            aix_tensor.dtype = aix_data_type_tbl.get(np.dtype(dtype).name, AIXLayer.AIXDataType.AIX_DATA_FLOAT)
+
+            if len(bias_tensor.shape) == 1:
+                aix_tensor.format = aix_tensor_format_tbl[b"VECTOR"]
+            else:
+                aix_tensor.format = aix_tensor_format_tbl[DEFAULT_TYPE.encode()]
+
+            # Set dimensions
+            aix_tensor.dims.extend(bias_tensor.shape[::-1])  # Reverse shape to NCHW format
+            aix_tensor.size = int(np.prod(aix_tensor.dims))
+
+            # If the bias tensor is constant, set its values
+            if isinstance(bias_tensor, gs.ir.tensor.Constant):
+                aix_tensor.fval.extend(bias_tensor.values.flatten())
+        else:
+            # Default to zero bias if no tensor found
+            aix_tensor = self.__emit_default_hyper_parameter(ir_node.aix_layer, default_value=0)
+
+        return aix_tensor
 
     ##  This method emits an AIX tensor of an variance type from the given IR node.
     #
