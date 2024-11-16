@@ -52,7 +52,6 @@ class AxfcONNXIRBuilder(AxfcIRBuilder):
         onnx_model = onnx.load(path)
         inferred_model = shape_inference.infer_shapes(onnx_model)
         onnx.checker.check_model(inferred_model)
-        print('After shape inference, the shape info of Y is:\n{}'.format(inferred_model.graph.value_info))
 
         #remove training nodes
         #use onnx runtime for removing
