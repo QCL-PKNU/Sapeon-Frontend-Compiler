@@ -163,55 +163,39 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
         Returns:
             AIXLayer.AIXTensor: The emitted AIXTensor representing the node's inputs.
         """
-        aix_layer = ir_node.aix_layer
         aix_tensor = AIXLayer.AIXTensor()
-
-        exception_op = ['add']
         layer_name = ir_node.name
 
-        # Skip layers that do not need tensor handling
-        if any(op in layer_name for op in exception_op):
+        # Retrieve the output tensor for the given layer
+        layer_io = self.get_layer_io(layer_name)
+        output_tensor = layer_io.get('input') if layer_io else None
+
+        # Check if the output tensor is None
+        if output_tensor is None:
+            aix_tensor.dtype = aix_data_type_tbl.get(DEFAULT_DTYPE)
+            aix_tensor.format = aix_tensor_format_tbl[b'NCHW']
             return aix_tensor
 
-        # Handle special naming cases for relu_1, relu_2
-        if '_relu_1' in layer_name or '_relu_2' in layer_name:
-            layer_name = layer_name[:-2]
-
-        # Retrieve the input tensor for this layer
-        input_tensor = self.get_layer_io(layer_name).get('input')
-
-        # Ensure input_tensor exists and has a valid dtype
-        if input_tensor is None:
-            logging.warning(f"Input tensor not found for layer: {layer_name}")
-            return aix_tensor
-
-        # Assign the dtype from the input_tensor or use default if it's missing
-        # if hasattr(input_tensor, 'dtype'):
-        #     dtype = input_tensor.dtype
-        # else:
-        dtype = aix_tensor.dtype
-
-        if not dtype:
+        # Assign data type from the output tensor, falling back to default
+        dtype = getattr(output_tensor, 'dtype', None)
+        if dtype is None:
+            logging.warning(f"Missing dtype for output tensor in layer: {layer_name}. Using default dtype.")
             dtype = DEFAULT_DTYPE
-
         aix_tensor.dtype = aix_data_type_tbl.get(dtype)
 
-        # Handle tensor format assignment, defaults to NCHW or VECTOR
-        if len(input_tensor.shape) == 1:
+        # Determine tensor format dynamically
+        if len(output_tensor.shape) == 1:
             data_format = b'VECTOR'
         else:
             data_format = DEFAULT_TYPE.encode()
-
         aix_tensor.format = aix_tensor_format_tbl.get(data_format, aix_tensor_format_tbl[b'NCHW'])
 
-        # Set the shape of the tensor
-        if input_tensor.shape:
-            shape = list(map(lambda x: 1 if not x else x, input_tensor.shape))
-            shape.reverse()  # AIXGraph shape is NCHW, reverse it
-            aix_tensor.dims.extend(shape)
+        # Set tensor dimensions and size
+        if hasattr(output_tensor, 'shape') and output_tensor.shape:
+            aix_tensor.dims.extend(reversed([max(dim, 1) for dim in output_tensor.shape]))
             aix_tensor.size = int(np.prod(aix_tensor.dims))
         else:
-            logging.warning(f"AxfcPyTorchIRTranslator: {ir_node.name} shape is invalid.")
+            logging.warning(f"Invalid shape for output tensor in layer: {layer_name}")
 
         return aix_tensor
     
