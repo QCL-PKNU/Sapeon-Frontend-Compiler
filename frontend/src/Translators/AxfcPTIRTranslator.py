@@ -683,9 +683,15 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
             elif layer_type == AIXLayer.AIXLayerType.AIX_LAYER_PIXELSHUFFLE:
                 sampling_desc.mode = AIXLayer.AIXSamplingMode.AIX_POOLING_PIXELSHUFFLE
 
-            logging.debug(f"Before setting window: {sampling_desc.window}")
+        # Set kernel size (window)
+        if hasattr(pt_node, "kernel_size"):
+            if isinstance(pt_node.kernel_size, int):  # Single value for square kernel
+                kernel_size = [pt_node.kernel_size, pt_node.kernel_size]
+            else:  # Tuple for height and width
+                kernel_size = list(pt_node.kernel_size)
+            sampling_desc.window.extend([kernel_size[0], kernel_size[1], 0, 0])
+        else:
             sampling_desc.window.extend([0, 0, 0, 0])
-            logging.debug(f"After setting window: {sampling_desc.window}")
 
         # stride
         if "stride" in vars(pt_node):
