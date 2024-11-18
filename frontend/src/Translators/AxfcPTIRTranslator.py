@@ -105,7 +105,13 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
         def hook(module, input, output):
             # Create a unique layer name using the full module name path
             layer_name = self._get_unique_layer_name(module)
+            
             if layer_name:
+                if layer_name in self.layer_io_dict:
+                    # Append an index to make the name unique
+                    index = sum(1 for key in self.layer_io_dict if key.startswith(layer_name))
+                    layer_name = f"{layer_name}_{index}"
+
                 # Store input and output tensors in the dictionary using the unique layer name as the key
                 self.layer_io_dict[layer_name] = {
                     'input': input[0].detach().cpu() if input else None,  # Detach and move to CPU
@@ -126,8 +132,10 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
         for name, child in self._gm.named_modules():
             if child == module:
                 names.append(name)
-        # Combine the names to form a unique layer name, replacing dots with underscores
-        return '_'.join(names).replace('.', '_')
+
+        unique_name = '_'.join(names).replace('.', '_')
+
+        return unique_name
 
     def forward_pass(self, input_data):
         """Perform a forward pass to observe the layer-wise input/output shapes."""
