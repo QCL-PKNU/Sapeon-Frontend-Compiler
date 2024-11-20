@@ -102,6 +102,8 @@ class AxfcMachineDesc:
         """
         # logging.info("AxfcMachineDesc:get_layer_info - %s", layer_type)
         try:
+            if 'Clip' in layer_type:
+                layer_type = 'Relu6'
             return self.__aix_layer_info_tbl[layer_type]
         except KeyError:
             return None
