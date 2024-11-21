@@ -452,7 +452,14 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
     def _emit_aix_tensor_bias(self, ir_node: AxfcIRNode) -> AIXLayer.AIXTensor:
         aix_tensor = AIXLayer.AIXTensor()
         onnx_node = self._symtab[ir_node.name]  # Get ONNX node
-        bias_input_name = onnx_node.inputs[2].name  # Bias is the third input (index 2)
+        # bias_input_name = onnx_node.inputs[2].name  # Bias is the third input (index 2)
+
+        # Dynamically identify the bias input labeled as 'B'
+        bias_input_name = None
+        for input in onnx_node.inputs:
+            if input.name.lower().endswith("_beta") or input.name.lower() == "b":
+                bias_input_name = input.name
+                break
 
         # Check if the bias tensor is in the tensors dictionary
         if bias_input_name in self.tensors:
