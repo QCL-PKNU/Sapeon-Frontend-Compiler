@@ -421,22 +421,20 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
         logging.info("AxfcONNXIRTranslator:_emit_aix_layer_batchnorm - node %d", ir_node.layer_id)
 
         aix_layer = ir_node.aix_layer
+        for key in self.tensors.keys():
+            if key.startswith(ir_node.name):
+                tensor = self.tensors.get(key, None)
+                aix_layer.scale.CopyFrom(self._emit_aix_tensor_scale(ir_node, tensor=tensor))
+                aix_layer.mean.CopyFrom(self._emit_aix_tensor_mean(ir_node, tensor=tensor))
+                aix_layer.variance.CopyFrom(self._emit_aix_tensor_variance(ir_node, tensor=tensor))
 
-        tensor = self.tensors[ir_node.name]
-        onnx_node = self._symtab[ir_node.name]
-
-        #filter
-        # aix_layer.filter.CopyFrom(self._emit_aix_tensor_filter(ir_node, tensor=tensor))
-        aix_layer.scale.CopyFrom(self._emit_aix_tensor_scale(ir_node, tensor=tensor))
-        aix_layer.mean.CopyFrom(self._emit_aix_tensor_mean(ir_node, tensor=tensor))
-        aix_layer.variance.CopyFrom(self._emit_aix_tensor_variance(ir_node, tensor=tensor))
-
-        # # convolution desc
-        aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node, tensor=tensor))
+                # convolution desc
+                aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node, tensor=tensor))
 
         # Extract bias
         aix_layer.bias.CopyFrom(self._emit_aix_tensor_bias(ir_node))
 
+        onnx_node = self._symtab[ir_node.name]
         if 'epsilon' in onnx_node.attrs:
             aix_layer.epsilon = onnx_node.attrs['epsilon']
 
@@ -522,19 +520,20 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
                      ir_node.layer_id, ir_node.op)
         
         aix_layer = ir_node.aix_layer
-
-        tensor = self.tensors[ir_node.name]
-        onnx_node = self._symtab[ir_node.name]
-
-        # filter
-        aix_layer.filter.CopyFrom(self._emit_aix_tensor_filter(ir_node, tensor=tensor))
-
-        # # convolution desc
-        aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node, tensor=tensor))
-
-        # if 'epsilon' in onnx_node.attrs:
-        #     aix_layer.epsilon = onnx_node.attrs['epsilon']
         
+        tensor = self.tensors.get(ir_node.name, None)
+        if tensor:
+
+            # filter
+            aix_layer.filter.CopyFrom(self._emit_aix_tensor_filter(ir_node, tensor=tensor))
+
+            # # convolution desc
+            aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node, tensor=tensor))
+
+            # if 'epsilon' in onnx_node.attrs:
+            #     aix_layer.epsilon = onnx_node.attrs['epsilon']
+        
+
         return AxfcError.SUCCESS
 
     ##  This method emits some onnx-specific information of the given IR node

@@ -75,34 +75,7 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
 
         # build AIX IR graph using the nodes of the Tensorflow graph
         for tf_node_def in tf_graph_def.node:
-
-            # Process separate: BN -> BN + BiasAdd
-            for index, pred_name in enumerate(tf_node_def.input):
-                # find the predecessor using the symbol table
-                if not (pred_name in self._ir_symtab):
-                    continue
-
-                pred_node = self._ir_symtab[pred_name]
-                if pred_node is not None:
-                    if pred_node.op is not None and "FusedBatchNorm" in pred_node.op: #to support different version of FusedBatchNorm
-                        tf_node_def.input[index] += '/BiasaddClone'
-
             err = self.__append_node_def(tf_node_def)
-
-            if tf_node_def.op is not None and "FusedBatchNorm" in tf_node_def.op: #to support different version of FusedBatchNorm
-                tf_node_clone_def = tf.compat.v1.NodeDef()
-                tf_node_clone_def.CopyFrom(tf_node_def)
-
-                # clear all elements in input
-                tf_node_clone_def.input[:] = []
-
-                tf_node_clone_def.input.append(tf_node_def.name)
-                tf_node_clone_def.name += '/BiasaddClone'
-                tf_node_clone_def.op = 'BiasAdd'
-
-                err = self.__append_node_sym_ir(tf_node_clone_def)
-                err = self.__append_node_def(tf_node_clone_def)
-
             if err != AxfcError.SUCCESS:
                 return err
 
@@ -191,27 +164,8 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
     def __append_node_def(self, tf_node_def: tf.compat.v1.NodeDef) -> AxfcError:
         # logging.info("AxfcTFIRBuilder:append_node_def - tf_node_def: %s", tf_node_def.name)
 
-        # create a new IR node
-        # ir_node = AxfcIRNode(tf_node_def)
-
-        # register the IR node to the symbol table with the name of node_def
-        # self._ir_symtab[tf_node_def.name] = ir_node
-
-        #Get ir_node from _ir_symtab
         ir_node = self._ir_symtab.get(tf_node_def.name)
-
-        # set the operation of this node
         ir_node.op = tf_node_def.op
-
-        # set the name of this node by pruning unnecessary prefixes
-        # model_name = self._md.get_model_name()
-        #
-        # prefix_index = tf_node_def.name.find(model_name)
-        # if prefix_index >= 0:
-        #     ir_node.name = tf_node_def.name[prefix_index:]
-        # else:
-        #     ir_node.name = tf_node_def.name
-
         ir_node.name = tf_node_def.name
 
         # check the node that is supported by AIXH hardware
