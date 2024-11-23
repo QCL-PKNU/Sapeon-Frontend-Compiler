@@ -484,12 +484,6 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
         tensor = self.tensors[ir_node.output_name[0]]
         onnx_node = self._symtab[ir_node.name]
 
-        # filter
-        aix_layer.filter.CopyFrom(self._emit_aix_tensor_filter(ir_node, tensor=tensor))
-        
-        # convolution desc
-        # aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node, tensor=tensor))
-
         # epsilon
         if 'epsilon' in onnx_node.attrs:
             aix_layer.epsilon = onnx_node.attrs.get('epsilon')
@@ -579,12 +573,6 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
 
         tensor = self.tensors[ir_node.output_name[0]]
         onnx_node = self._symtab[ir_node.name]
-
-        # filter
-        aix_layer.filter.CopyFrom(self._emit_aix_tensor_filter(ir_node, tensor=tensor))
-
-        # # convolution desc
-        aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node, tensor=tensor))
 
         ewadddesc = AIXLayer.AIXEWAddDesc()
         scale_size = len(onnx_node.inputs)
