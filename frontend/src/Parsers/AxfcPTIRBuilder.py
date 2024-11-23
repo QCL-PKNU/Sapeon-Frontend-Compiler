@@ -18,9 +18,6 @@ import os
 import torch
 import torch.fx
 
-from torchvision import models
-from torch.autograd import Variable
-
 from AxfcError          import AxfcError
 from .AxfcIRBuilder     import AxfcIRBuilder
 from AxfcIRNode         import AxfcIRNode
@@ -60,7 +57,6 @@ class AxfcPTIRBuilder(AxfcIRBuilder):
             node_name: The name of the node in the computational graph.
         """
 
-        # ResNet50 operations
         op_list = [
             'conv', 'relu', 'bn', 'add', 'downsample', 
             'maxpool', 'avgpool', 'flatten', 'fc'
@@ -74,22 +70,33 @@ class AxfcPTIRBuilder(AxfcIRBuilder):
 
 
     def _read_model_graph(self, model_path: str) -> AxfcError:
-        """Read the PyTorch model.
-        
-        Args:
-            model_path: The path to Pytorch model.
-        """
-        logging.info("AxfcPyTorchBuilder:read_model_graph - path: %s", model_path)
+        """Read a TorchScript model."""
 
-        model: torch.nn.Module = torch.load(model_path)
-        input_tensor = torch_randn((1, 3, 224, 224))
-        graph_module = torch.fx.symbolic_trace(model, (input_tensor, ))
+        """Read a model graph dynamically, whether it is TorchScript or nn.Module."""
+        try:
+            # Attempt to load as TorchScript
+            model: torch.jit.ScriptModule = torch.jit.load(model_path)
+            graph = model.inlined_graph
+            self.__pt_graph = graph
+            self.__pt_model = model
+            logging.info("Successfully loaded TorchScript model.")
+            return AxfcError.SUCCESS
+        except RuntimeError as e:
+            logging.warning(f"Model is not a TorchScript model. Falling back to nn.Module. Error: {e}")
 
-        # Extract graph from graph_module
-        self.__pt_graph = graph_module.graph
+        try:
+            # If not TorchScript, load as nn.Module
+            model: torch.nn.Module = torch.load(model_path)
+            input_tensor = torch.randn((1, 3, 224, 224))  # Adjust input shape as needed
+            graph_module = torch.fx.symbolic_trace(model)
+            self.__pt_graph = graph_module.graph
+            self.__pt_model = model
+            logging.info("Successfully loaded nn.Module model.")
+            return AxfcError.SUCCESS
+        except Exception as e:
+            logging.error(f"Failed to load model: {e}")
+            return AxfcError.LOAD_MODEL_FAILURE
 
-        return AxfcError.SUCCESS
-    
 
     def _build_naive_ir(self, model_path: str) -> AxfcError:
         """Construct a naive AIX IR from a Pytorch Graph.
@@ -100,13 +107,19 @@ class AxfcPTIRBuilder(AxfcIRBuilder):
         # Read model graph
         if (err := self._read_model_graph(model_path)) != AxfcError.SUCCESS:
             return err
-        
-        graph_def: torch.fx.graph = self.__pt_graph
-        if graph_def is None:
+        graph_def = None
+            
+        if isinstance(self.__pt_graph, torch.fx.Graph):
+            graph_def = self.__pt_graph
+            graph_def_nodes = graph_def.nodes
+
+        elif self.__pt_graph.nodes():
+            graph_def = self.__pt_graph
+            graph_def_nodes = graph_def.nodes()
+        else:
             return AxfcError.INVALID_IR_GRAPH
-        
-        # Build ir node symbolic table
-        for node_def in graph_def.nodes:
+
+        for node_def in graph_def_nodes:
             if node_def.op in ["placeholder", "get_attr"]:
                 err = self.__append_node_sym_ir(node_def, op = "Input")
             elif node_def.op == "output":
@@ -116,18 +129,28 @@ class AxfcPTIRBuilder(AxfcIRBuilder):
                 # extract the operator from the pt_node definition like 'conv', 'bn'
                 node_op = self.__find_matched_op(node_def.name)
 
-                # Make the symbolic table for pt_node_def
-                err = self.__append_node_sym_ir(node_def, op = node_op)
+                if "downsample" in node_op:
+                    node_name = node_def.name.replace("_", ".")
+                    for submodule_name, submodule in self.__pt_model.named_modules():
+                        if submodule_name.startswith(node_name):
+                            if isinstance(submodule, torch.nn.Conv2d):
+                                err = self.__append_node_sym_ir(node_def, op="conv")
+                            elif isinstance(submodule, torch.nn.BatchNorm2d):
+                                err = self.__append_node_sym_ir(node_def, op="bn")
 
-                # Append info to ir_node
-                err = self.__append_node_def(node_def)
+                else:
+                    # Handle regular nodes
+                    err = self.__append_node_sym_ir(node_def, op=node_op)
+
+            # Append info to IR node
+            err = self.__append_node_def(node_def)
 
             if err is not AxfcError.SUCCESS:
                 return err
             
         ## Connect node pred/succ
         # Pred includes the input (weight, biase, etc) and previous node
-        for pt_node_def in graph_def.nodes:
+        for pt_node_def in graph_def_nodes:
             err = self.__connect_node_def(pt_node_def)
             if err is not AxfcError.SUCCESS: 
                 return err
@@ -160,6 +183,11 @@ class AxfcPTIRBuilder(AxfcIRBuilder):
         """
 
         ir_node = self._ir_symtab.get(node_def.name)
+        if ir_node is None:
+            logging.error(f"Node {node_def.name} not found in symbolic table.")
+            return AxfcError.NODE_NOT_FOUND
+
+
         if ir_node.op is None:
             ir_node.op = self.__find_matched_op(node_def.name)
 
