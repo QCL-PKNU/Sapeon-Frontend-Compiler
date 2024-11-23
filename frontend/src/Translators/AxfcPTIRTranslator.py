@@ -95,10 +95,6 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
         self._input_names = [node.name for node in self._pt_graph.nodes
                              if node.op in ('placeholder', 'get_attr')]
 
-        # Initialize caches
-        self._input_tensor_cache = {}
-        self._emitted_tensors_cache = {}
-
     def _register_hooks(self, model):
         """Registers forward hooks to capture input and output tensor shapes for each layer."""
 

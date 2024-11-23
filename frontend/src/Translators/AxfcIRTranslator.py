@@ -179,6 +179,7 @@ class AxfcIRTranslator:
 
 
         # todo: emit the output based on each layer type
+        emit_aix_layer = None
         try:
             emit_aix_layer = self.__emit_aix_layer_tbl[layer_type]
         except:
