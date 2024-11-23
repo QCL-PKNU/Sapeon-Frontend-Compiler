@@ -267,6 +267,10 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
         # Handle epsilon if present
         if 'epsilon' in onnx_node.attrs:
             aix_layer.epsilon = onnx_node.attrs['epsilon']
+        
+        # # DEBUG: conv goup
+        # if aix_layer.convdesc.groups > 1:
+        #     print(f"{aix_layer.name}, group_conv: {aix_layer.convdesc.groups}")
 
         return AxfcError.SUCCESS
 
@@ -494,7 +498,7 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
         # aixgraph requirement : set stride to default
         sampling_desc.stride[:] = []
         sampling_desc.stride.extend([0, 0, 0, 0])
-        aix_layer.filter.dims[0], aix_layer.filter.dims[1] = 1, 1
+        # aix_layer.filter.dims[0], aix_layer.filter.dims[1] = 1, 1
 
         aix_layer.samplingdesc.CopyFrom(sampling_desc)
 
