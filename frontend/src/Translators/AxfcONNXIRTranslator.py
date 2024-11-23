@@ -268,9 +268,19 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
         if 'epsilon' in onnx_node.attrs:
             aix_layer.epsilon = onnx_node.attrs['epsilon']
         
-        # # DEBUG: conv goup
-        # if aix_layer.convdesc.groups > 1:
-        #     print(f"{aix_layer.name}, group_conv: {aix_layer.convdesc.groups}")
+        #GroupConv layer has to be handled the same in Conv since
+        #Onnx doesn't have separate GroupConv (such as depthwise) Layer
+        if aix_layer.convdesc.groups > 1:
+            
+            #DEBUG
+            # print(f"{aix_layer.name}, group_conv: {aix_layer.convdesc.groups}")
+            
+            #change AIX layer type
+            aix_layer.type.remove(AIXLayer.AIX_LAYER_CONVOLUTION)
+            aix_layer.type.append(AIXLayer.AIX_LAYER_GROUP_CONV)
+
+            #update filter size
+            aix_layer.filter.size = int(aix_layer.filter.size / aix_layer.convdesc.groups)
 
         return AxfcError.SUCCESS
 
