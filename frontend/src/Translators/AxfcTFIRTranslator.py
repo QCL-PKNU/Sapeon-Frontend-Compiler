@@ -548,9 +548,14 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
         tensor = self.__get_tensor_by_name(ir_node.name)
 
-        # filter, bias
-        aix_layer.filter.CopyFrom(self._emit_aix_tensor_filter(ir_node, tensor=tensor))
-        aix_layer.bias.CopyFrom(self._emit_aix_tensor_bias(ir_node, tensor=tensor))
+        #     tf.nn.bias_add(
+        #    value, bias, data_format=None, name=None
+        #     )
+        #bias_add always have bias in the second input.
+        #https://www.tensorflow.org/api_docs/python/tf/nn/bias_add
+        # aix_layer.bias.CopyFrom(self._emit_aix_tensor_bias(ir_node, tensor=tensor))
+        bias_tensor = self.__get_tensor_by_name(ir_node.preds[1].name)
+        aix_layer.bias.CopyFrom(self.__emit_aix_tensor(bias_tensor))
 
         # convolution desc
         aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node, tensor=tensor))
