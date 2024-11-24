@@ -329,6 +329,8 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
         aix_layer.mean.CopyFrom(self._emit_aix_tensor_generic(ir_node, "mean"))
         aix_layer.variance.CopyFrom(self._emit_aix_tensor_generic(ir_node, "variance"))
 
+        aix_layer.filter.CopyFrom(self._emit_aix_tensor_filter(ir_node))
+
         # Attributes for BatchNormalization in float format
         # epsilon, momentum
         aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node))
