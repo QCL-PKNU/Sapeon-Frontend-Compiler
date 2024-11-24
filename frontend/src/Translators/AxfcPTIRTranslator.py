@@ -48,7 +48,6 @@ aix_tensor_format_tbl = {
 #######################################################################
 # Global variable
 #######################################################################
-DUMMY_INPUT = torch.randn((1, 3, 224, 224))
 DEFAULT_TYPE = 'NCHW' # Follow the darknet format
 DEFAULT_DTYPE = torch.float32 # Default dtype
 
@@ -66,8 +65,9 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
         layer_io_dict: A dictionary to store input/output tensors by unique layer name.
     """
 
-    def __init__(self, md, model_path: str):
+    def __init__(self, md: AxfcMachineDesc, model_path: str):
         super().__init__(md)
+        self.md = md
 
         # Load model
         model = self.__load_model(model_path)
@@ -100,8 +100,11 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
         
 
     def __setup_nn_module(self, model):
+        input_shape = self.md.get_input_shape()
+        input_tensor = torch.randn(input_shape)
+
         # Create a symbolic graph for the model using fx.symbolic_trace
-        self._gm: fx.GraphModule = fx.symbolic_trace(model, (DUMMY_INPUT,))
+        self._gm: fx.GraphModule = fx.symbolic_trace(model, (input_tensor,))
         self._pt_graph: fx.Graph = self._gm.graph
 
         # Tensor with input values; weight, bias, mean, etc.
@@ -114,7 +117,7 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
         self._register_hooks(model)
 
         # Perform a forward pass with dummy input to capture shapes
-        self.forward_pass(DUMMY_INPUT)
+        self.forward_pass(input_tensor)
 
         # Create symtab for named modules
         self._module_symtab = self.__build_module_symtab(self._gm)

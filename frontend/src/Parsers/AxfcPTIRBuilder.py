@@ -50,7 +50,7 @@ class AxfcPTIRBuilder(AxfcIRBuilder):
         self.__pt_graph = None 
 
 
-    def __find_matched_op(self, node_name) -> torch.nn:
+    def __find_matched_op(self, node_def) -> torch.nn:
         """Find a matched operation from a node of PyTorch graph.
         
         Args:
@@ -65,9 +65,32 @@ class AxfcPTIRBuilder(AxfcIRBuilder):
         # if op is in target name, return op
         # For example, op is 'conv' and target is 'layer1.0.conv1'
         for op in op_list:
-            if op in node_name:
+            if op in node_def.name:
                 return op
+            
+        # If node name doesn't match, check the module type from named_modules
+        module_name = node_def.name.replace("_", ".")  # Adjust to match named_modules
+        
+        for submodule_name, submodule in self.__pt_model.named_modules():
+            if submodule_name == module_name:
+                # Check for specific module types
+                if isinstance(submodule, torch.nn.Conv2d):
+                    return 'conv'
+                elif isinstance(submodule, torch.nn.BatchNorm2d):
+                    return 'bn'
+                elif isinstance(submodule, torch.nn.ReLU):
+                    return 'relu'
+                elif isinstance(submodule, torch.nn.Linear):
+                    return 'fc'
+                elif isinstance(submodule, torch.nn.MaxPool2d):
+                    return 'maxpool'
+                elif isinstance(submodule, torch.nn.AvgPool2d):
+                    return 'avgpool'
+                # Add more checks as needed
 
+        # If no match, return None or raise an error
+        logging.warning(f"Could not match operation for node: {node_def.name}")
+        return None
 
     def _read_model_graph(self, model_path: str) -> AxfcError:
         """Read a TorchScript model."""
@@ -128,9 +151,9 @@ class AxfcPTIRBuilder(AxfcIRBuilder):
                 else:
                     # Since, the pt_node.op is function for calling module and method and so on
                     # extract the operator from the pt_node definition like 'conv', 'bn'
-                    node_op = self.__find_matched_op(node_def.name)
+                    node_op = self.__find_matched_op(node_def)
 
-                    if "downsample" in node_op:
+                    if node_op and "downsample" in node_op:
                         node_name = node_def.name.replace("_", ".")
                         for submodule_name, submodule in self.__pt_model.named_modules():
                             if submodule_name.startswith(node_name):
@@ -196,7 +219,7 @@ class AxfcPTIRBuilder(AxfcIRBuilder):
 
 
             if ir_node.op is None:
-                ir_node.op = self.__find_matched_op(node_def.name)
+                ir_node.op = self.__find_matched_op(node_def)
 
             # Check the node is supported by AIXH hardware
             layer_info = self._md.get_layer_info(ir_node.op)
