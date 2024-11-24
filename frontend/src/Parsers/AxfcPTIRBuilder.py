@@ -80,6 +80,8 @@ class AxfcPTIRBuilder(AxfcIRBuilder):
                     return 'bn'
                 elif isinstance(submodule, torch.nn.ReLU):
                     return 'relu'
+                elif isinstance(submodule, torch.nn.ReLU6):
+                    return 'relu'
                 elif isinstance(submodule, torch.nn.Linear):
                     return 'fc'
                 elif isinstance(submodule, torch.nn.MaxPool2d):
@@ -212,6 +214,7 @@ class AxfcPTIRBuilder(AxfcIRBuilder):
             pass
 
         else:
+            # print('--------> ', node_def.name)
             ir_node = self._ir_symtab.get(node_def.name)
             if ir_node is None:
                 logging.error(f"Node {node_def.name} not found in symbolic table.")
