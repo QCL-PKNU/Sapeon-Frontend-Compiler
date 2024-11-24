@@ -61,12 +61,13 @@ class AxfcPTIRBuilder(AxfcIRBuilder):
             'conv', 'relu', 'bn', 'add', 'downsample', 
             'maxpool', 'avgpool', 'flatten', 'fc'
         ]
+        matched_op = None
 
         # if op is in target name, return op
         # For example, op is 'conv' and target is 'layer1.0.conv1'
         for op in op_list:
             if op in node_def.name:
-                return op
+                matched_op = op
             
         # If node name doesn't match, check the module type from named_modules
         module_name = node_def.name.replace("_", ".")  # Adjust to match named_modules
@@ -75,24 +76,22 @@ class AxfcPTIRBuilder(AxfcIRBuilder):
             if submodule_name == module_name:
                 # Check for specific module types
                 if isinstance(submodule, torch.nn.Conv2d):
-                    return 'conv'
+                    matched_op = 'conv'
                 elif isinstance(submodule, torch.nn.BatchNorm2d):
-                    return 'bn'
+                    matched_op = 'bn'
                 elif isinstance(submodule, torch.nn.ReLU):
-                    return 'relu'
+                    matched_op = 'relu'
                 elif isinstance(submodule, torch.nn.ReLU6):
-                    return 'relu'
+                    matched_op = 'relu'
                 elif isinstance(submodule, torch.nn.Linear):
-                    return 'fc'
+                    matched_op = 'fc'
                 elif isinstance(submodule, torch.nn.MaxPool2d):
-                    return 'maxpool'
+                    matched_op = 'maxpool'
                 elif isinstance(submodule, torch.nn.AvgPool2d):
-                    return 'avgpool'
+                    matched_op = 'avgpool'
                 # Add more checks as needed
 
-        # If no match, return None or raise an error
-        logging.warning(f"Could not match operation for node: {node_def.name}")
-        return None
+        return matched_op if matched_op else None
 
     def _read_model_graph(self, model_path: str) -> AxfcError:
         """Read a TorchScript model."""
