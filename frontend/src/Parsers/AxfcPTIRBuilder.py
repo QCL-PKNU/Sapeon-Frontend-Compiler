@@ -120,27 +120,31 @@ class AxfcPTIRBuilder(AxfcIRBuilder):
             return AxfcError.INVALID_IR_GRAPH
 
         for node_def in graph_def_nodes:
-            if node_def.op in ["placeholder", "get_attr"]:
-                err = self.__append_node_sym_ir(node_def, op = "Input")
-            elif node_def.op == "output":
-                err = self.__append_node_sym_ir(node_def, op = "Output")
-            else:
-                # Since, the pt_node.op is function for calling module and method and so on
-                # extract the operator from the pt_node definition like 'conv', 'bn'
-                node_op = self.__find_matched_op(node_def.name)
-
-                if "downsample" in node_op:
-                    node_name = node_def.name.replace("_", ".")
-                    for submodule_name, submodule in self.__pt_model.named_modules():
-                        if submodule_name.startswith(node_name):
-                            if isinstance(submodule, torch.nn.Conv2d):
-                                err = self.__append_node_sym_ir(node_def, op="conv")
-                            elif isinstance(submodule, torch.nn.BatchNorm2d):
-                                err = self.__append_node_sym_ir(node_def, op="bn")
-
+            if isinstance(self.__pt_graph, torch.fx.Graph):
+                if node_def.op in ["placeholder", "get_attr"]:
+                    err = self.__append_node_sym_ir(node_def, op = "Input")
+                elif node_def.op == "output":
+                    err = self.__append_node_sym_ir(node_def, op = "Output")
                 else:
-                    # Handle regular nodes
-                    err = self.__append_node_sym_ir(node_def, op=node_op)
+                    # Since, the pt_node.op is function for calling module and method and so on
+                    # extract the operator from the pt_node definition like 'conv', 'bn'
+                    node_op = self.__find_matched_op(node_def.name)
+
+                    if "downsample" in node_op:
+                        node_name = node_def.name.replace("_", ".")
+                        for submodule_name, submodule in self.__pt_model.named_modules():
+                            if submodule_name.startswith(node_name):
+                                if isinstance(submodule, torch.nn.Conv2d):
+                                    err = self.__append_node_sym_ir(node_def, op="conv")
+                                elif isinstance(submodule, torch.nn.BatchNorm2d):
+                                    err = self.__append_node_sym_ir(node_def, op="bn")
+
+                    else:
+                        # Handle regular nodes
+                        err = self.__append_node_sym_ir(node_def, op=node_op)
+            elif hasattr(node_def, "kind"):
+                # TODO: hanle logic for Script model 
+                pass
 
             # Append info to IR node
             err = self.__append_node_def(node_def)
@@ -181,26 +185,29 @@ class AxfcPTIRBuilder(AxfcIRBuilder):
         Args:
             node_def: Node definition of PyTorch model.
         """
+        if hasattr(node_def, "kind"):
+            pass
 
-        ir_node = self._ir_symtab.get(node_def.name)
-        if ir_node is None:
-            logging.error(f"Node {node_def.name} not found in symbolic table.")
-            return AxfcError.NODE_NOT_FOUND
-
-
-        if ir_node.op is None:
-            ir_node.op = self.__find_matched_op(node_def.name)
-
-        # Check the node is supported by AIXH hardware
-        layer_info = self._md.get_layer_info(ir_node.op)
-
-        # Set the profit property
-        if self._md.get_aixh_support(str(ir_node.op)) and not self._md.BREAK_POINT_CONDITION:
-            ir_node.is_aixh_support = True
-            ir_node.aixh_profit = layer_info.profit
         else:
-            ir_node.is_aixh_support = False
-            ir_node.aixh_profit = 0
+            ir_node = self._ir_symtab.get(node_def.name)
+            if ir_node is None:
+                logging.error(f"Node {node_def.name} not found in symbolic table.")
+                return AxfcError.NODE_NOT_FOUND
+
+
+            if ir_node.op is None:
+                ir_node.op = self.__find_matched_op(node_def.name)
+
+            # Check the node is supported by AIXH hardware
+            layer_info = self._md.get_layer_info(ir_node.op)
+
+            # Set the profit property
+            if self._md.get_aixh_support(str(ir_node.op)) and not self._md.BREAK_POINT_CONDITION:
+                ir_node.is_aixh_support = True
+                ir_node.aixh_profit = layer_info.profit
+            else:
+                ir_node.is_aixh_support = False
+                ir_node.aixh_profit = 0
 
         return AxfcError.SUCCESS
     
