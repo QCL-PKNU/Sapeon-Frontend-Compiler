@@ -48,7 +48,6 @@ aix_tensor_format_tbl = {
 #######################################################################
 # Global variable
 #######################################################################
-DUMMY_INPUT = torch.randn((1, 3, 224, 224))
 DEFAULT_TYPE = 'NCHW' # Follow the darknet format
 DEFAULT_DTYPE = torch.float32 # Default dtype
 
@@ -66,16 +65,48 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
         layer_io_dict: A dictionary to store input/output tensors by unique layer name.
     """
 
-    def __init__(self, md, model_path: str):
+    def __init__(self, md: AxfcMachineDesc, model_path: str):
         super().__init__(md)
+        self.md = md
+
+        # Load model
+        model = self.__load_model(model_path)
+
+    
+    def __load_model(self, model_path: str):
+        try:
+            # Attempt to load as nn.Module
+            logging.info(f"Attempting to load nn.Module model from {model_path}")
+            model = torch.load(model_path)
+
+            logging.info("Successfully loaded nn.Module model.")
+            
+            # Perform nn.Module-specific setup
+            self.__setup_nn_module(model)
+            return model
+
+        except Exception as e:
+            logging.warning(f"Failed to load nn.Module model: {e}")
         
-        # Load the model
-        model = torch.load(model_path)
+        try:
+            # If nn.Module fails, attempt to load as TorchScript
+            logging.info(f"Attempting to load TorchScript model from {model_path}")
+            model = torch.jit.load(model_path)
+            logging.info("Successfully loaded TorchScript model.")
+            return model
+        except Exception as e:
+            logging.error(f"Failed to load TorchScript model: {e}")
+            raise RuntimeError(f"Failed to load model from {model_path}: {e}")
         
+
+    def __setup_nn_module(self, model):
+        input_shape = self.md.get_input_shape()
+        input_tensor = torch.randn(input_shape)
+
         # Create a symbolic graph for the model using fx.symbolic_trace
-        self._gm: fx.GraphModule = fx.symbolic_trace(model, (DUMMY_INPUT,))
+        self._gm: fx.GraphModule = fx.symbolic_trace(model, (input_tensor,))
         self._pt_graph: fx.Graph = self._gm.graph
-        
+
         # Tensor with input values; weight, bias, mean, etc.
         self._tensor_symtab = OrderedDict(self._gm.state_dict())
 
@@ -84,9 +115,9 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
 
         # Register hooks to capture input and output tensors
         self._register_hooks(model)
-        
+
         # Perform a forward pass with dummy input to capture shapes
-        self.forward_pass(DUMMY_INPUT)
+        self.forward_pass(input_tensor)
 
         # Create symtab for named modules
         self._module_symtab = self.__build_module_symtab(self._gm)
@@ -94,6 +125,7 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
         # Capture input names
         self._input_names = [node.name for node in self._pt_graph.nodes
                              if node.op in ('placeholder', 'get_attr')]
+
 
     def _register_hooks(self, model):
         """Registers forward hooks to capture input and output tensor shapes for each layer."""
@@ -296,6 +328,8 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
         aix_layer.bias.CopyFrom(self._emit_aix_tensor_generic(ir_node, "bias"))
         aix_layer.mean.CopyFrom(self._emit_aix_tensor_generic(ir_node, "mean"))
         aix_layer.variance.CopyFrom(self._emit_aix_tensor_generic(ir_node, "variance"))
+
+        aix_layer.filter.CopyFrom(self._emit_aix_tensor_filter(ir_node))
 
         # Attributes for BatchNormalization in float format
         # epsilon, momentum

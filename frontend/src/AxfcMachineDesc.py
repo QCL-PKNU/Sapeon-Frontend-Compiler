@@ -93,7 +93,25 @@ class AxfcMachineDesc:
 
         return AxfcError.SUCCESS
     
-
+    def get_input_shape(self):
+        """
+        Extracts the input shape defined in the machine description (AIX_INPUT_SHAPE).
+        
+        Returns:
+            tuple: A tuple representing the input shape, e.g., (1, 3, 224, 224).
+        """
+        try:
+            input_shape = self.__aix_model_info_tbl["AIX_INPUT_SHAPE"]
+            if not isinstance(input_shape, list):
+                raise ValueError("AIX_INPUT_SHAPE must be a list.")
+            return tuple(input_shape)
+        except KeyError:
+            logging.warning("AIX_INPUT_SHAPE not defined in machine description.")
+            return None
+        except ValueError as e:
+            logging.error(f"Invalid AIX_INPUT_SHAPE format: {e}")
+            return None
+    
     def get_layer_info(self, layer_type: str):
         """Returns then information of a specific AIX Layer
         
@@ -102,6 +120,9 @@ class AxfcMachineDesc:
         """
         # logging.info("AxfcMachineDesc:get_layer_info - %s", layer_type)
         try:
+            if not layer_type:
+                return None
+            
             if 'Clip' in layer_type:
                 layer_type = 'Relu6'
             return self.__aix_layer_info_tbl[layer_type]
