@@ -22,8 +22,6 @@ from AxfcError          import AxfcError
 from .AxfcIRBuilder     import AxfcIRBuilder
 from AxfcIRNode         import AxfcIRNode
 
-import util.AxfcUtil    as _util
-
 @torch.fx.wrap
 def torch_randn(shape):
     return torch.randn(shape)
@@ -50,48 +48,33 @@ class AxfcPTIRBuilder(AxfcIRBuilder):
         self.__pt_graph = None 
 
 
-    def __find_matched_op(self, node_def) -> torch.nn:
+    def __find_matched_op(self, node_name) -> torch.nn:
         """Find a matched operation from a node of PyTorch graph.
         
         Args:
             node_name: The name of the node in the computational graph.
         """
+        # Define a mapping for operations
+        op_mapping = {
+            'add': 'add',
+            'relu': 'ReLU',
+        }
 
-        op_list = [
-            'conv', 'relu', 'bn', 'add', 'downsample', 
-            'maxpool', 'avgpool', 'flatten', 'fc'
-        ]
-        matched_op = None
-
-        # if op is in target name, return op
-        # For example, op is 'conv' and target is 'layer1.0.conv1'
-        for op in op_list:
-            if op in node_def.name:
-                matched_op = op
+        # Check if node_name contains a mapped operation
+        for key, mapped_op in op_mapping.items():
+            if key in node_name:
+                return mapped_op
             
         # If node name doesn't match, check the module type from named_modules
-        module_name = node_def.name.replace("_", ".")  # Adjust to match named_modules
+        module_name = node_name.replace("_", ".")
         
         for submodule_name, submodule in self.__pt_model.named_modules():
             if submodule_name == module_name:
-                # Check for specific module types
-                if isinstance(submodule, torch.nn.Conv2d):
-                    matched_op = 'conv'
-                elif isinstance(submodule, torch.nn.BatchNorm2d):
-                    matched_op = 'bn'
-                elif isinstance(submodule, torch.nn.ReLU):
-                    matched_op = 'relu'
-                elif isinstance(submodule, torch.nn.ReLU6):
-                    matched_op = 'relu'
-                elif isinstance(submodule, torch.nn.Linear):
-                    matched_op = 'fc'
-                elif isinstance(submodule, torch.nn.MaxPool2d):
-                    matched_op = 'maxpool'
-                elif isinstance(submodule, torch.nn.AvgPool2d):
-                    matched_op = 'avgpool'
-                # Add more checks as needed
-
-        return matched_op if matched_op else None
+                submodule_type = type(submodule)
+                if issubclass(submodule_type, torch.nn.Module):
+                    return submodule_type.__name__
+                
+        return None
 
     def _read_model_graph(self, model_path: str) -> AxfcError:
         """Read a TorchScript model."""
@@ -152,20 +135,10 @@ class AxfcPTIRBuilder(AxfcIRBuilder):
                 else:
                     # Since, the pt_node.op is function for calling module and method and so on
                     # extract the operator from the pt_node definition like 'conv', 'bn'
-                    node_op = self.__find_matched_op(node_def)
+                    node_op = self.__find_matched_op(node_def.name)
 
-                    if node_op and "downsample" in node_op:
-                        node_name = node_def.name.replace("_", ".")
-                        for submodule_name, submodule in self.__pt_model.named_modules():
-                            if submodule_name.startswith(node_name):
-                                if isinstance(submodule, torch.nn.Conv2d):
-                                    err = self.__append_node_sym_ir(node_def, op="conv")
-                                elif isinstance(submodule, torch.nn.BatchNorm2d):
-                                    err = self.__append_node_sym_ir(node_def, op="bn")
+                    err = self.__append_node_sym_ir(node_def, op=node_op)
 
-                    else:
-                        # Handle regular nodes
-                        err = self.__append_node_sym_ir(node_def, op=node_op)
             elif hasattr(node_def, "kind"):
                 # TODO: hanle logic for Script model 
                 pass
@@ -213,7 +186,6 @@ class AxfcPTIRBuilder(AxfcIRBuilder):
             pass
 
         else:
-            # print('--------> ', node_def.name)
             ir_node = self._ir_symtab.get(node_def.name)
             if ir_node is None:
                 logging.error(f"Node {node_def.name} not found in symbolic table.")
@@ -221,7 +193,7 @@ class AxfcPTIRBuilder(AxfcIRBuilder):
 
 
             if ir_node.op is None:
-                ir_node.op = self.__find_matched_op(node_def)
+                ir_node.op = self.__find_matched_op(node_def.name)
 
             # Check the node is supported by AIXH hardware
             layer_info = self._md.get_layer_info(ir_node.op)
