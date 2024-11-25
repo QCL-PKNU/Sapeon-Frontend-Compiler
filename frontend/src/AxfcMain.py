@@ -26,6 +26,7 @@ def __main(params):
     cal_path = params.calib_path
     kernel_path = params.kernel
     aix_graph_format = params.aix_graph_format
+    input_shape = params.input_shape
 
     # for logging
     if log_path is not None and os.path.isfile(log_path):
@@ -61,7 +62,7 @@ def __main(params):
         return err
 
     # # perform the compilation
-    err, aix_graphs = fc.compile(in_path)
+    err, aix_graphs = fc.compile(in_path, input_shape)
     if err is not AxfcError.SUCCESS:
         logging.error("Error] Compile TF graph to AXIGraph: %s", err)
         return err
@@ -136,6 +137,8 @@ if __name__ == "__main__":
                         help='path to dump an IR graph')
     parser.add_argument('-f', '--aix_graph_format', metavar='', type=str, required=False,
                         help='configure output format between binary and text for aix graph')
+    parser.add_argument('-s', '--input_shape', type=str, required=False,
+                        help="Input shape for the model, e.g., [1,3,224,224]")
 
     args = parser.parse_args()
     __main(args)

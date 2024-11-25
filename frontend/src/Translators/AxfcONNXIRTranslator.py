@@ -72,7 +72,7 @@ class AxfcONNXIRTranslator(AxfcIRTranslator):
 
 
     ## The constructure
-    def __init__(self, md, path):
+    def __init__(self, md, path, **kwargs):
         super().__init__(md)
 
         onnx_model = onnx.load(path)
