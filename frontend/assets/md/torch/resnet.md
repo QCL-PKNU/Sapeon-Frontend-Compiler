@@ -18,7 +18,7 @@
 			"is_conv": false,
 			"profit": 100
 		},
-		"add": {
+		"Add": {
 			"layer": "AIX_LAYER_EWADD",
 			"activation": null,
 			"is_group": false,

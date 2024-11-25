@@ -56,7 +56,7 @@ class AxfcPTIRBuilder(AxfcIRBuilder):
         """
         # Define a mapping for operations
         op_mapping = {
-            'add': 'add',
+            'add': 'Add',
             'relu': 'ReLU',
         }
 

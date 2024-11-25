@@ -626,7 +626,7 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
         convolution_desc.dtype = ir_node.aix_layer.input.dtype
 
         # Handle special case for `ewadd` which may not have a `target`
-        if "add" in ir_node.op:
+        if "Add" in ir_node.op:
             # Assign default settings for element-wise addition (ewadd)
             logging.warning("ewadd node has no target; using default attributes.")
             stride = (1, 1)
