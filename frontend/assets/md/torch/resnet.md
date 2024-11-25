@@ -1,7 +1,6 @@
 {
     "AIX_MODEL_TYPE": "PYTORCH",
     "AIX_MODEL_NAME": "resnet_model",
-	"AIX_INPUT_SHAPE": [1, 3, 224, 224],
     "AIX_PROFIT_THRESHOLD": 500,
     "STOP_COMPILING_POINT":"",
     "AIX_LAYER": {
