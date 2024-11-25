@@ -55,10 +55,7 @@ class AxfcPTIRBuilder(AxfcIRBuilder):
             node_name: The name of the node in the computational graph.
         """
         # Define a mapping for operations
-        op_mapping = {
-            'add': 'Add',
-            'relu': 'ReLU',
-        }
+        op_mapping = {'add': 'Add'}
 
         # Check if node_name contains a mapped operation
         for key, mapped_op in op_mapping.items():
@@ -73,6 +70,10 @@ class AxfcPTIRBuilder(AxfcIRBuilder):
                 submodule_type = type(submodule)
                 if issubclass(submodule_type, torch.nn.Module):
                     return submodule_type.__name__
+                
+        # Handle fall back case for ReLU
+        if "relu" in node_name:
+            return "ReLU"
                 
         return None
 
