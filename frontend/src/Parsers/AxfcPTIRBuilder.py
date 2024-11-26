@@ -95,7 +95,6 @@ class AxfcPTIRBuilder(AxfcIRBuilder):
         try:
             # If not TorchScript, load as nn.Module
             model: torch.nn.Module = torch.load(model_path)
-            input_tensor = torch.randn((1, 3, 224, 224))  # Adjust input shape as needed
             graph_module = torch.fx.symbolic_trace(model)
             self.__pt_graph = graph_module.graph
             self.__pt_model = model
@@ -168,7 +167,7 @@ class AxfcPTIRBuilder(AxfcIRBuilder):
             op: 
         """
         ir_node = AxfcIRNode(node_def)
-        ir_node.name = node_def.name
+        ir_node.name = node_def.name.replace("_", ".")
         if op:
             ir_node.op = op
 
