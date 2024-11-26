@@ -2,6 +2,8 @@ SHELL := /bin/bash
 
 .PHONY: all frontend simulator clean
 
+PYTHON=python3.9
+
 # Frontend
 FRONTEND_DIR = frontend
 FRONTEND_SRC_DIR = $(FRONTEND_DIR)/src
@@ -20,7 +22,7 @@ frontend: $(FRONTEND_VENV)
 	source $(FRONTEND_VENV)/bin/activate && pip install -r $(FRONTEND_REQUIREMENTS)
 
 	@echo "Compile deep learning model...$(MODEL_PATH)"
-	source $(FRONTEND_VENV)/bin/activate && python $(FRONTEND_SRC)  -i $(FRONTEND_DIR)/assets/models/$(MODEL_NAME) \
+	source $(FRONTEND_VENV)/bin/activate && $(PYTHON) $(FRONTEND_SRC)  -i $(FRONTEND_DIR)/assets/models/$(MODEL_NAME) \
 																    -c $(FRONTEND_DIR)/assets/calibs/$(CALIB_FILE) \
 																    -m $(FRONTEND_DIR)/assets/md/$(MD_FILE) \
 																	-l $(FRONTEND_DIR)/assets/logging.log \
@@ -32,7 +34,7 @@ frontend: $(FRONTEND_VENV)
 
 $(FRONTEND_VENV):
 	@echo "Creating virtual environment..."
-	python3 -m venv $(FRONTEND_VENV)
+	$(PYTHON) -m venv $(FRONTEND_VENV)
 
 
 simulator: simulator_env
