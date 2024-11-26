@@ -8,7 +8,7 @@
 #      Heng Sengthai (sengthai37@gmail.com)
 #      Hour Leanghok (hourleanghok@gmail.com)
 #
-#   Quantum Computing Labaratory (qcl.pknu.ac.kr)
+#   Quantum Computing Laboratory (quantum.pknu.ac.kr)
 #######################################################################
 
 

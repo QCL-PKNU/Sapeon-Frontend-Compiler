@@ -9,7 +9,7 @@
 #      Sanghyeon Lee (sanghyeon@pukyong.ac.kr)
 #      Pov Kimsay (povkimsay@gmail.com)
 #
-#   Quantum Computing Labaratory (qcl.pknu.ac.kr)
+#   Quantum Computing Laboratory (quantum.pknu.ac.kr)
 #######################################################################
 
 import logging
