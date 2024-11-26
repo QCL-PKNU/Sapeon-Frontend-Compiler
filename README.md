@@ -1,7 +1,7 @@
-# AIX Frontend Compiler and Simulator Tutorial  
+# Sapeon Frontend Compiler and Simulator Tutorial  
 **Version: v2.0**  
 
-This guide provides step-by-step instructions for compiling and executing deep learning models using the AIX Frontend Compiler and Simulator.  
+This guide provides step-by-step instructions for compiling and executing deep learning models using the Sapeon Frontend Compiler and Simulator.  
 
 ---
 
@@ -22,7 +22,7 @@ make frontend/venv
 ---
 
 ### 3. Compile the Model  
-The AIX Frontend Compiler converts deep learning models into **AIXGraph** format. Follow the steps below for different frameworks:  
+The Sapeon Frontend Compiler converts deep learning models into **AIXGraph** format. Follow the steps below for different frameworks:  
 
 #### Step 1: Enter the Scripts Directory  
 ```bash  
