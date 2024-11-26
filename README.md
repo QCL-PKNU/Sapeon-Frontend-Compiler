@@ -136,23 +136,3 @@ Use the following command to execute the compiled AIXGraph:
 After execution, the output tensor will be saved in the `outputs` folder.  
 
 ---
-
-## Automating Model Compilation and Execution  
-
-### 1. Install Dependencies  
-Ensure the following dependencies are installed:  
-```bash  
-pip install numpy  
-sudo apt-get install pybind11-dev  
-sudo apt-get install python3-dev  
-sudo apt-get install libgoogle-glog-dev  
-```  
-
-#### Install Protocol Buffers  
-Clone and build Protocol Buffers from GitHub:  
-```bash  
-git clone https://github.com/protocolbuffers/protobuf.git  
-cd protobuf  
-git checkout v3.21.12  
-git submodule update --init --recursive  
-```  
