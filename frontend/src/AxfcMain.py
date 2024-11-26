@@ -7,7 +7,7 @@
 #      Youngsun Han (youngsun@pknu.ac.kr)
 #      Heng Sengthai (sengthai37@gmail.com)
 #
-#   High Performance Computing Laboratory (hpcl.pknu.ac.kr)
+#   Quantum Computing Labaratory (qcl.pknu.ac.kr)
 #######################################################################
 
 import argparse
@@ -15,9 +15,8 @@ import argparse
 from AxfcFrontendCompiler import *
 
 
-## This is a main function for SKT-AIX frontend compiler
-## @param params input parameters for the compilation
 def __main(params):
+    """Main function for Sapeon Frontend Compiler"""
     md_path = params.md_path
     in_path = params.in_path
     gv_path = params.graph_path
@@ -49,7 +48,7 @@ def __main(params):
 
     fc = AxfcFrontendCompiler()
     
-    # # read a machine description file
+    # read a machine description file
     err = fc.read_md_file(md_path)
     if err is not AxfcError.SUCCESS:
         logging.error("Error] Read machine descremitiption: %s", err)
@@ -61,7 +60,7 @@ def __main(params):
         logging.error("Error] Read calibration data: %s", err)
         return err
 
-    # # perform the compilation
+    # perform the compilation
     err, aix_graphs = fc.compile(in_path, input_shape)
     if err is not AxfcError.SUCCESS:
         logging.error("Error] Compile TF graph to AXIGraph: %s", err)
@@ -118,7 +117,7 @@ def __main(params):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description='SKT AIX Frontend Compiler',
+        description='Sapeon Frontend Compiler',
         usage='use "%(prog)s -h/--help" for more information')
 
     parser.add_argument('-m', '--md-path', metavar='', type=str, required=True,

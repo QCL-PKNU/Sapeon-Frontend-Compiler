@@ -10,7 +10,7 @@
 #      Pov Kimsay (povkimsay@gmail.com)
 #
 #   Quantum Computing Labaratory (qcl.pknu.ac.kr)
-#   [Before:High Performance Computing Laboratory (hpcl.pknu.ac.kr)]
+#   [Before:Quantum Computing Labaratory (qcl.pknu.ac.kr)]
 #######################################################################
 
 import ast

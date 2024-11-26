@@ -7,7 +7,7 @@
 #      Youngsun Han (youngsun@pknu.ac.kr)
 #      Heng Sengthai (sengthai37@gmail.com)
 #
-#   High Performance Computing Laboratory (hpcl.pknu.ac.kr)
+#   Quantum Computing Labaratory (qcl.pknu.ac.kr)
 #######################################################################
 
 import tensorflow as tf
@@ -217,8 +217,6 @@ class AxfcTFIRTranslator(AxfcIRTranslator):
 
             # map 'NHWC' format with opt_shape
             shape_dict = dict(zip('NHWC', shape))
-
-            # reverse appending (following aix compiler structure)
             for t in reversed('NCHW'):
                 aix_tensor.dims.append(shape_dict[t])
         else:
