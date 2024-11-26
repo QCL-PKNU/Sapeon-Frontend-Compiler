@@ -13,7 +13,7 @@
 #   [Before:High Performance Computing Laboratory (hpcl.pknu.ac.kr)]
 #######################################################################
 
-
+import ast
 import torch
 import torch.fx as fx
 import numpy as np
@@ -65,65 +65,47 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
         layer_io_dict: A dictionary to store input/output tensors by unique layer name.
     """
 
-    def __init__(self, md: AxfcMachineDesc, model_path: str):
+    def __init__(self, md: AxfcMachineDesc, path: str, **kwargs):
         super().__init__(md)
         self.md = md
 
         # Load model
-        model = self.__load_model(model_path)
-
-    
-    def __load_model(self, model_path: str):
+        is_dynamic_model = False
         try:
-            # Attempt to load as nn.Module
-            logging.info(f"Attempting to load nn.Module model from {model_path}")
-            model = torch.load(model_path)
-
-            logging.info("Successfully loaded nn.Module model.")
-            
-            # Perform nn.Module-specific setup
-            self.__setup_nn_module(model)
-            return model
+            logging.info(f"Attempting to load nn.Module model from {path}")
+            model = torch.load(path)
+            is_dynamic_model = True
 
         except Exception as e:
             logging.warning(f"Failed to load nn.Module model: {e}")
-        
-        try:
-            # If nn.Module fails, attempt to load as TorchScript
-            logging.info(f"Attempting to load TorchScript model from {model_path}")
-            model = torch.jit.load(model_path)
-            logging.info("Successfully loaded TorchScript model.")
-            return model
-        except Exception as e:
-            logging.error(f"Failed to load TorchScript model: {e}")
-            raise RuntimeError(f"Failed to load model from {model_path}: {e}")
-        
 
-    def __setup_nn_module(self, model):
-        input_shape = self.md.get_input_shape()
-        input_tensor = torch.randn(input_shape)
+        if is_dynamic_model:
+            input_shape = tuple(
+                ast.literal_eval(kwargs['input_shape'])
+            )
+            input_tensor = torch.randn(input_shape)
 
-        # Create a symbolic graph for the model using fx.symbolic_trace
-        self._gm: fx.GraphModule = fx.symbolic_trace(model, (input_tensor,))
-        self._pt_graph: fx.Graph = self._gm.graph
+            # Create a symbolic graph
+            self._gm: fx.GraphModule = fx.symbolic_trace(model, (input_tensor,))
+            self._pt_graph: fx.Graph = self._gm.graph
 
-        # Tensor with input values; weight, bias, mean, etc.
-        self._tensor_symtab = OrderedDict(self._gm.state_dict())
+            # Create tensor symtab
+            self._tensor_symtab = OrderedDict(self._gm.state_dict())
 
-        # Initialize a dictionary to store input/output tensors by unique layer name
-        self.layer_io_dict = {}
+            # Create dict to store I/O tensors
+            self.layer_io_dict = {}
 
-        # Register hooks to capture input and output tensors
-        self._register_hooks(model)
+            # Register hook to extract I/O tensors
+            self._register_hooks(model)
 
-        # Perform a forward pass with dummy input to capture shapes
-        self.forward_pass(input_tensor)
+            # Perform a forward pass, given specific input shape
+            self.forward_pass(input_tensor)
 
-        # Create symtab for named modules
-        self._module_symtab = self.__build_module_symtab(self._gm)
-        
-        # Capture input names
-        self._input_names = [node.name for node in self._pt_graph.nodes
+            # Create symtab for named modules
+            self._module_symtab = self.__build_module_symtab(self._gm)
+
+            # Capture input names
+            self._input_names = [node.name for node in self._pt_graph.nodes
                              if node.op in ('placeholder', 'get_attr')]
 
 
@@ -644,7 +626,7 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
         convolution_desc.dtype = ir_node.aix_layer.input.dtype
 
         # Handle special case for `ewadd` which may not have a `target`
-        if "add" in ir_node.op:
+        if "Add" in ir_node.op:
             # Assign default settings for element-wise addition (ewadd)
             logging.warning("ewadd node has no target; using default attributes.")
             stride = (1, 1)

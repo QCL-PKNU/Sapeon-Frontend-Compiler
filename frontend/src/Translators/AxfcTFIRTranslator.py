@@ -52,7 +52,7 @@ DEFAULT_TYPE = 'NCHW'
 class AxfcTFIRTranslator(AxfcIRTranslator):
 
     ## The constructor
-    def __init__(self, md, path):
+    def __init__(self, md, path, **kwargs):
         super().__init__(md)
 
         graph_def = loadFrozenModel(path)

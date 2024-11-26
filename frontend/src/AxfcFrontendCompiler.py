@@ -127,7 +127,7 @@ class AxfcFrontendCompiler:
         return AxfcError.SUCCESS
         
 
-    def compile(self, path: str) -> AxfcError:
+    def compile(self, path: str, input_shape) -> AxfcError:
         """Compile an input AI model into AIXGraph object.
 
         Args:
@@ -152,7 +152,7 @@ class AxfcFrontendCompiler:
             return AxfcError.INVALID_INPUT_TYPE, None
         
         self.__ir_builder = builder_class(self.__md)
-        self.__ir_translator = translator_class(self.__md, path)
+        self.__ir_translator = translator_class(md=self.__md, path=path, input_shape=input_shape)
 
         # Build AIXIR from input graph of AI model
         err, aix_ir = self.__ir_builder.build_ir(path)
