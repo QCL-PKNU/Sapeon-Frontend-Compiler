@@ -18,6 +18,13 @@
 			"is_conv": false,
 			"profit": 100
 		},
+		"FusedBatchNormV3": {
+			"layer": "AIX_LAYER_BATCHNORM",
+			"activation": null,
+			"is_group": false,
+			"is_conv": false,
+			"profit": 100
+		},
 		"FusedBatchNorm": {
 			"layer": "AIX_LAYER_BATCHNORM",
 			"activation": null,
@@ -52,7 +59,21 @@
 			"is_group": false,
 			"is_conv": false,
 			"profit": 100
-		},      
+		},
+		"AddV3": {
+			"layer": "AIX_LAYER_EWADD",
+			"activation": null,
+			"is_group": false,
+			"is_conv": false,
+			"profit": 100
+		},
+		"AddV2": {
+			"layer": "AIX_LAYER_EWADD",
+			"activation": null,
+			"is_group": false,
+			"is_conv": false,
+			"profit": 100
+		},                        
 		"Add": {
 			"layer": "AIX_LAYER_EWADD",
 			"activation": null,
