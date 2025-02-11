@@ -1,4 +1,4 @@
-# SKT AIX Frontend Compiler
+# Sapeon Frontend Compiler
 
 This README describes the organization and usage of the SKT AIX Frontend Compiler.
 
@@ -89,7 +89,7 @@ This release contains the following issue that needs to be addressed:
 * AxfcPTTranslator
 * AxfcPTWriter
 
-### **SKT-AIX**
+### **Sapeon-AIX**
 
 * aixh_pb2
 
@@ -143,9 +143,9 @@ To use the python3 command line, we have to pass the required arguments listed b
  
  **Example**
 
-1. On terminal, go to aix frontend compiler directory
+1. On terminal, go to the frontend compiler directory
     ```    
-    $ cd skt-aix-frontend-compiler
+    $ cd sapeon-frontend-compiler
     ```
 2. Run aix compiler
    ```
