@@ -11,13 +11,13 @@
 #######################################################################
 
 import argparse
-
 from AxfcFrontendCompiler import *
 
 
-## This is a main function for SKT-AIX frontend compiler
-## @param params input parameters for the compilation
 def __main(params):
+    """Main function of Sapeon Frontend Compiler.
+    """
+    
     md_path = params.md_path
     in_path = params.in_path
     gv_path = params.graph_path
@@ -26,14 +26,15 @@ def __main(params):
     cal_path = params.calib_path
     kernel_path = params.kernel
     aix_graph_format = params.aix_graph_format
+    input_shape = params.input_shape
 
-    # for logging
+    # Logging
     if log_path is not None and os.path.isfile(log_path):
         os.remove(log_path)
 
     logging.basicConfig(filename=log_path, level=logging.INFO)
 
-    # for validating md and input files
+    # Validation
     if not os.path.isfile(md_path):
         print("Invalid path to an MD file: " + md_path)
         return
@@ -48,20 +49,20 @@ def __main(params):
 
     fc = AxfcFrontendCompiler()
     
-    # # read a machine description file
+    # Read machine description file
     err = fc.read_md_file(md_path)
     if err is not AxfcError.SUCCESS:
-        logging.error("Error] Read machine description: %s", err)
+        logging.error("Error] Read machine descremitiption: %s", err)
         return err
 
-    # # read a calibration data file
+    # Read calibration file
     err = fc.read_calib_file(cal_path)
     if err is not AxfcError.SUCCESS:
         logging.error("Error] Read calibration data: %s", err)
         return err
 
-    # # perform the compilation
-    err, aix_graphs = fc.compile(in_path)
+    # Compile the model
+    err, aix_graphs = fc.compile(in_path, input_shape)
     if err is not AxfcError.SUCCESS:
         logging.error("Error] Compile TF graph to AXIGraph: %s", err)
         return err
@@ -69,27 +70,25 @@ def __main(params):
     # Save the generated AIXGraphs
     if out_path is None:
         out_path = os.path.dirname(in_path) + '/aix_graph.out'
-
     
-    # Saves the generated AIXGraph
     err = fc.dump_aix_graphs(out_path, aix_graphs, aix_graph_format)
     if err is not AxfcError.SUCCESS:
         logging.error("Error] Dump out AIXGraphs: %s", err)
         return err
 
-    # AIX custom model
-    dir = os.path.dirname(os.path.realpath('__file__'))
-    tst_path = dir + '/tst'
-    aix_graph_path = tst_path + '/aix_graph.out.'
-    print(aix_graph_path)
+    # # AIX custom model
+    # dir = os.path.dirname(os.path.realpath('__file__'))
+    # tst_path = dir + '/tst'
+    # aix_graph_path = tst_path + '/aix_graph.out.'
+    # print(aix_graph_path)
     
-    err, custom_model_path = fc.dump_custom_model(path=in_path,
-                               kernel_path=kernel_path,
-                               aix_graph_path=aix_graph_path,
-                               save_path=os.path.dirname(in_path))
+    # err, custom_model_path = fc.dump_custom_model(path=in_path,
+    #                            kernel_path=kernel_path,
+    #                            aix_graph_path=aix_graph_path,
+    #                            save_path=os.path.dirname(in_path))
 
-    if err is not AxfcError.SUCCESS:
-        logging.error("Error] Dump out AIX custom model: %s", err)
+    # if err is not AxfcError.SUCCESS:
+    #     logging.error("Error] Dump out AIX custom model: %s", err)
 
     # AIX Launcher: TESTING
     # if kernel_path is not None:
@@ -117,25 +116,29 @@ def __main(params):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description='SKT AIX Frontend Compiler',
-        usage='use "%(prog)s -h/--help" for more information')
+        description="Sapeon Frontend Compiler",
+        usage='use "%(prog)s -h/--help" for more information'
+    )
 
-    parser.add_argument('-m', '--md-path', metavar='', type=str, required=True,
-                        help='path to a machine description file')
-    parser.add_argument('-i', '--in-path', metavar='', type=str, required=True,
-                        help='path to the protocol buffer of a frozen model')
-    parser.add_argument('-k', '--kernel', metavar='', type=str, required=False,
+    # Configure arguments
+    parser.add_argument("-i", "--in-path", metavar="", type=str, required=True,
+                        help="path to the protocol buffer of a frozen model")
+    parser.add_argument("-m", "--md-path", metavar="", type=str, required=True,
+                        help="path to a machine description file")
+    parser.add_argument("-k", "--kernel", metavar="", type=str, required=False,
                         help='path to the kernel (custom operation kernel *.so) file')
-    parser.add_argument('-c', '--calib-path', metavar='', type=str, required=False,
-                        help='path to the calibration data of a frozen model')
-    parser.add_argument('-o', '--out-path', metavar='', type=str, required=False,
-                        help='path to output the generated AIXGraph')
-    parser.add_argument('-l', '--log-path', metavar='', type=str, required=False,
-                        help='path to log out')
-    parser.add_argument('-g', '--graph-path', metavar='', type=str, required=False,
-                        help='path to dump an IR graph')
-    parser.add_argument('-f', '--aix_graph_format', metavar='', type=str, required=False,
-                        help='configure output format between binary and text for aix graph')
+    parser.add_argument("-c", "--calib-path", metavar="", type=str, required=False,
+                        help="path to the calibration data of a frozen model")
+    parser.add_argument("-o", "--out-path", metavar="", type=str, required=False,
+                        help="path to output the generated AIXGraph")
+    parser.add_argument("-l", "--log-path", metavar="", type=str, required=False,
+                        help="path to log out")
+    parser.add_argument("-g", "--graph-path", metavar="", type=str, required=False,
+                        help="path to dump an IR graph")
+    parser.add_argument("-f", "--aix_graph_format", metavar="", type=str, required=False,
+                        help="configure output format between binary and text for aix graph")
+    parser.add_argument("-s", "--input_shape", type=str, required=False,
+                        help="Input shape for the model, e.g., [1,3,224,224]")
 
     args = parser.parse_args()
     __main(args)
