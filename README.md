@@ -1,42 +1,12 @@
-
 Here's the updated README with the explanation of the output file generated after running `make run`:
 
 ---
 
-# SKT AIX Frontend Compiler
+# Sapeon Frontend Compiler
 
-This README describes the organization and usage of the SKT AIX Frontend Compiler.
+This README describes the organization and usage of the Sapeon Frontend Compiler.
 
-## **Release Note v2.0 (UAT)**
-
-### **New Updates**
-
-This release includes features:
-
-1. Enable to compile PyTorch-to-AIXGraph
-
-We have implemented a parser and translator for PyTorch models. The following files were added for this implementation:
-
-- `src/AxfcPyTorchIRBuilder`: Parser for PyTorch graph
-- `src/AxfcPyTorchIRTranslator`: Translator for PyTorch graph
-- `src/AxfcPyTorchWriter`: Generates `AIXGraph` from a PyTorch model
-
-2. Support multiple AIXGraphs or AIXOps for TensorFlow, ONNX, and PyTorch
-
-Multiple `AIXGraphs` can be generated from a model, with supported frameworks including TensorFlow, ONNX, and PyTorch.
-
-### **Open Issues**
-
-This release contains the following issue that needs to be addressed:
-
-1. Generated `AIXGraph` only contains input information (type, dims, size) but does not contain input value (`fval`) for `AIX_LAYER_INPUT`.
-
-The generated `AIXGraph` only contains input information:
-
-- The generated `AIXGraph` gets the input from the previous node in the model, so it only contains input information like type, dims, and size.
-- It doesn’t contain the input value (`fval`) for the `AIX_LAYER_INPUT` node. For this reason, when testing with the `AIXGraph` simulator, the input value (`fval`) needs to be manually inserted.
-
-![Scheme](doc/images/ex_gen_aixgraph.png)
+## **Release Note v3.0 (UAT)**
 
 ## **Source Organization**
 
@@ -80,151 +50,97 @@ The generated `AIXGraph` only contains input information:
 - `AxfcPTTranslator`
 - `AxfcPTWriter`
 
-### **SKT-AIX**
+### **SKT-Sapeon**
 
 - `aixh_pb2`
 
 ## **Prerequisites**
 
-Install Dependencies (Ubuntu 20.04~)
+Manaully Installing Dependency (Ubuntu 20.04 ~)
 
-To avoid module conflicts, we recommend creating a virtual environment. The `Makefile` automatically creates and configures a virtual environment (`venv`) when you run `make all`. It sets up the necessary environment and installs the required packages.
-
-If you need to set up the virtual environment manually for any reason, you can follow these steps:
+to avoid module conflicts, we reconnect to create a virtual ENV by following the following command:
 
 ```bash
-$ python3 -m venv {virtual_env_name}
+# Create
+python3.9 -m venv venv
 
-1. Ubuntu
-$ cd {virtual_env_name}
-$ source bin/activate
+# Activate
+source venv/bin/activate
 
-2. Windows
-$ cd {virtual_env_name}/Scripts
-$ activate.bat
+# Install
+pip install -r requirements.txt
 ```
 
-And install the required packages:
+## Model Compilation
+
+The Sapeon Frontend Compiler converted DL model into **AIXGraph** format. Follow the steps below for different frameworks:
+
+### Step 1: Enter the Scripts Directory
 
 ```bash
-$ pip3 install -r requirements.txt
+cd scripts
 ```
 
-If the `onnx_graphsurgeon` package is not installed successfully, please check the latest version and install it manually:
+### Step 2: Update File Permissions
+
+Ensure the shell script file is executable:
 
 ```bash
-$ pip3 install onnx_graphsurgeon=={latest_version}
+chmod +x _file_name_.sh
 ```
 
-## **Usage**
+### Step 3: Compile Models
 
-Our frontend compiler currently provides 2 ways for execution: using a Makefile or the `python3` command line.
-
-### **Using Makefile**
-
-The `Makefile` simplifies the process of setting up the environment and running the compiler.
-
-To use the Makefile, please follow the steps below:
-
-1. Configure the Makefile by editing it at path `skt-aix-frontend-compiler/Makefile`.
-
-2. Fill in the required parameters:
-
-```makefile
-MODEL= ./tst/model_name.pb
-MD= ./tst/model_description.md
-```
-
-3. On the terminal, navigate to the AIX frontend compiler directory:
+**Compile a TensorFlow Model (e.g., ResNet50)**:
 
 ```bash
-$ cd skt-aix-frontend-compiler
+./c_tf_resnet50.sh
 ```
 
-4. Run the Makefile:
+**Compile an ONNX Model (e.g., ResNet50)**:
 
 ```bash
-$ make all
+./c_onnx_resnet50.sh
 ```
 
-This will:
-- Create and activate a virtual environment (`venv`).
-- Install the required Python packages.
-- Compile the specified model to generate an `AIXGraph`.
-
-5. To run the frontend compiler and generate the `AIXGraph`, execute:
+**Compile a PyTorch Model (e.g., ResNet50)**:  
+**Note**: For PyTorch, you must pass the `INPUT_SHAPE` as a parameter to generate a static AIXGraph.
 
 ```bash
-$ make run
+./c_pt_resnet50.sh
 ```
 
-### **Output: AIXGraph**
+### Step 4: Output AIXGraph Format
 
-- The output of the frontend compiler is an `AIXGraph`, which is a serialized representation of the model suitable for execution on the AIX simulator.
-- After running `make run`, an output file named `aixgraph.out.0.pb` (for binary format) or `aixgraph.out.0.pbtxt` (for text format) will be created in the output directory specified in the Makefile.
-  - The format of the output depends on the `-f` argument specified (either `'binary'` or `'text'`).
-- This `AIXGraph` file serves as the input to the simulator for performing inference or other operations.
+After running the compilation, the output **AIXGraph** file (e.g., `aix_graph.0.aixt`) will initially be generated in text format. To obtain the binary format, convert it to `aix_graph.0.aixb` by setting `GRAPH_FORMAT=binary`.
 
-### **Cleaning Up Files**
+## **Cleaning Up Files**
 
-To clean up build artifacts and temporary files generated during execution (such as `__pycache__`, `venv`, and `tst/aix_graph.out.*`), run the `make clean` command:
+To clean up build artifacts and temporary files generated during execution (such as `__pycache__`, and `venv`), run the `make clean` command:
 
 ```bash
 $ make clean
 ```
 
-This will delete the specified files and directories according to the `clean` target in the Makefile.
-
-### **Using Python3 Command Line**
-
-Alternatively, you can manually execute the compiler through the command line with Python. Pass the required arguments listed below.
-
-**Required Arguments**
-
-- `-m`: Path to a model description file
-- `-i`: Path to the protocol buffer of a frozen model
-
-**Optional Arguments**
-
-- `-c`: Path to the calibration data of a frozen model (optional)
-- `-o`: Path to output the generated `AIXGraph` (optional)
-- `-l`: Path to log out (optional)
-- `-g`: Path to dump out an IR graph (optional)
-- `-f`: Configure output for `AIXGraph` format between 'binary' and 'text' (optional, default is binary)
-
-**Note**: For the `-f` argument, we recommend using the binary format as it is much faster for dumping the `AIXGraph`.
-
-**Example**
-
-1. On the terminal, navigate to the AIX frontend compiler directory:
-
-```bash
-$ cd skt-aix-frontend-compiler
-```
-
-2. Run the AIX compiler:
-
-```bash
-$ python3 src/AxfcMain.py -m=tst/model_description.md -i=tst/model_name.pb -f=text
-```
-
-You can find sample model description files for ONNX models (`onnx_sample.md`) and TensorFlow models (`tf_sample.md`) in the `skt-aix-frontend-compiler/tst` directory.
-
 ## **Contact**
 
 - **Youngsun Han (youngsun@pknu.ac.kr)**
+
   - Associate Professor
   - Department of Computer Engineering, Pukyong National University
 
 - **Sengthai Heng (sengthai37@gmail.com)**
+
   - Graduate Student
   - Department of AI Convergence, Pukyong National University
 
 - **Leanghok Hour (leanghok@pukyong.ac.kr)**
+
   - Graduate Student
   - Department of AI Convergence, Pukyong National University
 
 - **Myeongseong Go (gms3089@pukyong.ac.kr)**
+
   - Graduate Student
   - Department of AI Convergence, Pukyong National University
 
