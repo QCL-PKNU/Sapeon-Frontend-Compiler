@@ -210,6 +210,9 @@ class AxfcIRBuilder(ABC):
         output_node_list = []
 
         for node in reversed(ir_block.nodes):
+            if len(node.succ) == 0:
+                node.is_output = True
+
             for succ_node in node.succs:
                 if succ_node not in ir_block.nodes and node.op not in ["Const", "Identity", "Pad"]:
                     if node not in output_node_list:

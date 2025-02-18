@@ -7,14 +7,13 @@
 #      Youngsun Han (youngsun@pknu.ac.kr)
 #      Heng Sengthai (sengthai37@gmail.com)
 #
-#   High Performance Computing Laboratory (hpcl.pknu.ac.kr)
+#   Quantum Computing Labaratory (qcl.pknu.ac.kr)
 #######################################################################
 
 import tensorflow as tf
 
 from . import AxfcIRBuilder
 from AxfcGraphWriter import *
-import util.AxfcUtil as _util
 
 
 #######################################################################
@@ -29,194 +28,141 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
 
         self.__tf_graph = None
 
-    ## This method is used to read a tensorflow graph from an input file in the given path.
-    #
-    # @param self this object
-    # @param path file path of input network model
-    # @return error info
+
     def _read_model_graph(self, path: str) -> AxfcError:
+        """
+        Reads the TensorFlow graph from the provided model path.
+
+        Args:
+            path (str): Path to the saved TensorFlow model.
+        """
         logging.info("AxfcTFIRBuilder:read_model_graph - path: %s", path)
 
-        # read input Tensorflow graph_def
-        tf_graph = tf.compat.v1.GraphDef()
+        graph = tf.compat.v1.GraphDef()
 
         with tf.io.gfile.GFile(path, 'rb') as f:
-            tf_graph.ParseFromString(f.read())
-            tf.import_graph_def(tf_graph)
+            graph.ParseFromString(f.read())
+            tf.import_graph_def(graph)
 
-        # remove identity nodes
-        self.__tf_graph = tf.compat.v1.graph_util.remove_training_nodes(tf_graph, protected_nodes=None)
-        # self.__tf_graph = tf_graph
+        # Remove identity nodes
+        self.__tf_graph = tf.compat.v1.graph_util.remove_training_nodes(graph, protected_nodes=None)
 
         return AxfcError.SUCCESS
+    
 
-    ## This method is used to construct a naive AIXIR using a tensorflow graph.
-    #
-    # @param self this object
-    # @param path file path of input network model
-    # @return error info
     def _build_naive_ir(self, path: str) -> AxfcError:
+        """
+        Builds a naive IR from the TensorFlow graph.
+
+        Args:
+            path (str): Path to the TensorFlow model.
+        """
         logging.info("AxfcTFIRBuilder:build_naive_ir - path: %s", path)
 
-        # read a Tensorflow graph
         err = self._read_model_graph(path)
-        if err != AxfcError.SUCCESS:
+        if err !=  AxfcError.SUCCESS:
             return err
 
-        # translation from Tensorflow graph to AIXIR
-        tf_graph_def = self.__tf_graph
+        graph_def = self.__tf_graph
+        if graph_def is None:
+            return AxfcError.INVALID_TF_GRAPH
+        
+        # Add all graph_def nodes into the symbolic IR table
+        for node_def in graph_def.node:
+            err = self.__append_node_sym_ir(node_def)
 
-        if tf_graph_def is None:
-            return AxfcError.INVALID__TF_GRAPH
-
-        #Add all graph def node into the _sym_ir
-        for tf_node_def in tf_graph_def.node:
-            err = self.__append_node_sym_ir(tf_node_def)
-
-        # build AIX IR graph using the nodes of the Tensorflow graph
-        for tf_node_def in tf_graph_def.node:
-
-            # Process separate: BN -> BN + BiasAdd
-            for index, pred_name in enumerate(tf_node_def.input):
-                # find the predecessor using the symbol table
-                if not (pred_name in self._ir_symtab):
-                    continue
-
-                pred_node = self._ir_symtab[pred_name]
-                if pred_node is not None:
-                    if pred_node.op is not None and "FusedBatchNorm" in pred_node.op: #to support different version of FusedBatchNorm
-                        tf_node_def.input[index] += '/BiasaddClone'
-
-            err = self.__append_node_def(tf_node_def)
-
-            if tf_node_def.op is not None and "FusedBatchNorm" in tf_node_def.op: #to support different version of FusedBatchNorm
-                tf_node_clone_def = tf.compat.v1.NodeDef()
-                tf_node_clone_def.CopyFrom(tf_node_def)
-
-                # clear all elements in input
-                tf_node_clone_def.input[:] = []
-
-                tf_node_clone_def.input.append(tf_node_def.name)
-                tf_node_clone_def.name += '/BiasaddClone'
-                tf_node_clone_def.op = 'BiasAdd'
-
-                err = self.__append_node_sym_ir(tf_node_clone_def)
-                err = self.__append_node_def(tf_node_clone_def)
-
+        # Build AIX IR Graph using TensorFlow graph nodes
+        for node_def in graph_def.node:
+            err = self.__append_node_def(node_def)
             if err != AxfcError.SUCCESS:
                 return err
 
-        # remove unnecessary IR nodes
+        # Remove unecessary IR Nodes
         return self.__prune_ir_nodes()
 
-    ## This method is used to prune unnecessary nodes from the IR graph.
-    #  Currently, we will remove "identity" and "pad" nodes for the IR translation.
-    #
-    # @param self this object
-    # @return error info
+
     def __prune_ir_nodes(self) -> AxfcError:
+        """Prunes unnecessary nodes (e.g., Identity and Pad) from the IR graph."""
 
-        # for each node
         for ir_node in self._ir_graph.nodes:
-            #The checking code for Identity validity is incorrect, needs to fix
+            # # Handle Identity nodes
             # if ir_node.op == "Identity":
-            #     # check validity of the identity node
+            #     print("----------")
             #     if len(ir_node.preds) != 1 or len(ir_node.succs) != 1:
-            #         #can not remove identify if it is invalid 
             #         continue
-            #         # return AxfcError.INVALID_IDENTITY_LAYER
 
-            #     # remove the current node from the graph
+            #     # Get the predecessor and successor nodes
             #     pred_node = ir_node.preds[0]
             #     succ_node = ir_node.succs[0]
 
-            #     pred_node.succs[0] = succ_node
+            #     # Transfer the tensor value from Identity to the successor (key layer)
+            #     if "input_tensor_values" not in succ_node.attrs:
+            #         succ_node.attrs["input_tensor_values"] = {}
+            #     succ_node.attrs["input_tensor_values"][ir_node.name] = pred_node.tensor_value
 
+            #     # Rewire the graph: connect predecessor directly to successor
+            #     pred_node.succs[0] = succ_node
             #     for i, node in enumerate(succ_node.preds):
             #         if node == ir_node:
             #             succ_node.preds[i] = pred_node
             #             break
 
+            #     # Remove the Identity node from the IR graph
             #     self._ir_graph.nodes.remove(ir_node)
-            
-            #The checking code for Pad validity is incorrectl so can not remove Pad
-            #if it is not valid. Needs to fix. 
-            # elif ir_node.op == "Pad":
+
+            # Handle Pad nodes
             if ir_node.op == "Pad":
-                # check validity of the pad node
                 if len(ir_node.preds) != 2 or len(ir_node.succs) != 1:
-                    #can not remove pad if it is invalid
-                    continue
-                    # return AxfcError.INVALID_PAD_LAYER
+                    continue  # Skip invalid Pad nodes
 
-                # check the following convolution node
-                succ_node = ir_node.succs[0]
+                # Check the following nodes
+                succ_node: AxfcIRNode = ir_node.succs[0]
+                if succ_node.op not in ["Conv2D", "DepthwiseConv2dNative", "MaxPool", "AvgPool"]:
+                    continue # Skip Pad nodes not followed by a supported operation
 
-                if succ_node.op.find("Conv") < 0:
-                    #can not remove pad if it is invalid
-                    continue
-                    # return AxfcError.INVALID_PAD_LAYER
+                # Remove the Pad node and connect its input directly
+                pred_node: AxfcIRNode = ir_node.preds[0]
+                pads_node: AxfcIRNode = ir_node.preds[1]
 
-                # remove the current node from the graph
-                pred_node = ir_node.preds[0]
+                # Rewire the graph: connect predecessor directly to successor
+                pred_node.succs = [succ_node]
+                for i, node in enumerate(succ_node.preds):
+                    if node == ir_node:
+                        succ_node.preds[i] = pred_node
+                        break
 
-                pred_node.succs[0] = succ_node
-                succ_node.preds[0] = pred_node
-
-                # append paddings to the end of the predecessors.
-                pads_node = ir_node.preds[1]
-                pads_node.op = "Pad"
-                succ_node.preds.append(pads_node)
-
+                # Remove the Pad node from the IR graph
                 self._ir_graph.nodes.remove(ir_node)
-            else:
-                continue
 
         return AxfcError.SUCCESS
 
 
-    def __append_node_sym_ir(self, tf_node_def: tf.compat.v1.NodeDef) -> AxfcError:
-        ir_node = AxfcIRNode(tf_node_def)
-        self._ir_symtab[tf_node_def.name] = ir_node
+    def __append_node_sym_ir(self, node_def: tf.compat.v1.NodeDef) -> AxfcError:
+        """
+        Adds a TensorFlow node to the symbolic IR table.
+
+        Args:
+            node_def: TensorFlow NodeDef object representing a graph node.
+        """
+        ir_node = AxfcIRNode(node_def)
+        self._ir_symtab[node_def.name] = ir_node
 
         return AxfcError.SUCCESS
 
-    ## @internal
-    #  This method is used to create a new IR node from tf.NodeDef and append it to the IR graph.
-    #  The successors and predecessors of the IR node is found using the symbol table.
-    #
-    # @param self this object
-    # @param tf_node_def input node_def object of Tensorflow
-    # @return error info.
-    def __append_node_def(self, tf_node_def: tf.compat.v1.NodeDef) -> AxfcError:
-        # logging.info("AxfcTFIRBuilder:append_node_def - tf_node_def: %s", tf_node_def.name)
 
-        # create a new IR node
-        # ir_node = AxfcIRNode(tf_node_def)
+    def __append_node_def(self, node_def: tf.compat.v1.NodeDef) -> AxfcError:
+        """
+        Creates an IR node from a TensorFlow node and appends it to the IR graph.
 
-        # register the IR node to the symbol table with the name of node_def
-        # self._ir_symtab[tf_node_def.name] = ir_node
+        Args:
+            node_def: TensorFlow NodeDef object representing a graph node.
+        """
+        ir_node: AxfcIRNode = self._ir_symtab.get(node_def.name)
+        ir_node.op = node_def.op
+        ir_node.name = node_def.name
 
-        #Get ir_node from _ir_symtab
-        ir_node = self._ir_symtab.get(tf_node_def.name)
-
-        # set the operation of this node
-        ir_node.op = tf_node_def.op
-
-        # set the name of this node by pruning unnecessary prefixes
-        # model_name = self._md.get_model_name()
-        #
-        # prefix_index = tf_node_def.name.find(model_name)
-        # if prefix_index >= 0:
-        #     ir_node.name = tf_node_def.name[prefix_index:]
-        # else:
-        #     ir_node.name = tf_node_def.name
-
-        ir_node.name = tf_node_def.name
-
-        # check the node that is supported by AIXH hardware
+        # Check if the node is supported by target hardware
         layer_info = self._md.get_layer_info(ir_node.op)
-
         if self._md.get_aixh_support(ir_node.op) and not self._md.BREAK_POINT_CONDITION:
             ir_node.is_aixh_support = True
             ir_node.aixh_profit = layer_info.profit
@@ -224,33 +170,28 @@ class AxfcTFIRBuilder(AxfcIRBuilder):
             ir_node.is_aixh_support = False
             ir_node.aixh_profit = 0
 
-        # connect predecessors and successor
-        for pred_name in tf_node_def.input:
-            
-            #replacing ':' for multiple value outputs from a layer
-            if ":" in pred_name:
-                pred_name = pred_name.split(":")[0]
-            
-            if "^" in pred_name:
-                pred_name = pred_name.replace("^", "")
+        # Connect predecessor and successors
+        for pred_name in node_def.input:
+            pred_name = pred_name.split(":")[0].replace("^", "")
 
-            # find the predecessor using the symbol table
-            pred_node = self._ir_symtab[pred_name]
-
-            if pred_node is not None:
+            # Find the predecessor using the symbol table
+            pred_node: AxfcIRNode = self._ir_symtab.get(pred_name)
+            if pred_node:
                 pred_node.succs.append(ir_node)
                 ir_node.preds.append(pred_node)
             else:
                 return AxfcError.PRED_NODE_NOT_FOUND
+            
 
-        # append the new IR into a IR graph
+        # Append the new IR node to the graph
         self._ir_graph.append_node(ir_node)
 
-        # check break point node
+        # Handle breakpoint nodes
         if ir_node.name == self._md.get_break_point_node():
             self._md.BREAK_POINT_CONDITION = True
 
         return AxfcError.SUCCESS
+
 
     ## For debugging
     def __str__(self):
