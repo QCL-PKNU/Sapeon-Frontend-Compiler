@@ -7,7 +7,7 @@
 #      Youngsun Han (youngsun@pknu.ac.kr)
 #      Heng Sengthai (sengthai37@gmail.com)
 #
-#   High Performance Computing Laboratory (hpcl.pknu.ac.kr)
+#   Quantum Computing Labaratory (qcl.pknu.ac.kr)
 #######################################################################
 
 from abc import ABC, abstractmethod
@@ -210,9 +210,9 @@ class AxfcIRBuilder(ABC):
         output_node_list = []
 
         for node in reversed(ir_block.nodes):
-            if len(node.succ) == 0:
+            if len(node.succs) == 0:
                 node.is_output = True
-
+                
             for succ_node in node.succs:
                 if succ_node not in ir_block.nodes and node.op not in ["Const", "Identity", "Pad"]:
                     if node not in output_node_list:
