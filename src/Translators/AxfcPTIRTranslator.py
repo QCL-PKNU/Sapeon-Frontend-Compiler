@@ -9,11 +9,11 @@
 #      Sanghyeon Lee (sanghyeon@pukyong.ac.kr)
 #      Pov Kimsay (povkimsay@gmail.com)
 #
-#   Quantum Computing Laboratory (quantum.pknu.ac.kr)
-#   [Before:High Performance Computing Laboratory (hpcl.pknu.ac.kr)]
+#   Quantum Computing Labaratory (qcl.pknu.ac.kr)
+#   [Before:Quantum Computing Labaratory (qcl.pknu.ac.kr)]
 #######################################################################
 
-
+import ast
 import torch
 import torch.fx as fx
 import numpy as np
@@ -48,42 +48,115 @@ aix_tensor_format_tbl = {
 #######################################################################
 # Global variable
 #######################################################################
-DUMMY_INPUT = torch.randn((1, 3, 244, 244))
 DEFAULT_TYPE = 'NCHW' # Follow the darknet format
 DEFAULT_DTYPE = torch.float32 # Default dtype
 
-
 class AxfcPTIRTranslator(AxfcIRTranslator):
     """PyTorch IR Translator class.
-
+    
     Args:
         md: Machine description object.
         model_path: Path to the PyTorch model file.
-
+    
     Attributes:
         _gm: PyTorch graph module.
         _module_symtab: A symbolic table for named modules of Pytorch model.
         _input_names: Input name of model.
+        layer_io_dict: A dictionary to store input/output tensors by unique layer name.
     """
 
-
-    def __init__(self, md, model_path: str):
+    def __init__(self, md: AxfcMachineDesc, path: str, **kwargs):
         super().__init__(md)
-        
-        model = torch.load(model_path)
-        self._gm: fx.graph_module = fx.symbolic_trace(model, (DUMMY_INPUT, ))
-        self._pt_graph: fx.graph = self._gm.graph
-        # Tensor with input values; weight, bias, mean, etc
-        self._tensor_symtab = OrderedDict(self._gm.state_dict())
+        self.md = md
 
-        # Create symtab for named_module
-        self._module_symtab = self.__build_module_symtab(self._gm)
-        self._input_names = [node.name for node in self._pt_graph.nodes
+        # Load model
+        is_dynamic_model = False
+        try:
+            logging.info(f"Attempting to load nn.Module model from {path}")
+            model = torch.load(path)
+            is_dynamic_model = True
+
+        except Exception as e:
+            logging.warning(f"Failed to load nn.Module model: {e}")
+
+        if is_dynamic_model:
+            input_shape = tuple(
+                ast.literal_eval(kwargs['input_shape'])
+            )
+            input_tensor = torch.randn(input_shape)
+
+            # Create a symbolic graph
+            self._gm: fx.GraphModule = fx.symbolic_trace(model, (input_tensor,))
+            self._pt_graph: fx.Graph = self._gm.graph
+
+            # Create tensor symtab
+            self._tensor_symtab = OrderedDict(self._gm.state_dict())
+
+            # Create dict to store I/O tensors
+            self.layer_io_dict = {}
+
+            # Register hook to extract I/O tensors
+            self._register_hooks(model)
+
+            # Perform a forward pass, given specific input shape
+            self.forward_pass(input_tensor)
+
+            # Create symtab for named modules
+            self._module_symtab = self.__build_module_symtab(self._gm)
+
+            # Capture input names
+            self._input_names = [node.name for node in self._pt_graph.nodes
                              if node.op in ('placeholder', 'get_attr')]
-        
-        self._input_tensor_cache = {}
-        self._emitted_tensors_cache = {}
-    
+
+
+    def _register_hooks(self, model):
+        """Registers forward hooks to capture input and output tensor shapes for each layer."""
+
+        def hook(module, input, output):
+            # Create a unique layer name using the full module name path
+            layer_name = self._get_unique_layer_name(module)
+            
+            if layer_name:
+                if layer_name in self.layer_io_dict:
+                    # Append an index to make the name unique
+                    index = sum(1 for key in self.layer_io_dict if key.startswith(layer_name))
+                    layer_name = f"{layer_name}_{index}"
+
+                # Store input and output tensors in the dictionary using the unique layer name as the key
+                self.layer_io_dict[layer_name] = {
+                    'input': input[0].detach().cpu() if input else None,  # Detach and move to CPU
+                    'output': output.detach().cpu() if output is not None else None  # Detach and move to CPU
+                }
+
+        # Register hooks on all layers
+        for name, layer in model.named_modules():
+            # Replace dots with underscores for consistency in naming
+            name = name.replace('.', '_')
+
+            layer.register_forward_hook(hook)
+
+    def _get_unique_layer_name(self, module):
+        """Generates a unique name for each layer based on the full module hierarchy."""
+        names = []
+        # Recursively find the parent layers
+        for name, child in self._gm.named_modules():
+            if child == module:
+                names.append(name)
+
+        unique_name = '_'.join(names).replace('.', '_')
+
+        return unique_name
+
+    def forward_pass(self, input_data):
+        """Perform a forward pass to observe the layer-wise input/output shapes."""
+        return self._gm(input_data)
+
+    def get_layer_io(self, layer_name):
+        """Get the input and output tensors for a specific layer by name."""
+        if layer_name in self.layer_io_dict:
+            return self.layer_io_dict[layer_name]
+        else:
+            return None
     
     def __build_module_symtab(self, graph_module):
         """Builds a symbolic table for IR node from Pytorch model."""
@@ -108,24 +181,41 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
         Returns:
             AIXLayer.AIXTensor: The emitted AIXTensor representing the node's inputs.
         """
+        aix_tensor = AIXLayer.AIXTensor()
+        layer_name = ir_node.name
 
-        input_nodes = [node for node in ir_node.preds]
-        # input_nodes = list(filter(lambda x: x.op != "Const" or x.name in self._input_names, ir_node.preds))
-        
-        aix_tensors = []
-        for pred in input_nodes:
-            node_id = pred.node_def.target
+        # Retrieve the output tensor for the given layer
+        layer_io = self.get_layer_io(layer_name)
+        output_tensor = layer_io.get('input') if layer_io else None
 
-            if node_id not in self._input_tensor_cache:
-                aix_tensor = self.__emit_aix_tensor(pred)
-                self._input_tensor_cache[node_id] = aix_tensor
-            else:
-                aix_tensor = self._input_tensor_cache[node_id]
+        # Check if the output tensor is None
+        if output_tensor is None:
+            aix_tensor.dtype = aix_data_type_tbl.get(DEFAULT_DTYPE)
+            aix_tensor.format = aix_tensor_format_tbl[b'NCHW']
+            return aix_tensor
 
-            aix_tensors.append(aix_tensor)
+        # Assign data type from the output tensor, falling back to default
+        dtype = getattr(output_tensor, 'dtype', None)
+        if dtype is None:
+            logging.warning(f"Missing dtype for output tensor in layer: {layer_name}. Using default dtype.")
+            dtype = DEFAULT_DTYPE
+        aix_tensor.dtype = aix_data_type_tbl.get(dtype)
+
+        # Determine tensor format dynamically
+        if len(output_tensor.shape) == 1:
+            data_format = b'VECTOR'
+        else:
+            data_format = DEFAULT_TYPE.encode()
+        aix_tensor.format = aix_tensor_format_tbl.get(data_format, aix_tensor_format_tbl[b'NCHW'])
+
+        # Set tensor dimensions and size
+        if hasattr(output_tensor, 'shape') and output_tensor.shape:
+            aix_tensor.dims.extend(reversed([max(dim, 1) for dim in output_tensor.shape]))
+            aix_tensor.size = int(np.prod(aix_tensor.dims))
+        else:
+            logging.warning(f"Invalid shape for output tensor in layer: {layer_name}")
 
         return aix_tensor
-    
     
     def _emit_aix_tensor_output(self, ir_node: AxfcIRNode, **kwargs) -> AIXLayer.AIXTensor:
         """Emits an AIX tensor of an output type for the given IR node.
@@ -136,22 +226,44 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
         Returns:
             AIXLayer.AIXTensor: The emitted AIXTensor representing the node's output.
         """
-        # Read the output nodes of IR_node
-        output_nodes = [node for node in ir_node.succs]
-        # output_nodes = list(lambda x: x.op != "Const" or x.name in ir_node.succs)
-        
-        aix_tensors = []
-        # for output_node in output_nodes:
-        #     tensor_name = output_node.node_def.target
-        #     aix_tensor = self.__emit_aix_tensor(output_node, is_inout_tensor=True)
-        #     aix_tensors.append(aix_tensor)
+        aix_tensor = AIXLayer.AIXTensor()
+        layer_name = ir_node.name
 
-       
-        # Emit tensor
-        aix_tensor = self.__emit_aix_tensor(ir_node)
+        # Retrieve the output tensor for the given layer
+        layer_io = self.get_layer_io(layer_name)
+        output_tensor = layer_io.get('output') if layer_io else None
+
+        # Check if the output tensor is None
+        if output_tensor is None:
+            logging.warning(f"Output tensor not found for layer: {layer_name}")
+            # Assign default dtype and format to prevent further issues
+            aix_tensor.dtype = aix_data_type_tbl.get(DEFAULT_DTYPE)
+            aix_tensor.format = aix_tensor_format_tbl[b'NCHW']
+            return aix_tensor
+
+        # Assign data type from the output tensor, falling back to default
+        dtype = getattr(output_tensor, 'dtype', None)
+        if dtype is None:
+            logging.warning(f"Missing dtype for output tensor in layer: {layer_name}. Using default dtype.")
+            dtype = DEFAULT_DTYPE
+        aix_tensor.dtype = aix_data_type_tbl.get(dtype)
+
+        # Determine tensor format dynamically
+        if len(output_tensor.shape) == 1:
+            data_format = b'VECTOR'
+        else:
+            data_format = DEFAULT_TYPE.encode()
+        aix_tensor.format = aix_tensor_format_tbl.get(data_format, aix_tensor_format_tbl[b'NCHW'])
+
+        # Set tensor dimensions and size
+        if hasattr(output_tensor, 'shape') and output_tensor.shape:
+            aix_tensor.dims.extend(reversed([max(dim, 1) for dim in output_tensor.shape]))
+            aix_tensor.size = int(np.prod(aix_tensor.dims))
+        else:
+            logging.warning(f"Invalid shape for output tensor in layer: {layer_name}")
 
         return aix_tensor
-
+    
 
     def _emit_aix_layer_convolution(self, ir_node: AxfcIRNode, **kwargs) -> AxfcError:
         """
@@ -199,12 +311,13 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
         aix_layer.mean.CopyFrom(self._emit_aix_tensor_generic(ir_node, "mean"))
         aix_layer.variance.CopyFrom(self._emit_aix_tensor_generic(ir_node, "variance"))
 
+        aix_layer.filter.CopyFrom(self._emit_aix_tensor_filter(ir_node))
+
         # Attributes for BatchNormalization in float format
         # epsilon, momentum
         aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node))
 
-        return AxfcError.SUCCESS
-    
+        return AxfcError.SUCCESS    
 
     def _emit_aix_layer_downsample(self, ir_node: AxfcIRNode, **kwargs) -> AxfcError:
         """Emits PyTorch-specific information for a downsampling layer from the given IR node
@@ -238,7 +351,12 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
 
         aix_layer = ir_node.aix_layer
 
-        # aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node))
+        # input and output tensor
+        inout_tensor = self._emit_aix_tensor_input(ir_node.preds[0])
+        aix_layer.input.CopyFrom(inout_tensor)
+        aix_layer.output.CopyFrom(inout_tensor)
+
+        aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node))
 
         ewadddesc = AIXLayer.AIXEWAddDesc()
         scale_size = len(ir_node.preds)
@@ -265,8 +383,11 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
 
         aix_layer = ir_node.aix_layer
 
-        #filter
-        # aix_layer.filter.CopyFrom(self._emit_aix_tensor_filter(ir_node, tensor=[]))
+        # filter
+        aix_layer.filter.CopyFrom(self._emit_aix_tensor_filter(ir_node, tensor=[]))
+        
+
+        aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node))
 
         # samplingdesc
         # dilation, kernel_size, padding, stride
@@ -276,21 +397,11 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
 
 
     def _emit_aix_layer_avgpool(self, ir_node: AxfcIRNode, **kwargs) -> AxfcError:
-        """
-        Emits PyTorch-specific information into the given AIX avgpool layer object
-        from an IR node, including layer inputs and outputs.
-
-        Args:
-            ir_node (AxfcIRNode): The IR node to be processed.
-
-        Returns:
-            An output AIX avgpool layer.
-        """
         logging.info("AxfcPTBuilderTranslator:_emit_aix_layer_avgpool - node %d", ir_node.layer_id)
 
         aix_layer = ir_node.aix_layer
 
-        # aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node))
+        aix_layer.convdesc.CopyFrom(self._emit_aix_convolution_desc(ir_node))
 
         sampling_desc = self._emit_aix_sampling_desc(ir_node)
 
@@ -357,11 +468,6 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
         Returns:
             AIXLayer.AIXTensor: The emitted AIX Tensor object.
         """
-        # Simplify cache key to ensure it captures both the node and its in/out state
-        cache_key = f"{node}_{is_inout_tensor}"
-        if cache_key in self._emitted_tensors_cache:
-            return self._emitted_tensors_cache[cache_key]
-
         aix_tensor = AIXLayer.AIXTensor()
         exception_op = ['add']
         if isinstance(node, AxfcIRNode) and node.op == "Input":
@@ -369,7 +475,7 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
         elif isinstance(node, AxfcIRNode) and node.op in exception_op:
             tensor_name = node.name
         elif isinstance(node, AxfcIRNode):
-            tensor_name = node.node_def.target + ".weight"
+            tensor_name = str(node.node_def.target) + ".weight"
         else:
             tensor_name = node
 
@@ -396,15 +502,14 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
         # Set format
         aix_tensor.format = aix_tensor_format_tbl[data_format]
 
-        # NOTE If requires_grad is False, it means constant which is not traced by autograd machine
-        if tensor.requires_grad == False:
-            tensor_values = torch.flatten(tensor)
-            for fval in tensor_values:
-                aix_tensor.fval.append(fval.item())
+        # # NOTE: Only set fval if this is a constant tensor (not an input tensor)
+        # if not tensor.requires_grad and not is_inout_tensor:
+        #     tensor_values = torch.flatten(tensor)
+        #     for fval in tensor_values:
+        #         aix_tensor.fval.append(fval.item())
 
         if tensor.shape:
             shape = list(map(lambda x: 1 if not x else x, tensor.shape))
-                
             # AIXGraph shape is NCHW, in reversed order
             shape.reverse()
             aix_tensor.dims.extend(shape)
@@ -414,7 +519,6 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
         # Compute and set tensor size
         aix_tensor.size = int(np.prod(aix_tensor.dims))
 
-        self._emitted_tensors_cache[cache_key] = aix_tensor
         return aix_tensor
 
 
@@ -432,6 +536,12 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
         if tensor_name + ".weight" in self._tensor_symtab.keys():
             aix_tensor = self.__emit_aix_tensor(f"{tensor_name}.weight")
             aix_tensor.format = aix_tensor_format_tbl[b'NCHW']
+
+            # fval
+            tensor = self._tensor_symtab[f"{tensor_name}.weight"]
+            if not tensor.requires_grad:  # Check if tensor is constant
+                tensor_values = tensor.flatten().cpu().numpy()
+                aix_tensor.fval.extend(tensor_values)
         else:
             aix_layer = ir_node.aix_layer
             aix_tensor = AIXLayer.AIXTensor()
@@ -442,8 +552,8 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
 
             input_dims_dict = self.__get_aix_tensor_dims(aix_layer.input)
             output_dims_dict = self.__get_aix_tensor_dims(aix_layer.output)
-            aix_tensor.dims.append(input_dims_dict['C'])
-            aix_tensor.dims.append(output_dims_dict['C'])
+            # aix_tensor.dims.append(input_dims_dict['C'])
+            # aix_tensor.dims.append(output_dims_dict['C'])
 
         return aix_tensor
     
@@ -487,6 +597,13 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
 
         if tensor_name in self._tensor_symtab.keys():
             aix_tensor = self.__emit_aix_tensor(tensor_name)
+            tensor = self._tensor_symtab[tensor_name]
+
+            # Add fval for constant tensors
+            if not tensor.requires_grad:  # Ensure it's a constant tensor
+                tensor_values = tensor.flatten().cpu().numpy()
+                aix_tensor.fval.extend(tensor_values)
+
         else:
             # Fallback to a default tensor emission if specific tensor not found
             aix_tensor = self.__emit_default_hyper_parameter(ir_node.aix_layer, default_value=1)
@@ -494,12 +611,12 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
         return aix_tensor
     
     
-    def _emit_aix_convolution_desc(self, ir_node: AxfcIRNode, **kwargs) -> AIXLayer.AIXTensor:
+    def _emit_aix_convolution_desc(self, ir_node: AxfcIRNode, **kwargs) -> AIXLayer.AIXConvolutionDesc:
         """Emits the AIX convolution description from a given IR node.
 
         Args:
             ir_node (AxfcIRNode): An IR node to be emitted as an AIX tensor.
-            kwargs: Keyword arguments used for pass the 'tensor'
+            kwargs: Keyword arguments used to pass the 'tensor'
 
         Returns:
             AIXLayer.AIXConvolutionDesc: The convolution description for the AIX layer.
@@ -508,18 +625,37 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
         convolution_desc = AIXLayer.AIXConvolutionDesc()
         convolution_desc.dtype = ir_node.aix_layer.input.dtype
 
-        # Retrieve the PyTorch module from the symbol table
-        pt_node = self._module_symtab[ir_node.node_def.target]
+        # Handle special case for `ewadd` which may not have a `target`
+        if "Add" in ir_node.op:
+            # Assign default settings for element-wise addition (ewadd)
+            logging.warning("ewadd node has no target; using default attributes.")
+            stride = (1, 1)
+            padding = (0, 0)
+            dilation = (1, 1)
+            groups = 1
+        else:
+            # Retrieve the PyTorch module from the symbol table
+            pt_node = self._module_symtab.get(ir_node.node_def.target)
 
-        # Helper function to simplify setting attributes
-        def get_attr_with_default(attr, default):
-            return getattr(pt_node, attr, default)
+            # If `pt_node` is not found, log an error and use default values
+            if pt_node is None:
+                logging.error(f"Target '{ir_node.node_def}' not found in symbol table. Using default attributes.")
+                stride = (1, 1)
+                padding = (0, 0)
+                dilation = (1, 1)
+                groups = 1
+            else:
+                # Helper function to simplify setting attributes
+                def get_attr_with_default(attr, default):
+                    value = getattr(pt_node, attr, default)
+                    return (value, value) if isinstance(value, int) else value
 
-        # Set stride, padding, dilation, and groups with fallbacks to defaults if not specified
-        stride = get_attr_with_default("stride", (1, 1))
-        padding = get_attr_with_default("padding", (0, 0))
-        dilation = get_attr_with_default("dilation", (1, 1))
-        groups = get_attr_with_default("groups", 1)
+                # Set stride, padding, and dilation with fallbacks to defaults if not specified
+                stride = get_attr_with_default("stride", (1, 1))
+                padding = get_attr_with_default("padding", (0, 0))
+                dilation = get_attr_with_default("dilation", (1, 1))
+                # Set groups separately without converting to tuple
+                groups = getattr(pt_node, "groups", 1)
 
         # Update the convolution descriptor
         convolution_desc.stride.extend([stride[0], stride[1], 0, 0])
@@ -567,6 +703,14 @@ class AxfcPTIRTranslator(AxfcIRTranslator):
             elif layer_type == AIXLayer.AIXLayerType.AIX_LAYER_PIXELSHUFFLE:
                 sampling_desc.mode = AIXLayer.AIXSamplingMode.AIX_POOLING_PIXELSHUFFLE
 
+        # Set kernel size (window)
+        if hasattr(pt_node, "kernel_size"):
+            if isinstance(pt_node.kernel_size, int):  # Single value for square kernel
+                kernel_size = [pt_node.kernel_size, pt_node.kernel_size]
+            else:  # Tuple for height and width
+                kernel_size = list(pt_node.kernel_size)
+            sampling_desc.window.extend([kernel_size[0], kernel_size[1], 0, 0])
+        else:
             sampling_desc.window.extend([0, 0, 0, 0])
 
         # stride
