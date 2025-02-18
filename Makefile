@@ -8,11 +8,10 @@ all: frontend
 
 frontend: $(FRONTEND_VENV)
 	@echo "Install Python dependencies..."
-	source venv/bin/activate && pip install -r requrements.txt
+	source venv/bin/activate && pip install -r requirements.txt
 
 	@echo "Compile deep learning model...$(MODEL_PATH)"
-	source venv/bin/activate && $(PYTHON) src/AxfcMain.py \  
-																	-i assets/models/$(MODEL_NAME) \
+	source venv/bin/activate && $(PYTHON) src/AxfcMain.py -i assets/models/$(MODEL_NAME) \
 																  -c assets/calibs/$(CALIB_FILE) \
 																  -m assets/md/$(MD_FILE) \
 																	-l assets/logging.log \
